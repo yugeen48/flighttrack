@@ -331,7 +331,7 @@ const PLACES = [
   { key:"home", name:"Home", lat:48.22868, lon:16.39602 },
   { key:"work", name:"Work", lat:48.28767, lon:16.54102 }
 ];
-const RADIUS_KM = 15, RADIUS_NM = RADIUS_KM/1.852, REFRESH_MS = 10000;
+const RADIUS_KM = 15, RADIUS_NM = RADIUS_KM/1.852, REFRESH_MS = 15000;
 /* Datenquellen. Erst direkt, dann über Umwege, falls der Browser blockiert.
    dist ist in nautischen Meilen. adsb.fi bittet um Nennung der Quelle. */
 /* Eigener Cloudflare Worker. Sobald hier eine Adresse steht, wird sie zuerst
@@ -847,7 +847,7 @@ async function planes(){
       const d=await fetchJSON(`${MY_PROXY}?lat=${la}&lon=${lo}&dist=${nm}`, 9000);
       best=d.ac||d.aircraft||[];
       srcStatus="Worker über "+(d.src||"?")+" · "+best.length
-        + (d.error?" ("+d.error+")":"");
+        + (d.error?" ("+String(d.error).replace(/\s+/g," ").slice(0,60)+")":"");
       return { list:best, ok:1 };
     }catch(e){ notes.push("Worker "+errName(e)); }
   }
@@ -900,6 +900,9 @@ async function tick(){
     else await showEmpty(null, list.length, ok);
   }catch(e){
     if(g!==gen) return;
+    /* Kurze Aussetzer nicht ins Bild schreiben - erst nach einer Minute
+       ohne brauchbare Antwort auf die Fehleranzeige wechseln. */
+    if(lastOk && Date.now()-lastOk < 60000) return;
     await showEmpty("Keine Quelle erreichbar · "+srcStatus);
   }
 }
