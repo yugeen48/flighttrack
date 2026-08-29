@@ -236,10 +236,10 @@
     <div class="sun"></div>
 
     <div class="top">
-      <button class="place" id="btn-0" aria-pressed="true" aria-label="Leopoldstadt">
+      <button class="place" id="btn-0" aria-pressed="true" aria-label="Home">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6 1.9 11.4h2.9V21h5.3v-5.6h3.8V21h5.2v-9.6h2.9L12 2.6Z"/></svg>
       </button>
-      <button class="place" id="btn-1" aria-pressed="false" aria-label="Aderklaa">
+      <button class="place" id="btn-1" aria-pressed="false" aria-label="Work">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M9.7 8.3A4.24 4.24 0 0 1 15.7 14.3L5.2 20.8a1.2 1.2 0 0 1-1.7-1.7Z"/>
           <ellipse cx="14.4" cy="5.7" rx="1.45" ry="3.2" transform="rotate(-15 14.4 5.7)"/>
@@ -256,7 +256,7 @@
       <button class="place gear" id="btn-tech" aria-pressed="false" aria-label="Technische Zeichnung">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8Zm9 4.9v-3l-2.4-.5a6.9 6.9 0 0 0-.8-1.9l1.4-2-2.1-2.1-2 1.4a6.9 6.9 0 0 0-1.9-.8L12.7 2h-3l-.5 2.6c-.7.2-1.3.4-1.9.8l-2-1.4-2.1 2.1 1.4 2c-.4.6-.6 1.2-.8 1.9L1.5 10.5v3l2.4.5c.2.7.4 1.3.8 1.9l-1.4 2 2.1 2.1 2-1.4c.6.4 1.2.6 1.9.8l.5 2.6h3l.5-2.6c.7-.2 1.3-.4 1.9-.8l2 1.4 2.1-2.1-1.4-2c.4-.6.6-1.2.8-1.9l2.4-.5Z"/></svg>
       </button>
-      <span class="here" id="here">Der Himmel über Leopoldstadt</span>
+      <span class="here" id="here">Der Himmel über Home</span>
       <span class="live">Live · <b id="clock">–</b></span>
     </div>
 
@@ -320,8 +320,8 @@ const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
 const PLACES = [
-  { key:"leo", name:"Leopoldstadt", lat:48.2167, lon:16.3961 },
-  { key:"ade", name:"Aderklaa",     lat:48.2994, lon:16.5544 }
+  { key:"home", name:"Home", lat:48.22868, lon:16.39602 },
+  { key:"work", name:"Work", lat:48.28767, lon:16.54102 }
 ];
 const RADIUS_KM = 15, RADIUS_NM = RADIUS_KM/1.852, REFRESH_MS = 8000;
 /* Datenquellen. Erst direkt, dann über Umwege, falls der Browser blockiert.
@@ -332,16 +332,16 @@ const VIA = {
   allorigins: u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u),
   corsproxy: u=>"https://corsproxy.io/?url="+encodeURIComponent(u)
 };
-const SOURCES = [
-  { ms:6000,  url:(la,lo,nm)=>ADSBFI(la,lo,nm) },
-  { ms:6000,  url:(la,lo,nm)=>`https://api.adsb.lol/v2/point/${la}/${lo}/${nm}` },
-  { ms:6000,  url:(la,lo,nm)=>`https://api.airplanes.live/v2/point/${la}/${lo}/${nm}` },
+const DIRECT = [
+  { ms:7000, url:(la,lo,nm)=>ADSBFI(la,lo,nm) },
+  { ms:7000, url:(la,lo,nm)=>`https://api.adsb.lol/v2/point/${la}/${lo}/${nm}` },
+  { ms:7000, url:(la,lo,nm)=>`https://api.airplanes.live/v2/point/${la}/${lo}/${nm}` }
+];
+const PROXIED = [
   { ms:13000, url:(la,lo,nm)=>VIA.codetabs(ADSBFI(la,lo,nm)) },
   { ms:13000, url:(la,lo,nm)=>VIA.allorigins(ADSBFI(la,lo,nm)) },
   { ms:13000, url:(la,lo,nm)=>VIA.corsproxy(ADSBFI(la,lo,nm)) }
 ];
-/* Quelle, die zuletzt funktioniert hat - wird zuerst probiert. */
-let bestSource = 0;
 
 /* ============ Airline-Farben ============
    Schlüssel ist das ICAO-Präfix des Callsigns (die ersten drei Buchstaben).
@@ -421,8 +421,6 @@ const store={
   get(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch(e){return f;}},
   set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 };
-
-bestSource = store.get("src",0);
 
 /* ============ adsbdb-Cache ============ */
 const CK="adsbdb-cache", TTL=30*24*3600*1000;
@@ -789,7 +787,7 @@ async function showPlane(ac){
   } else paint();
 }
 
-async function showEmpty(note){
+async function showEmpty(note, raw, ok){
   shownHex=null; last=null;
   if($("tech").classList.contains("on")) paintTech();
   const w=await getWeather(place);
@@ -801,26 +799,36 @@ async function showEmpty(note){
   $("metaText").textContent="";
   $("rare").classList.remove("on");
   $("route").textContent = note ? "Keine Verbindung" : "Kein Flugzeug in Reichweite";
-  $("detail").textContent = note ? note : ("Umkreis "+RADIUS_KM+" km · "+place.name);
+  $("detail").textContent = note ? note
+    : "Umkreis "+RADIUS_KM+" km · "+place.name
+      + (ok!==undefined ? " · "+ok+"/3 Quellen, "+(raw||0)+" empfangen" : "");
   $("reg").textContent="";
   $("compassBox").hidden=true;
 }
 
 /* ============ Daten ============ */
+/* Alle drei Netze gleichzeitig fragen und die Ergebnisse zusammenlegen.
+   Jedes Netz hat eigene Empfänger - was dem einen fehlt, hat oft das andere. */
 async function planes(){
   const la=place.lat.toFixed(4), lo=place.lon.toFixed(4), nm=RADIUS_NM.toFixed(1);
-  const order=[bestSource,...SOURCES.keys()].filter((v,i,a)=>a.indexOf(v)===i);
-  let err=null;
-  for(const i of order){
-    const s=SOURCES[i]; if(!s) continue;
-    try{
-      const d=await fetchJSON(s.url(la,lo,nm), s.ms);
-      if(bestSource!==i){ bestSource=i; store.set("src",i); }
-      return d.ac||d.aircraft||[];
-    }catch(e){ err=e; }
+  const res=await Promise.allSettled(DIRECT.map(s=>fetchJSON(s.url(la,lo,nm), s.ms)));
+  let raw=[], ok=0;
+  for(const r of res){
+    if(r.status==="fulfilled"){ ok++; raw=raw.concat(r.value.ac||r.value.aircraft||[]); }
   }
-  throw err||new Error("keine Quelle");
+  if(!ok){
+    for(const s of PROXIED){
+      try{ const d=await fetchJSON(s.url(la,lo,nm), s.ms);
+        return { list:d.ac||d.aircraft||[], ok:1 }; }catch(e){}
+    }
+    throw new Error("blockiert");
+  }
+  const seen=new Set(), list=[];
+  for(const a of raw){ const k=a.hex||JSON.stringify([a.lat,a.lon]);
+    if(!seen.has(k)){ seen.add(k); list.push(a); } }
+  return { list, ok };
 }
+
 function nearest(list){
   let best=null,bk=Infinity;
   for(const ac of list){
@@ -867,11 +875,11 @@ async function tick(){
   if(DEMO) return demoTick();
   const g=gen;
   try{
-    const list=await planes();
+    const {list,ok}=await planes();
     if(g!==gen) return;              /* Standort wurde inzwischen gewechselt */
     const ac=nearest(list); lastOk=Date.now();
     if(ac){ await showPlane(ac); if(g===gen) applyWeather(await getWeather(place)); }
-    else await showEmpty();
+    else await showEmpty(null, list.length, ok);
   }catch(e){
     if(g!==gen) return;
     await showEmpty("Alle ADS-B-Quellen blockiert · "+place.name);
