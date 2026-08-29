@@ -323,7 +323,7 @@ const PLACES = [
   { key:"home", name:"Home", lat:48.22868, lon:16.39602 },
   { key:"work", name:"Work", lat:48.28767, lon:16.54102 }
 ];
-const RADIUS_KM = 15, RADIUS_NM = RADIUS_KM/1.852, REFRESH_MS = 8000;
+const RADIUS_KM = 15, RADIUS_NM = RADIUS_KM/1.852, REFRESH_MS = 10000;
 /* Datenquellen. Erst direkt, dann über Umwege, falls der Browser blockiert.
    dist ist in nautischen Meilen. adsb.fi bittet um Nennung der Quelle. */
 const ADSBFI = (la,lo,nm)=>`https://opendata.adsb.fi/api/v3/lat/${la}/lon/${lo}/dist/${nm}`;
@@ -333,14 +333,14 @@ const VIA = {
   corsproxy: u=>"https://corsproxy.io/?url="+encodeURIComponent(u)
 };
 const DIRECT = [
-  { ms:7000, url:(la,lo,nm)=>ADSBFI(la,lo,nm) },
-  { ms:7000, url:(la,lo,nm)=>`https://api.adsb.lol/v2/point/${la}/${lo}/${nm}` },
-  { ms:7000, url:(la,lo,nm)=>`https://api.airplanes.live/v2/point/${la}/${lo}/${nm}` }
+  { n:"adsb.fi",       ms:7000, url:(la,lo,nm)=>ADSBFI(la,lo,nm) },
+  { n:"adsb.lol",      ms:7000, url:(la,lo,nm)=>`https://api.adsb.lol/v2/point/${la}/${lo}/${nm}` },
+  { n:"airplanes.live",ms:7000, url:(la,lo,nm)=>`https://api.airplanes.live/v2/point/${la}/${lo}/${nm}` }
 ];
 const PROXIED = [
-  { ms:13000, url:(la,lo,nm)=>VIA.codetabs(ADSBFI(la,lo,nm)) },
-  { ms:13000, url:(la,lo,nm)=>VIA.allorigins(ADSBFI(la,lo,nm)) },
-  { ms:13000, url:(la,lo,nm)=>VIA.corsproxy(ADSBFI(la,lo,nm)) }
+  { n:"codetabs",   ms:13000, url:(la,lo,nm)=>VIA.codetabs(ADSBFI(la,lo,nm)) },
+  { n:"allorigins", ms:13000, url:(la,lo,nm)=>VIA.allorigins(ADSBFI(la,lo,nm)) },
+  { n:"corsproxy",  ms:13000, url:(la,lo,nm)=>VIA.corsproxy(ADSBFI(la,lo,nm)) }
 ];
 
 /* ============ Airline-Farben ============
@@ -801,32 +801,35 @@ async function showEmpty(note, raw, ok){
   $("route").textContent = note ? "Keine Verbindung" : "Kein Flugzeug in Reichweite";
   $("detail").textContent = note ? note
     : "Umkreis "+RADIUS_KM+" km · "+place.name
-      + (ok!==undefined ? " · "+ok+"/3 Quellen, "+(raw||0)+" empfangen" : "");
+      + (srcStatus ? " · "+srcStatus : "");
   $("reg").textContent="";
   $("compassBox").hidden=true;
 }
 
 /* ============ Daten ============ */
-/* Alle drei Netze gleichzeitig fragen und die Ergebnisse zusammenlegen.
-   Jedes Netz hat eigene Empfänger - was dem einen fehlt, hat oft das andere. */
+/* Quellen nacheinander, nicht alle gleichzeitig - das schont die
+   Freiwilligennetze und ihre Ratelimits. Sobald eine etwas liefert,
+   ist Schluss. Liefert eine nur eine leere Liste, wird die nächste
+   gefragt, weil jedes Netz eigene Empfänger hat. */
+let srcStatus = "";
 async function planes(){
   const la=place.lat.toFixed(4), lo=place.lon.toFixed(4), nm=RADIUS_NM.toFixed(1);
-  const res=await Promise.allSettled(DIRECT.map(s=>fetchJSON(s.url(la,lo,nm), s.ms)));
-  let raw=[], ok=0;
-  for(const r of res){
-    if(r.status==="fulfilled"){ ok++; raw=raw.concat(r.value.ac||r.value.aircraft||[]); }
-  }
-  if(!ok){
-    for(const s of PROXIED){
-      try{ const d=await fetchJSON(s.url(la,lo,nm), s.ms);
-        return { list:d.ac||d.aircraft||[], ok:1 }; }catch(e){}
+  const notes=[]; let best=[], ok=0;
+  for(const s of DIRECT.concat(PROXIED)){
+    try{
+      const d=await fetchJSON(s.url(la,lo,nm), s.ms);
+      const list=d.ac||d.aircraft||[];
+      ok++; notes.push(s.n+" "+list.length);
+      if(list.length){ best=list; break; }
+    }catch(e){
+      const m=String(e&&e.message||e);
+      notes.push(s.n+" "+(/^\d+$/.test(m) ? "HTTP "+m : "blockiert"));
     }
-    throw new Error("blockiert");
+    if(ok) break;              /* eine Quelle hat geantwortet, das reicht */
   }
-  const seen=new Set(), list=[];
-  for(const a of raw){ const k=a.hex||JSON.stringify([a.lat,a.lon]);
-    if(!seen.has(k)){ seen.add(k); list.push(a); } }
-  return { list, ok };
+  srcStatus=notes.join(" · ");
+  if(!ok) throw new Error(srcStatus);
+  return { list:best, ok };
 }
 
 function nearest(list){
@@ -882,7 +885,7 @@ async function tick(){
     else await showEmpty(null, list.length, ok);
   }catch(e){
     if(g!==gen) return;
-    await showEmpty("Alle ADS-B-Quellen blockiert · "+place.name);
+    await showEmpty("Keine Quelle erreichbar · "+srcStatus);
   }
 }
 function loop(){ clearInterval(timer); tick(); timer=setInterval(tick, DEMO?6000:REFRESH_MS); }
