@@ -324,17 +324,24 @@ const PLACES = [
   { key:"ade", name:"Aderklaa",     lat:48.2994, lon:16.5544 }
 ];
 const RADIUS_KM = 15, RADIUS_NM = RADIUS_KM/1.852, REFRESH_MS = 8000;
-/* Datenquellen. Reihenfolge = Reihenfolge der Versuche. dist ist in nautischen Meilen.
-   adsb.fi bittet um Nennung der Quelle - steht im Datenblatt. */
+/* Datenquellen. Erst direkt, dann über Umwege, falls der Browser blockiert.
+   dist ist in nautischen Meilen. adsb.fi bittet um Nennung der Quelle. */
+const ADSBFI = (la,lo,nm)=>`https://opendata.adsb.fi/api/v3/lat/${la}/lon/${lo}/dist/${nm}`;
+const VIA = {
+  codetabs: u=>"https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(u),
+  allorigins: u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u),
+  corsproxy: u=>"https://corsproxy.io/?url="+encodeURIComponent(u)
+};
 const SOURCES = [
-  (la,lo,nm)=>`https://opendata.adsb.fi/api/v3/lat/${la}/lon/${lo}/dist/${nm}`,
-  (la,lo,nm)=>`https://api.adsb.lol/v2/point/${la}/${lo}/${nm}`,
-  (la,lo,nm)=>`https://api.airplanes.live/v2/point/${la}/${lo}/${nm}`,
-  /* Letzte Rettung: falls eine der Quellen CORS blockiert, über einen
-     öffentlichen Umweg holen. Langsamer, deshalb erst ganz am Schluss. */
-  (la,lo,nm)=>"https://api.allorigins.win/raw?url="+
-     encodeURIComponent(`https://opendata.adsb.fi/api/v3/lat/${la}/lon/${lo}/dist/${nm}`)
+  { ms:6000,  url:(la,lo,nm)=>ADSBFI(la,lo,nm) },
+  { ms:6000,  url:(la,lo,nm)=>`https://api.adsb.lol/v2/point/${la}/${lo}/${nm}` },
+  { ms:6000,  url:(la,lo,nm)=>`https://api.airplanes.live/v2/point/${la}/${lo}/${nm}` },
+  { ms:13000, url:(la,lo,nm)=>VIA.codetabs(ADSBFI(la,lo,nm)) },
+  { ms:13000, url:(la,lo,nm)=>VIA.allorigins(ADSBFI(la,lo,nm)) },
+  { ms:13000, url:(la,lo,nm)=>VIA.corsproxy(ADSBFI(la,lo,nm)) }
 ];
+/* Quelle, die zuletzt funktioniert hat - wird zuerst probiert. */
+let bestSource = 0;
 
 /* ============ Airline-Farben ============
    Schlüssel ist das ICAO-Präfix des Callsigns (die ersten drei Buchstaben).
@@ -414,6 +421,8 @@ const store={
   get(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch(e){return f;}},
   set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 };
+
+bestSource = store.get("src",0);
 
 /* ============ adsbdb-Cache ============ */
 const CK="adsbdb-cache", TTL=30*24*3600*1000;
@@ -713,7 +722,7 @@ async function getWeather(p){
 
 /* ============ Zustand ============ */
 let place=PLACES[Math.min(1,Math.max(0,store.get("place",0)))];
-let shownHex=null, timer=null, lastOk=0;
+let shownHex=null, timer=null, lastOk=0, gen=0;
 
 function clock(){
   const t=new Date().toLocaleTimeString("de-AT",{hour:"2-digit",minute:"2-digit"});
@@ -799,11 +808,16 @@ async function showEmpty(note){
 
 /* ============ Daten ============ */
 async function planes(){
-  const nm=RADIUS_NM.toFixed(1);
+  const la=place.lat.toFixed(4), lo=place.lon.toFixed(4), nm=RADIUS_NM.toFixed(1);
+  const order=[bestSource,...SOURCES.keys()].filter((v,i,a)=>a.indexOf(v)===i);
   let err=null;
-  for(const url of SOURCES){
-    try{ const d=await fetchJSON(url(place.lat.toFixed(4),place.lon.toFixed(4),nm));
-      return d.ac||d.aircraft||[]; }catch(e){ err=e; }
+  for(const i of order){
+    const s=SOURCES[i]; if(!s) continue;
+    try{
+      const d=await fetchJSON(s.url(la,lo,nm), s.ms);
+      if(bestSource!==i){ bestSource=i; store.set("src",i); }
+      return d.ac||d.aircraft||[];
+    }catch(e){ err=e; }
   }
   throw err||new Error("keine Quelle");
 }
@@ -851,12 +865,16 @@ function demoTick(){
 /* ============ Schleife ============ */
 async function tick(){
   if(DEMO) return demoTick();
+  const g=gen;
   try{
-    const ac=nearest(await planes()); lastOk=Date.now();
-    if(ac){ await showPlane(ac); applyWeather(await getWeather(place)); }
+    const list=await planes();
+    if(g!==gen) return;              /* Standort wurde inzwischen gewechselt */
+    const ac=nearest(list); lastOk=Date.now();
+    if(ac){ await showPlane(ac); if(g===gen) applyWeather(await getWeather(place)); }
     else await showEmpty();
   }catch(e){
-    await showEmpty("ADS-B-Netz gerade nicht erreichbar · "+place.name);
+    if(g!==gen) return;
+    await showEmpty("Alle ADS-B-Quellen blockiert · "+place.name);
   }
 }
 function loop(){ clearInterval(timer); tick(); timer=setInterval(tick, DEMO?6000:REFRESH_MS); }
@@ -867,7 +885,7 @@ function markActive(which){
   $("btn-geo").setAttribute("aria-pressed",String(which==="geo"));
 }
 function applyPlace(p, which){
-  place=p; markActive(which);
+  place=p; gen++; markActive(which);
   $("here").textContent="Der Himmel über "+place.name;
   shownHex=null; last=null; weather={}; loop();
 }
