@@ -80,6 +80,13 @@
   }
   .craft svg{width:100%;height:auto;display:block;overflow:visible}
   .craft.hide{opacity:0}
+  /* Zweite Maschine: kleiner, höher, blasser - liegt hinter der ersten */
+  .craft2{
+    position:absolute;z-index:1;left:31%;top:24%;width:30%;max-width:340px;
+    transform:translate(-50%,-50%);opacity:.4;transition:opacity var(--t);
+  }
+  .craft2 svg{width:100%;height:auto;display:block;overflow:visible}
+  .craft2.hide{opacity:0}
 
   /* Leerer Himmel */
   .empty{
@@ -260,6 +267,7 @@
       <span class="live">Live · <b id="clock">–</b></span>
     </div>
 
+    <div class="craft2 hide" id="craft2"></div>
     <div class="craft hide" id="craft"></div>
 
     <div class="empty" id="empty">
@@ -326,6 +334,11 @@ const PLACES = [
 const RADIUS_KM = 15, RADIUS_NM = RADIUS_KM/1.852, REFRESH_MS = 10000;
 /* Datenquellen. Erst direkt, dann über Umwege, falls der Browser blockiert.
    dist ist in nautischen Meilen. adsb.fi bittet um Nennung der Quelle. */
+/* Eigener Cloudflare Worker. Sobald hier eine Adresse steht, wird sie zuerst
+   gefragt - damit ist Schluss mit blockierten Quellen und Ratelimits.
+   Beispiel: const MY_PROXY = "https://himmel.yugeen48.workers.dev"; */
+const MY_PROXY = "https://flightworker.eugen-643.workers.dev";
+
 const ADSBFI = (la,lo,nm)=>`https://opendata.adsb.fi/api/v3/lat/${la}/lon/${lo}/dist/${nm}`;
 const VIA = {
   codetabs: u=>"https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(u),
@@ -735,7 +748,7 @@ function phase(rate){
   return "im Horizontalflug";
 }
 
-async function showPlane(ac){
+async function showPlane(ac, second){
   const call=(ac.flight||"").trim();
   const [route,info]=await Promise.all([
     call?lookupRoute(call):Promise.resolve(null), lookupAircraft(ac.hex)
@@ -750,6 +763,16 @@ async function showPlane(ac){
   const paint=()=>{
     $("craft").innerHTML=craftSVG(kind,a,flipped);
     $("craft").classList.remove("hide");
+
+    /* zweite Maschine ohne zusätzliche Abfragen, nur aus den ADS-B-Feldern */
+    const c2=$("craft2");
+    if(second){
+      const call2=(second.flight||"").trim();
+      const a2=airlineOf(call2);
+      const r2=(second.category||"").toUpperCase()==="A7"?{kind:"heli"}:{kind:null};
+      c2.innerHTML=craftSVG(kindOf(second,null,r2),a2,((second.track||90)%360)>180);
+      c2.classList.remove("hide");
+    } else c2.classList.add("hide");
     $("empty").classList.remove("show");
 
     const typeName=info&&(info.type||info.icao)
@@ -792,6 +815,7 @@ async function showEmpty(note, raw, ok){
   if($("tech").classList.contains("on")) paintTech();
   const w=await getWeather(place);
   $("craft").classList.add("hide");
+  $("craft2").classList.add("hide");
   $("empty").classList.add("show");
   applyWeather(w);
   $("temp").innerHTML=w?`${Math.round(w.temperature_2m)}<span>°</span>`:"";
@@ -812,76 +836,67 @@ async function showEmpty(note, raw, ok){
    ist Schluss. Liefert eine nur eine leere Liste, wird die nächste
    gefragt, weil jedes Netz eigene Empfänger hat. */
 let srcStatus = "";
+const errName = e => { const m=String(e&&e.message||e);
+  return /^\d+$/.test(m) ? "HTTP "+m : "blockiert"; };
+
 async function planes(){
   const la=place.lat.toFixed(4), lo=place.lon.toFixed(4), nm=RADIUS_NM.toFixed(1);
   const notes=[]; let best=[], ok=0;
-  for(const s of DIRECT.concat(PROXIED)){
+  if(MY_PROXY){
+    try{
+      const d=await fetchJSON(`${MY_PROXY}?lat=${la}&lon=${lo}&dist=${nm}`, 9000);
+      best=d.ac||d.aircraft||[];
+      srcStatus="Worker über "+(d.src||"?")+" · "+best.length
+        + (d.error?" ("+d.error+")":"");
+      return { list:best, ok:1 };
+    }catch(e){ notes.push("Worker "+errName(e)); }
+  }
+  for(const s of DIRECT){
     try{
       const d=await fetchJSON(s.url(la,lo,nm), s.ms);
       const list=d.ac||d.aircraft||[];
       ok++; notes.push(s.n+" "+list.length);
-      if(list.length){ best=list; break; }
-    }catch(e){
-      const m=String(e&&e.message||e);
-      notes.push(s.n+" "+(/^\d+$/.test(m) ? "HTTP "+m : "blockiert"));
+      if(list.length){ best=list; break; }   /* leer? dann das nächste Netz fragen */
+    }catch(e){ notes.push(s.n+" "+errName(e)); }
+  }
+  if(!ok){                                   /* keine einzige Antwort - Umwege */
+    for(const s of PROXIED){
+      try{
+        const d=await fetchJSON(s.url(la,lo,nm), s.ms);
+        best=d.ac||d.aircraft||[]; ok++; notes.push(s.n+" "+best.length); break;
+      }catch(e){ notes.push(s.n+" "+errName(e)); }
     }
-    if(ok) break;              /* eine Quelle hat geantwortet, das reicht */
   }
   srcStatus=notes.join(" · ");
   if(!ok) throw new Error(srcStatus);
   return { list:best, ok };
 }
 
-function nearest(list){
-  let best=null,bk=Infinity;
+/* Nach Entfernung sortiert. Meldungen, deren Position älter als 25 s ist,
+   fliegen raus - sonst klebt eine längst weggeflogene Maschine im Bild. */
+function ranked(list){
+  const out=[];
   for(const ac of list){
     if(typeof ac.lat!=="number"||typeof ac.lon!=="number") continue;
     if(ac.alt_baro==="ground"||ac.gs===0) continue;
     if(typeof ac.alt_baro==="number"&&ac.alt_baro<300) continue;
+    if(typeof ac.seen_pos==="number"&&ac.seen_pos>25) continue;
     const km=haversine(place.lat,place.lon,ac.lat,ac.lon);
-    if(km<=RADIUS_KM&&km<bk){best=ac;bk=km;}
+    if(km<=RADIUS_KM) out.push({ac,km});
   }
-  return best;
+  out.sort((a,b)=>a.km-b.km);
+  return out;
 }
 
-/* ============ Demo ============ */
-const SAMPLES=[
-  {hex:"4b1810",flight:"SWR14  ",t:"A333",r:"HB-JHM",lat:48.25,lon:16.44,track:290,gs:191,alt_baro:4050,baro_rate:1400,
-   _route:{airline:"Swiss",from:"Zürich",to:"New York"},_ac:{manufacturer:"Airbus",type:"A330-300",icao:"A333",reg:"HB-JHM"}},
-  {hex:"440123",flight:"AUA342 ",t:"A20N",r:"OE-LZA",lat:48.20,lon:16.36,track:100,gs:330,alt_baro:7000,baro_rate:0,
-   _route:{airline:"Austrian Airlines",from:"Wien",to:"Frankfurt"},_ac:{manufacturer:"Airbus",type:"A320neo",icao:"A20N",reg:"OE-LZA"}},
-  {hex:"896180",flight:"UAE127 ",t:"A388",r:"A6-EOV",lat:48.24,lon:16.42,track:95,gs:410,alt_baro:9200,baro_rate:-900,
-   _route:{airline:"Emirates",from:"Dubai",to:"Wien"},_ac:{manufacturer:"Airbus",type:"A380-800",icao:"A388",reg:"A6-EOV"}},
-  {hex:"3c4dc2",flight:"DLH716 ",t:"B748",r:"D-ABYT",lat:48.19,lon:16.38,track:280,gs:390,alt_baro:11500,baro_rate:1100,
-   _route:{airline:"Lufthansa",from:"Frankfurt",to:"Tokio"},_ac:{manufacturer:"Boeing",type:"747-8",icao:"B748",reg:"D-ABYT"}},
-  {hex:"3946a2",flight:"BGA24C ",t:"A3ST",r:"F-GSTA",lat:48.22,lon:16.41,track:70,gs:330,alt_baro:5600,baro_rate:400,
-   _route:{airline:"Airbus Transport",from:"Toulouse",to:"Hamburg"},_ac:{manufacturer:"Airbus",type:"A300-600ST Beluga",icao:"A3ST",reg:"F-GSTA"}},
-  {hex:"44f001",flight:"OEXVA  ",t:"H135",r:"OE-XVA",lat:48.21,lon:16.40,track:200,category:"A7",gs:107,alt_baro:1400,baro_rate:-500,
-   _route:null,_ac:{manufacturer:"Airbus Helicopters",type:"H135",icao:"H135",reg:"OE-XVA"}},
-  null
-];
-let di=0;
-function demoTick(){
-  const s=SAMPLES[di++%SAMPLES.length];
-  if(!s){ shownHex=null; $("craft").classList.add("hide"); $("empty").classList.add("show");
-    $("temp").innerHTML="24<span>°</span>"; $("cond").textContent="Leicht bewölkt";
-    $("metaText").textContent=""; $("rare").classList.remove("on");
-    $("route").textContent="Kein Flugzeug in Reichweite";
-    $("detail").textContent="Umkreis 10 km · "+place.name;
-    $("reg").textContent=""; $("compassBox").hidden=true; return; }
-  cSet("cs:"+s.flight.trim(),s._route); cSet("hx:"+s.hex,s._ac);
-  showPlane(s);
-}
-
-/* ============ Schleife ============ */
 async function tick(){
   if(DEMO) return demoTick();
   const g=gen;
   try{
     const {list,ok}=await planes();
     if(g!==gen) return;              /* Standort wurde inzwischen gewechselt */
-    const ac=nearest(list); lastOk=Date.now();
-    if(ac){ await showPlane(ac); if(g===gen) applyWeather(await getWeather(place)); }
+    const near=ranked(list); lastOk=Date.now();
+    if(near.length){ await showPlane(near[0].ac, near[1]&&near[1].ac);
+      if(g===gen) applyWeather(await getWeather(place)); }
     else await showEmpty(null, list.length, ok);
   }catch(e){
     if(g!==gen) return;
