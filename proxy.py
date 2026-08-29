@@ -26,7 +26,9 @@ def fetch(la, lo, di):
             req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
             raw = urllib.request.urlopen(req, timeout=8).read()
             data = json.loads(raw)
-            ac = data.get("ac") or data.get("aircraft")
+            ac = data.get("ac")
+            if ac is None:
+                ac = data.get("aircraft")   # leere Liste ist gueltig, nicht "or" verwenden
             if isinstance(ac, list):
                 return {"ac": ac, "src": name}
         except urllib.error.HTTPError as e:
