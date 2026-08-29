@@ -110,12 +110,14 @@
   .night .bands i:nth-child(4){background:#25304A}
   .night .bands i:nth-child(5){background:#2C3852}
   .night .bands i:nth-child(6){background:#333F59}
-  .night .bands i{filter:none !important}
   .night .glow{background:radial-gradient(120% 90% at 78% 18%,rgba(200,215,255,.16),transparent 60%)}
   .night .cloud{fill:#3A465F !important;opacity:.75}
   .night .sun{                       /* wird zur Mondsichel */
-    background:#E9E7DA;border-color:#0E1524;
-    box-shadow:inset -15px 7px 0 -3px #1A2438;
+    background:#EFEDE0;border-color:rgba(239,237,224,.4);overflow:hidden;
+  }
+  .night .sun::after{                /* versetzter Schatten schneidet die Sichel */
+    content:"";position:absolute;inset:-2px;border-radius:50%;
+    background:#1B2540;transform:translate(30%,-18%);
   }
   .night .top{color:#9FB0CC}
   .night .top .live b{color:#E6ECF7}
@@ -149,6 +151,7 @@
     margin:7px 0 0;font-family:var(--mono);font-size:12.5px;color:#4E4A42;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:120px;
   }
+  .ok{color:#2C7A4B;letter-spacing:.16em;text-transform:uppercase}
   .reg{
     position:absolute;right:26px;bottom:14px;font-family:var(--mono);
     font-size:11px;letter-spacing:.1em;color:#9A958A;
@@ -213,6 +216,13 @@
   .wx-storm .bands i{filter:saturate(.25) brightness(.72)}
   .wx-fog .bands i{filter:saturate(.1) brightness(1.02)}
   .wx-snow .bands i{filter:saturate(.25) brightness(1.04)}
+  /* Nachts dieselben Wetterlagen, nur behutsamer aufgehellt bzw. abgedunkelt */
+  .night.wx-overcast .bands i,.night.wx-drizzle .bands i{filter:saturate(.5) brightness(.85)}
+  .night.wx-rain .bands i{filter:saturate(.4) brightness(.75)}
+  .night.wx-storm .bands i{filter:saturate(.3) brightness(.6)}
+  .night.wx-fog .bands i{filter:saturate(.2) brightness(1.15)}
+  .night.wx-snow .bands i{filter:saturate(.3) brightness(1.2)}
+  .night .precip{opacity:.55}
   /* ---------------- Technische Zeichnung ---------------- */
   .tech{
     position:absolute;inset:0;z-index:6;display:none;flex-direction:column;
@@ -879,9 +889,9 @@ async function showEmpty(note, raw, ok){
   $("metaText").textContent="";
   $("rare").classList.remove("on");
   $("route").textContent = note ? "Keine Verbindung" : "Kein Flugzeug in Reichweite";
-  $("detail").textContent = note ? note
-    : "Umkreis "+RADIUS_KM+" km · "+place.name
-      + (srcStatus ? " · "+srcStatus : "");
+  if(note) $("detail").textContent = note;
+  else     $("detail").innerHTML = "Umkreis "+RADIUS_KM+" km · "+place.name
+                                 + ' · <span class="ok">Online</span>';
   $("reg").textContent=""; $("second").innerHTML="";
   $("compassBox").hidden=true;
 }
@@ -903,7 +913,7 @@ async function planes(){
       const d=await fetchJSON(`${MY_PROXY}?lat=${la}&lon=${lo}&dist=${nm}`, 9000);
       best=d.ac||d.aircraft||[];
       srcStatus="Worker über "+(d.src||"?")+" · "+best.length
-        + (d.error?" ("+String(d.error).replace(/\s+/g," ").slice(0,60)+")":"");
+        + (d.error?" ("+String(d.error).replace(/\s+/g," ").slice(0,110)+")":"");
       return { list:best, ok:1 };
     }catch(e){ notes.push("Worker "+errName(e)); }
   }
