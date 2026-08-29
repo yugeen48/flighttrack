@@ -1,1 +1,936 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Der Himmel über dir</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#1B1B1A">
+<meta name="apple-mobile-web-app-title" content="Himmel">
+<style>
+  :root{
+    --ink:#1A1A18;
+    --panel:#F2EFE4;
+    --panel-soft:#7C776C;
+    --sun:#E0AE3C;
+    --needle:#B4232A;
+    --accent:#1F4E5F;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sans: ui-sans-serif, -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+    --t: 560ms cubic-bezier(.22,.61,.36,1);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{
+    background:#141413;color:var(--ink);font-family:var(--sans);
+    -webkit-text-size-adjust:100%;overflow:hidden;
+    display:grid;place-items:center;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
 
+  .frame{
+    position:relative;width:100%;height:100%;
+    display:flex;flex-direction:column;overflow:hidden;background:var(--panel);
+  }
+
+  /* ---------------- Himmel ---------------- */
+  .sky{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}
+  .bands{position:absolute;inset:0;display:flex;flex-direction:column}
+  .bands i{flex:1}
+  .bands i:nth-child(1){background:#AEBCCB}
+  .bands i:nth-child(2){background:#B9C6D3}
+  .bands i:nth-child(3){background:#C7D0D9}
+  .bands i:nth-child(4){background:#D6DBDD}
+  .bands i:nth-child(5){background:#E3E2D9}
+  .bands i:nth-child(6){background:#EAE7DC}
+  .glow{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 40%,rgba(255,255,255,.30),transparent 62%);pointer-events:none}
+
+  .cloud{position:absolute;fill:#F6F4EC}
+  .cloud.c1{width:20%;left:9%;top:22%}
+  .cloud.c2{width:15%;left:57%;top:9%;fill:#FBFAF3}
+  .cloud.c3{width:17%;left:72%;top:52%;fill:#EFEDE4}
+  .sun{position:absolute;right:7%;top:11%;width:9.5%;aspect-ratio:1;border-radius:50%;
+       background:var(--sun);border:2.5px solid var(--ink)}
+
+  /* Kopfzeile */
+  .top{
+    position:absolute;left:0;right:0;top:0;z-index:3;
+    display:flex;align-items:center;gap:14px;padding:18px 26px;
+    font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#4A4F57;
+  }
+  .top .here{flex:1 1 auto;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .top .live{flex:0 0 auto}
+  .top .live b{font-weight:400;color:var(--ink)}
+
+  .place{
+    width:40px;height:40px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;
+    background:rgba(255,255,255,.72);border:1px solid rgba(26,26,24,.18);color:#6E7580;cursor:pointer;
+    transition:color var(--t),border-color var(--t),background var(--t),transform 220ms;
+  }
+  .place svg{width:20px;height:20px;display:block;fill:currentColor}
+  .place[aria-pressed="true"]{color:var(--ink);border-color:var(--ink);background:#fff}
+  .place:active{transform:scale(.93)}
+  .place:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+
+  /* Flugzeug */
+  .craft{
+    position:absolute;z-index:2;left:50%;top:52%;width:76%;max-width:900px;
+    transform:translate(-50%,-50%);transition:opacity var(--t);
+  }
+  .craft svg{width:100%;height:auto;display:block;overflow:visible}
+  .craft.hide{opacity:0}
+
+  /* Leerer Himmel */
+  .empty{
+    position:absolute;z-index:2;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:6px;text-align:center;
+    opacity:0;transition:opacity var(--t);pointer-events:none;padding:0 30px;
+  }
+  .empty.show{opacity:1}
+  .empty h2{margin:0;font-size:clamp(24px,4.4vw,44px);font-weight:700;letter-spacing:-.02em}
+  .empty p{margin:2px 0 0;font-size:clamp(13px,1.9vw,19px);font-weight:600;color:#5B6068}
+  .empty .temp{margin-top:16px;font-size:clamp(42px,8vw,84px);font-weight:700;letter-spacing:-.04em;line-height:1}
+  .empty .temp span{color:#6E7480;font-weight:300}
+  .empty .cond{margin-top:6px;font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#5B6068}
+
+  /* ---------------- Infoleiste ---------------- */
+  .info{
+    flex:0 0 auto;background:var(--panel);border-top:2.5px solid var(--ink);
+    padding:16px 26px 18px;position:relative;
+  }
+  .meta{
+    font-family:var(--mono);font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:#6B675E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:120px;
+  }
+  .rare{
+    display:none;margin-right:12px;color:var(--needle);letter-spacing:.22em;
+  }
+  .rare.on{display:inline}
+  .route{
+    margin:5px 0 0;font-size:clamp(26px,5.2vw,50px);font-weight:800;letter-spacing:-.02em;
+    line-height:1.06;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    padding-right:120px;
+  }
+  .route .arrow{font-weight:400;margin:0 .18em}
+  .detail{
+    margin:7px 0 0;font-family:var(--mono);font-size:12.5px;color:#4E4A42;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:120px;
+  }
+  .reg{
+    position:absolute;right:26px;bottom:14px;font-family:var(--mono);
+    font-size:11px;letter-spacing:.1em;color:#9A958A;
+  }
+  .compass{position:absolute;right:24px;top:14px;width:74px;text-align:center}
+  .compass .n{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:#6B675E;margin-bottom:2px}
+  .compass svg{width:52px;height:52px;display:block;margin:0 auto}
+  .compass .needle{transition:transform 700ms cubic-bezier(.3,.7,.3,1);transform-origin:50% 50%}
+
+  /* ---------------- Wetterlagen ---------------- */
+  .precip{position:absolute;inset:0;z-index:1;pointer-events:none;display:none}
+  .wx-rain .precip, .wx-storm .precip{
+    display:block;opacity:.45;
+    background-image:repeating-linear-gradient(102deg,
+      rgba(255,255,255,.75) 0 2px, transparent 2px 15px);
+    animation:rain .5s linear infinite;
+  }
+  .wx-drizzle .precip{
+    display:block;opacity:.28;
+    background-image:repeating-linear-gradient(100deg,
+      rgba(255,255,255,.7) 0 1.5px, transparent 1.5px 20px);
+    animation:rain .9s linear infinite;
+  }
+  @keyframes rain{to{background-position:-58px 150px}}
+  .wx-snow .precip{
+    display:block;opacity:.85;
+    background-image:
+      radial-gradient(circle at 12% 18%, #fff 1.7px, transparent 2px),
+      radial-gradient(circle at 42% 62%, #fff 1.4px, transparent 2px),
+      radial-gradient(circle at 73% 32%, #fff 1.9px, transparent 2px),
+      radial-gradient(circle at 88% 78%, #fff 1.4px, transparent 2px);
+    background-size:120px 120px,90px 90px,150px 150px,110px 110px;
+    animation:snow 9s linear infinite;
+  }
+  @keyframes snow{to{background-position:22px 120px,-16px 90px,14px 150px,-10px 110px}}
+  .wx-fog .precip{display:block;background:linear-gradient(to bottom,
+     rgba(226,228,226,.15),rgba(226,228,226,.72));}
+
+  /* Sonne nur bei passendem Wetter */
+  .sun{transition:opacity var(--t),transform var(--t)}
+  .wx-overcast .sun,.wx-rain .sun,.wx-storm .sun,.wx-snow .sun,.wx-fog .sun,.wx-drizzle .sun{
+    opacity:0;transform:scale(.85)}
+  /* Bewölkung */
+  .cloud{transition:opacity var(--t)}
+  .wx-clear .cloud.c1{opacity:.55}
+  .wx-clear .cloud.c2,.wx-clear .cloud.c3{opacity:0}
+  .wx-overcast .cloud,.wx-rain .cloud,.wx-storm .cloud,.wx-snow .cloud{fill:#E4E3DB}
+  .wx-fog .cloud{opacity:.25}
+  /* Himmelsfarben */
+  .wx-clear .bands i:nth-child(1){background:#9BB4CE}
+  .wx-clear .bands i:nth-child(2){background:#A9C0D6}
+  .wx-clear .bands i:nth-child(3){background:#BCCEDE}
+  .wx-overcast .bands i,.wx-drizzle .bands i{filter:saturate(.45) brightness(.97)}
+  .wx-rain .bands i{filter:saturate(.35) brightness(.9)}
+  .wx-storm .bands i{filter:saturate(.25) brightness(.72)}
+  .wx-fog .bands i{filter:saturate(.1) brightness(1.02)}
+  .wx-snow .bands i{filter:saturate(.25) brightness(1.04)}
+  /* ---------------- Technische Zeichnung ---------------- */
+  .tech{
+    position:absolute;inset:0;z-index:6;display:none;flex-direction:column;
+    background:#1C3563;color:#CFDCFF;font-family:var(--mono);
+    background-image:
+      repeating-linear-gradient(to right, rgba(255,255,255,.075) 0 1px, transparent 1px 48px),
+      repeating-linear-gradient(to bottom, rgba(255,255,255,.075) 0 1px, transparent 1px 48px);
+  }
+  .tech.on{display:flex}
+  .tech .thead{display:flex;align-items:center;gap:14px;padding:18px 26px;
+    font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#B9CBF2}
+  .tech .thead .t{flex:1}
+  .tech .draw{flex:1 1 auto;min-height:0;display:grid;place-items:center;padding:0 26px}
+  .tech .draw svg{width:min(62%,620px);height:auto;overflow:visible}
+  .tech .draw svg *{fill:none !important;stroke:#DCE6FF !important;stroke-width:3 !important;opacity:1 !important}
+  .tech .dims{padding:0 26px 6px;text-align:center}
+  .tech .dims .bar{display:block;width:min(58%,560px);margin:0 auto 10px}
+  .tech .dims .l1{font-size:15px;letter-spacing:.14em}
+  .tech .dims .l2{font-size:13px;letter-spacing:.14em;color:#A9BEEC;margin-top:4px}
+  .tech .spec{margin:12px 26px 22px;align-self:flex-end;border:1px solid #6E88C6;font-size:11.5px;letter-spacing:.1em}
+  .tech .spec div{padding:6px 12px;border-bottom:1px solid #6E88C6;white-space:nowrap}
+  .tech .spec div:last-child{border-bottom:0;color:#A9BEEC}
+  .gear[aria-pressed="true"]{color:var(--ink);border-color:var(--ink);background:#fff}
+  .tech .place{background:rgba(255,255,255,.10);border-color:#8FA6DC;color:#CFDCFF}
+  @media (max-width:700px){
+    .tech .thead{padding:12px 16px;font-size:10px;gap:10px}
+    .tech .draw svg{width:80%}
+    .tech .dims .l1{font-size:13px}.tech .dims .l2{font-size:11px}
+    .tech .spec{margin:8px 16px 14px;font-size:10px}
+  }
+  .fade{transition:opacity var(--t)}
+  .fade.out{opacity:0}
+
+  @media (max-width:700px){
+    .top{padding:12px 16px;font-size:10.5px;gap:10px}
+    .place{width:34px;height:34px}
+    .place svg{width:17px;height:17px}
+    .info{padding:12px 18px 14px}
+    .meta,.detail{font-size:10.5px;padding-right:86px}
+    .route{padding-right:86px}
+    .compass{width:56px;right:16px}
+    .compass svg{width:40px;height:40px}
+    .reg{right:16px;bottom:10px;font-size:9.5px}
+    .craft{width:88%}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition-duration:1ms !important}}
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <div class="sky" id="sky">
+    <div class="bands"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="glow"></div>
+    <div class="precip"></div>
+
+    <svg class="cloud c1" viewBox="0 0 200 80"><path d="M28 78h150c14 0 22-10 22-21s-9-20-22-20c-3 0-6 .5-9 1.6C163 22 148 11 130 11c-14 0-26 6.6-33 17-4-2.6-9-4-14-4-13 0-24 9.6-26 22C25 47 0 53 0 65c0 8 7 13 15 13h13Z"/></svg>
+    <svg class="cloud c2" viewBox="0 0 200 80"><path d="M28 78h150c14 0 22-10 22-21s-9-20-22-20c-3 0-6 .5-9 1.6C163 22 148 11 130 11c-14 0-26 6.6-33 17-4-2.6-9-4-14-4-13 0-24 9.6-26 22C25 47 0 53 0 65c0 8 7 13 15 13h13Z"/></svg>
+    <svg class="cloud c3" viewBox="0 0 200 80"><path d="M28 78h150c14 0 22-10 22-21s-9-20-22-20c-3 0-6 .5-9 1.6C163 22 148 11 130 11c-14 0-26 6.6-33 17-4-2.6-9-4-14-4-13 0-24 9.6-26 22C25 47 0 53 0 65c0 8 7 13 15 13h13Z"/></svg>
+    <div class="sun"></div>
+
+    <div class="top">
+      <button class="place" id="btn-0" aria-pressed="true" aria-label="Leopoldstadt">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6 1.9 11.4h2.9V21h5.3v-5.6h3.8V21h5.2v-9.6h2.9L12 2.6Z"/></svg>
+      </button>
+      <button class="place" id="btn-1" aria-pressed="false" aria-label="Aderklaa">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M9.7 8.3A4.24 4.24 0 0 1 15.7 14.3L5.2 20.8a1.2 1.2 0 0 1-1.7-1.7Z"/>
+          <ellipse cx="14.4" cy="5.7" rx="1.45" ry="3.2" transform="rotate(-15 14.4 5.7)"/>
+          <ellipse cx="16.7" cy="6" rx="1.35" ry="3" transform="rotate(30 16.7 6)"/>
+          <ellipse cx="17.9" cy="7.2" rx="1.25" ry="2.8" transform="rotate(62 17.9 7.2)"/>
+        </svg>
+      </button>
+      <button class="place" id="btn-geo" aria-pressed="false" aria-label="Aktueller Standort">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 1.5a1.3 1.3 0 0 1 1.3 1.3v1.6a7.7 7.7 0 0 1 6.3 6.3h1.6a1.3 1.3 0 0 1 0 2.6h-1.6a7.7 7.7 0 0 1-6.3 6.3v1.6a1.3 1.3 0 0 1-2.6 0v-1.6a7.7 7.7 0 0 1-6.3-6.3H2.8a1.3 1.3 0 0 1 0-2.6h1.6a7.7 7.7 0 0 1 6.3-6.3V2.8A1.3 1.3 0 0 1 12 1.5Zm0 5.4a5.1 5.1 0 1 0 0 10.2 5.1 5.1 0 0 0 0-10.2Z"/>
+          <circle cx="12" cy="12" r="2.7"/>
+        </svg>
+      </button>
+      <button class="place gear" id="btn-tech" aria-pressed="false" aria-label="Technische Zeichnung">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8Zm9 4.9v-3l-2.4-.5a6.9 6.9 0 0 0-.8-1.9l1.4-2-2.1-2.1-2 1.4a6.9 6.9 0 0 0-1.9-.8L12.7 2h-3l-.5 2.6c-.7.2-1.3.4-1.9.8l-2-1.4-2.1 2.1 1.4 2c-.4.6-.6 1.2-.8 1.9L1.5 10.5v3l2.4.5c.2.7.4 1.3.8 1.9l-1.4 2 2.1 2.1 2-1.4c.6.4 1.2.6 1.9.8l.5 2.6h3l.5-2.6c.7-.2 1.3-.4 1.9-.8l2 1.4 2.1-2.1-1.4-2c.4-.6.6-1.2.8-1.9l2.4-.5Z"/></svg>
+      </button>
+      <span class="here" id="here">Der Himmel über Leopoldstadt</span>
+      <span class="live">Live · <b id="clock">–</b></span>
+    </div>
+
+    <div class="craft hide" id="craft"></div>
+
+    <div class="empty" id="empty">
+      <h2>Gerade ist der Himmel leer</h2>
+      <p>Aber bald kommt das nächste Flugzeug</p>
+      <div class="temp" id="temp"></div>
+      <div class="cond" id="cond"></div>
+    </div>
+  </div>
+
+
+  <div class="tech" id="tech">
+    <div class="thead">
+      <button class="place gear" id="btn-tech2" aria-label="Zurück">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8Zm9 4.9v-3l-2.4-.5a6.9 6.9 0 0 0-.8-1.9l1.4-2-2.1-2.1-2 1.4a6.9 6.9 0 0 0-1.9-.8L12.7 2h-3l-.5 2.6c-.7.2-1.3.4-1.9.8l-2-1.4-2.1 2.1 1.4 2c-.4.6-.6 1.2-.8 1.9L1.5 10.5v3l2.4.5c.2.7.4 1.3.8 1.9l-1.4 2 2.1 2.1 2-1.4c.6.4 1.2.6 1.9.8l.5 2.6h3l.5-2.6c.7-.2 1.3-.4 1.9-.8l2 1.4 2.1-2.1-1.4-2c.4-.6.6-1.2.8-1.9l2.4-.5Z"/></svg>
+      </button>
+      <span class="t">Technische Zeichnung</span>
+      <span>Live · <b id="clock2">–</b></span>
+    </div>
+    <div class="draw" id="techDraw"></div>
+    <div class="dims">
+      <svg class="bar" viewBox="0 0 600 16" aria-hidden="true">
+        <path d="M6 8h588M6 8l14-6M6 8l14 6M594 8l-14-6M594 8l-14 6" fill="none" stroke="#DCE6FF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="l1" id="techL1"></div>
+      <div class="l2" id="techL2"></div>
+      <div class="l2" id="techL3"></div>
+    </div>
+    <div class="spec">
+      <div id="techT1">Typ: —</div>
+      <div id="techT2">Kennzeichen: —</div>
+      <div id="techT3">Schematische Darstellung</div>
+    </div>
+  </div>
+
+  <div class="info" id="info">
+    <div class="meta"><span class="rare" id="rare">Seltener Gast ·</span><span id="metaText">—</span></div>
+    <div class="route" id="route">Warte auf Daten</div>
+    <div class="detail" id="detail"></div>
+    <div class="compass" id="compassBox" hidden>
+      <div class="n">N</div>
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle cx="50" cy="50" r="46" fill="#FBFAF4" stroke="#1A1A18" stroke-width="3"/>
+        <g class="needle" id="needle">
+          <path d="M50 12 60 52 50 47 40 52Z" fill="var(--needle)"/>
+          <path d="M50 88 40 52 50 57 60 52Z" fill="#3B3A36"/>
+        </g>
+        <circle cx="50" cy="50" r="4.5" fill="#1A1A18"/>
+      </svg>
+    </div>
+    <div class="reg" id="reg"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
+
+/* ============ Standorte ============ */
+const PLACES = [
+  { key:"leo", name:"Leopoldstadt", lat:48.2167, lon:16.3961 },
+  { key:"ade", name:"Aderklaa",     lat:48.2994, lon:16.5544 }
+];
+const RADIUS_KM = 15, RADIUS_NM = RADIUS_KM/1.852, REFRESH_MS = 8000;
+/* Datenquellen. Reihenfolge = Reihenfolge der Versuche. dist ist in nautischen Meilen.
+   adsb.fi bittet um Nennung der Quelle - steht im Datenblatt. */
+const SOURCES = [
+  (la,lo,nm)=>`https://opendata.adsb.fi/api/v3/lat/${la}/lon/${lo}/dist/${nm}`,
+  (la,lo,nm)=>`https://api.adsb.lol/v2/point/${la}/${lo}/${nm}`,
+  (la,lo,nm)=>`https://api.airplanes.live/v2/point/${la}/${lo}/${nm}`,
+  /* Letzte Rettung: falls eine der Quellen CORS blockiert, über einen
+     öffentlichen Umweg holen. Langsamer, deshalb erst ganz am Schluss. */
+  (la,lo,nm)=>"https://api.allorigins.win/raw?url="+
+     encodeURIComponent(`https://opendata.adsb.fi/api/v3/lat/${la}/lon/${lo}/dist/${nm}`)
+];
+
+/* ============ Airline-Farben ============
+   Schlüssel ist das ICAO-Präfix des Callsigns (die ersten drei Buchstaben).
+   e = Heckzeichen: cross | circle | chevron | bars      */
+const AIRLINES = {
+  AUA:{n:"Austrian Airlines", c:"#C8102E", e:"chevron"},
+  DLH:{n:"Lufthansa",         c:"#0A1E4F", e:"circle", ec:"#F0BE00"},
+  SWR:{n:"Swiss",             c:"#E30613", e:"cross"},
+  EDW:{n:"Edelweiss",         c:"#C8102E", e:"cross"},
+  RYR:{n:"Ryanair",           c:"#073590", e:"circle", ec:"#F1C933"},
+  WZZ:{n:"Wizz Air",          c:"#C6007E", e:"bars"},
+  EJU:{n:"easyJet",           c:"#FF6600", e:"bars"},
+  EZY:{n:"easyJet",           c:"#FF6600", e:"bars"},
+  EWG:{n:"Eurowings",         c:"#8B0E2B", e:"bars"},
+  THY:{n:"Turkish Airlines",  c:"#C70A0C", e:"circle", ec:"#FFFFFF"},
+  PGT:{n:"Pegasus",           c:"#1B3C87", e:"bars"},
+  BAW:{n:"British Airways",   c:"#1B325B", e:"bars"},
+  KLM:{n:"KLM",               c:"#00A1DE", e:"circle", ec:"#FFFFFF"},
+  AFR:{n:"Air France",        c:"#00256A", e:"bars"},
+  SAS:{n:"SAS",               c:"#003D87", e:"bars"},
+  LOT:{n:"LOT",               c:"#11397E", e:"bars"},
+  IBE:{n:"Iberia",            c:"#D7192D", e:"bars"},
+  VLG:{n:"Vueling",           c:"#F5C400", e:"bars", ink:true},
+  AEE:{n:"Aegean",            c:"#003A70", e:"bars"},
+  TAP:{n:"TAP",               c:"#00875A", e:"bars"},
+  FIN:{n:"Finnair",           c:"#0B1560", e:"bars"},
+  CTN:{n:"Croatia Airlines",  c:"#C8102E", e:"chevron"},
+  BTI:{n:"airBaltic",         c:"#98002E", e:"bars"},
+  QTR:{n:"Qatar Airways",     c:"#5C0632", e:"bars"},
+  UAE:{n:"Emirates",          c:"#D71921", e:"bars"},
+  ETD:{n:"Etihad",            c:"#B98A2E", e:"bars"},
+  CFG:{n:"Condor",            c:"#F5A200", e:"bars", ink:true},
+  SXS:{n:"SunExpress",        c:"#002B5C", e:"bars"},
+  CAI:{n:"Corendon",          c:"#003D7C", e:"bars"},
+  NAX:{n:"Norwegian",         c:"#D81939", e:"bars"},
+  TVS:{n:"Smartwings",        c:"#0B3A75", e:"bars"},
+  UAL:{n:"United",            c:"#0B3D6F", e:"bars"},
+  AAL:{n:"American",          c:"#0B4C8C", e:"bars"},
+  DAL:{n:"Delta",             c:"#0B3D6F", e:"bars"},
+  ACA:{n:"Air Canada",        c:"#C8102E", e:"circle", ec:"#FFFFFF"},
+  MSR:{n:"EgyptAir",          c:"#003399", e:"bars"},
+  ELY:{n:"El Al",             c:"#003C8F", e:"bars"},
+  ITY:{n:"ITA Airways",       c:"#0B3D6F", e:"bars"},
+  OHY:{n:"Onur Air",          c:"#1B3C87", e:"bars"},
+  ABW:{n:"AirBridgeCargo",    c:"#2A5C9A", e:"bars"},
+  GAC:{n:"Gulf Air",          c:"#B8912F", e:"bars"}
+};
+const DEFAULT_AIRLINE = { c:"#54637A", e:"bars" };
+
+/* ============ Helfer ============ */
+const $ = id => document.getElementById(id);
+const rad = Math.PI/180;
+
+function fetchJSON(url, ms=6000){
+  const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),ms);
+  return fetch(url,{signal:ctl.signal,headers:{Accept:"application/json"}})
+    .then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .finally(()=>clearTimeout(t));
+}
+function haversine(a1,o1,a2,o2){
+  const R=6371,dLat=(a2-a1)*rad,dLon=(o2-o1)*rad;
+  const s=Math.sin(dLat/2)**2+Math.cos(a1*rad)*Math.cos(a2*rad)*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(s));
+}
+function bearing(a1,o1,a2,o2){
+  const y=Math.sin((o2-o1)*rad)*Math.cos(a2*rad);
+  const x=Math.cos(a1*rad)*Math.sin(a2*rad)-Math.sin(a1*rad)*Math.cos(a2*rad)*Math.cos((o2-o1)*rad);
+  return (Math.atan2(y,x)/rad+360)%360;
+}
+const DIRS=["N","NO","O","SO","S","SW","W","NW"];
+const dirOf = d => DIRS[Math.round(d/45)%8];
+/* Tausender mit Apostroph, wie auf dem Vorbild */
+const thou = n => Math.round(n).toLocaleString("de-CH").replace(/[’']/g,"’");
+const dec1 = n => n.toLocaleString("de-AT",{minimumFractionDigits:1,maximumFractionDigits:1});
+
+const store={
+  get(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch(e){return f;}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+};
+
+/* ============ adsbdb-Cache ============ */
+const CK="adsbdb-cache", TTL=30*24*3600*1000;
+let cache=store.get(CK,{});
+const cGet=k=>{const e=cache[k];return e&&Date.now()-e.t<TTL?e.v:undefined;};
+function cSet(k,v){cache[k]={t:Date.now(),v};const ks=Object.keys(cache);
+  if(ks.length>800)ks.slice(0,200).forEach(x=>delete cache[x]);store.set(CK,cache);}
+
+/* adsbdb direkt, bei CORS-Problemen über den Umweg */
+async function adsbdb(path){
+  try{ return await fetchJSON("https://api.adsbdb.com/v0/"+path); }
+  catch(e){
+    return await fetchJSON("https://api.allorigins.win/raw?url="+
+      encodeURIComponent("https://api.adsbdb.com/v0/"+path));
+  }
+}
+async function lookupRoute(cs){
+  const k="cs:"+cs, h=cGet(k); if(h!==undefined) return h;
+  let out=null;
+  try{
+    const d=await adsbdb("callsign/"+encodeURIComponent(cs));
+    const fr=d?.response?.flightroute;
+    if(fr){ const pl=p=>p?(p.municipality||p.name||p.iata_code||""):"";
+      out={airline:fr.airline?.name||null,from:pl(fr.origin),to:pl(fr.destination)}; }
+  }catch(e){}
+  cSet(k,out); return out;
+}
+async function lookupAircraft(hex){
+  const k="hx:"+hex, h=cGet(k); if(h!==undefined) return h;
+  let out=null;
+  try{
+    const d=await adsbdb("aircraft/"+encodeURIComponent(hex));
+    const a=d?.response?.aircraft;
+    if(a) out={manufacturer:a.manufacturer||null,type:a.type||null,icao:a.icao_type||null,reg:a.registration||null};
+  }catch(e){}
+  cSet(k,out); return out;
+}
+
+/* ============ Seltener Gast ============ */
+const COMMON=new Set(["A319","A320","A20N","A321","A21N","B737","B738","B38M","B739","E190","E195",
+  "E290","E295","AT75","AT76","DH8D","CRJ9","CRJX","B77W","B788","B789","A333","A332","A359",
+  "B763","B752","B77L","A388","BCS1","BCS3","SU95"]);
+function noteType(pk,t){
+  if(!t) return 3;
+  const seen=store.get("seen-"+pk,{}), cut=Date.now()-30*24*3600*1000;
+  let l=(seen[t]||[]).filter(x=>x>cut); const before=l.length;
+  if(!l.length||Date.now()-l[l.length-1]>600000) l.push(Date.now());
+  seen[t]=l.slice(-12);
+  for(const k in seen){seen[k]=seen[k].filter(x=>x>cut); if(!seen[k].length) delete seen[k];}
+  store.set("seen-"+pk,seen); return before;
+}
+function rarity(ac,info,pk){
+  const type=(info&&info.icao)||ac.t||null;
+  const cat=(ac.category||"").toUpperCase();
+  const desc=((info&&info.type)||ac.desc||"").toLowerCase();
+  const before=noteType(pk,type);
+  if(cat==="A7"||/helicopter|rotorcraft/.test(desc)||
+     (type&&/^(H|EC1|EC3|EC4|A109|A139|B06|B407|B412|R22|R44|R66|S76|AS35|H145|H135|EC35)/.test(type)))
+    return {rare:true,kind:"heli"};
+  const f=Number(ac.dbFlags||0);
+  if(f&1) return {rare:true,kind:null};
+  if(type&&!COMMON.has(type)) return {rare:true,kind:null};
+  if(type&&before<3) return {rare:true,kind:null};
+  return {rare:false,kind:null};
+}
+
+/* ============ Flugzeug zeichnen ============
+   Seitenansicht, Nase rechts. Reihenfolge ist wichtig: erst die Teile,
+   die hinter dem Rumpf liegen (Gegenflügel, Höhenleitwerk, Seitenleitwerk),
+   dann der Rumpf darüber - so verschwinden alle Wurzeln sauber im Rumpf.
+   Der Flügel kommt zuletzt über den Rumpf, das Triebwerk über den Flügel. */
+const BODY="#FBFAF5", LINE="#1A1A18";
+
+const FIN_JET  = "M154 90 106 22 C104 17 100 14 94 14 L72 14 C66 14 62 19 64 25 L84 90Z";
+const FIN_T    = "M158 88 116 30 C114 25 110 22 104 22 L88 22 C82 22 78 27 80 33 L96 88Z";
+const FUSE_JET = "M446 118C443 106 426 98 397 95L118 83C88 82 70 80 58 78 54 77 52 81 55 83L140 130C150 135 160 138 172 138L390 138C424 136 444 130 446 118Z";
+const FUSE_REG = "M438 116C435 106 419 99 393 96L128 86C100 85 84 83 72 81 68 80 66 84 69 86L148 126C157 130 166 132 177 132L388 132C418 130 436 126 438 116Z";
+
+/* Heckzeichen. Liegt immer im Leitwerk, weil es zugeschnitten wird. */
+function emblem(a, t){
+  const w = a.ink ? "#1A1A18" : "#FFFFFF";
+  const dy = t ? 8 : 0;
+  switch(a.e){
+    case "cross":
+      return `<path d="M93 ${31+dy}h12v12h12v12h-12v12h-12v-12h-12v-12h12z" fill="${w}"/>`;
+    case "circle":
+      return `<circle cx="99" cy="${49+dy}" r="15" fill="${a.ec||w}"/>`;
+    case "chevron":
+      return `<path d="M81 ${67+dy} 99 ${29+dy} 117 ${67+dy} 99 ${57+dy}Z" fill="${w}"/>`;
+    default:
+      return `<rect x="77" y="${37+dy}" width="42" height="11" rx="5.5" fill="${w}"/>`
+           + `<rect x="83" y="${55+dy}" width="32" height="11" rx="5.5" fill="${w}"/>`;
+  }
+}
+const tail = (a, path, t) => `
+  <defs><clipPath id="finclip"><path d="${path}"/></clipPath></defs>
+  <path d="${path}" fill="${a.c}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
+  <g clip-path="url(#finclip)">${emblem(a,t)}</g>`;
+
+/* --- Verkehrsflugzeug --- */
+function drawJet(a){ return `
+  <path d="M298 94 188 40 168 43 280 108Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M134 84 60 60C54 58 50 65 56 68L120 102C128 106 136 102 136 94Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  ${tail(a, FIN_JET, false)}
+  <path d="${FUSE_JET}" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
+  <path d="M168 113H396" stroke="${LINE}" stroke-width="1.6" opacity=".28"/>
+  <rect x="204" y="105" width="146" height="14" rx="7" fill="${a.c}"/>
+  <path d="M396 98C412 101 427 107 435 113L400 107Z" fill="${LINE}"/>
+  <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
+  <rect x="226" y="150" width="84" height="37" rx="18.5" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
+  <path d="M292 151.5a18.5 18.5 0 0 1 0 34Z" fill="${BODY}"/>`;
+}
+
+/* --- Regionaljet: T-Leitwerk, Triebwerke am Heck --- */
+function drawRegional(a){ return `
+  <path d="M292 96 196 48 178 51 276 108Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  ${tail(a, FIN_T, true)}
+  <path d="M50 16H152C159 16 163 20 163 25 163 30 159 34 152 34L50 34C43 34 39 30 39 25 39 20 43 16 50 16Z" fill="${a.c}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
+  <path d="${FUSE_REG}" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
+  <path d="M296 116 206 190 184 200 240 136Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
+  <rect x="148" y="92" width="78" height="35" rx="17.5" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
+  <path d="M208 93.5a17.5 17.5 0 0 1 0 32Z" fill="${BODY}"/>
+  <g fill="${LINE}"><circle cx="252" cy="103" r="5"/><circle cx="276" cy="104" r="5"/><circle cx="300" cy="105" r="5"/><circle cx="324" cy="106" r="5"/><circle cx="348" cy="107" r="5"/></g>
+  <path d="M390 99C406 102 420 107 428 113L394 107Z" fill="${LINE}"/>`;
+}
+
+/* --- Turboprop: Hochdecker mit Propeller --- */
+function drawProp(a){ return `
+  ${tail(a, FIN_T, true)}
+  <path d="M50 16H152C159 16 163 20 163 25 163 30 159 34 152 34L50 34C43 34 39 30 39 25 39 20 43 16 50 16Z" fill="${a.c}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
+  <path d="${FUSE_REG}" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
+  <rect x="212" y="102" width="138" height="13" rx="6.5" fill="${a.c}"/>
+  <path d="M390 99C406 102 420 107 428 113L394 107Z" fill="${LINE}"/>
+  <path d="M360 78 154 96C147 97 147 108 154 109L364 96C372 95 371 79 360 78Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
+  <rect x="238" y="82" width="76" height="32" rx="16" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
+  <ellipse cx="316" cy="96" rx="7" ry="46" fill="${a.c}" opacity=".22" stroke="${LINE}" stroke-width="2.4"/>
+  <path d="M304 84a16 16 0 0 1 0 28Z" fill="${BODY}"/>`;
+}
+
+/* --- Hubschrauber --- */
+function drawHeli(a){ return `
+  <path d="M212 116 78 106C70 105 66 113 73 117L126 140 212 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
+  <path d="M86 108 62 72C59 67 52 69 52 75L58 112Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="62" cy="86" r="21" fill="none" stroke="${LINE}" stroke-width="3"/>
+  <path d="M48 72 76 100M76 72 48 100" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
+  <path d="M296 90C328 90 354 102 370 122 376 130 370 140 360 140L216 140C190 140 172 128 172 114 172 100 194 90 216 90Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
+  <path d="M336 104C348 110 358 118 364 126L318 126C314 126 312 122 314 118L322 106C325 102 331 101 336 104Z" fill="${a.c}"/>
+  <rect x="214" y="98" width="88" height="16" rx="8" fill="${a.c}"/>
+  <rect x="268" y="58" width="16" height="34" rx="5" fill="${LINE}"/>
+  <path d="M96 54H456C463 54 463 64 456 64L96 64C89 64 89 54 96 54Z" fill="${LINE}"/>
+  <path d="M206 176H352" stroke="${LINE}" stroke-width="8" stroke-linecap="round"/>
+  <path d="M232 140 224 176M320 140 328 176" stroke="${LINE}" stroke-width="6" stroke-linecap="round"/>`;
+}
+
+/* --- Jumbo: Buckel hinter dem Cockpit, vier Triebwerke (747) --- */
+function drawJumbo(a){ return `
+  <path d="M298 94 188 40 168 43 280 108Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M134 84 60 60C54 58 50 65 56 68L120 102C128 106 136 102 136 94Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  ${tail(a, FIN_JET, false)}
+  <path d="M450 120C447 108 432 99 408 94 400 72 378 60 350 61 326 62 310 72 302 88L118 83C88 82 70 80 58 78 54 77 52 81 55 83L140 130C150 135 160 138 172 138L392 138C426 136 447 132 450 120Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
+  <path d="M168 113H398" stroke="${LINE}" stroke-width="1.6" opacity=".28"/>
+  <rect x="196" y="106" width="176" height="14" rx="7" fill="${a.c}"/>
+  <rect x="318" y="74" width="62" height="12" rx="6" fill="${a.c}"/>
+  <path d="M404 96C418 99 430 104 438 110L408 105Z" fill="${LINE}"/>
+  <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
+  <rect x="190" y="176" width="66" height="30" rx="15" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
+  <path d="M241 177.5a15 15 0 0 1 0 27Z" fill="${BODY}"/>
+  <rect x="236" y="142" width="78" height="34" rx="17" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
+  <path d="M297 143.5a17 17 0 0 1 0 31Z" fill="${BODY}"/>`;
+}
+
+/* --- Doppelstock über die ganze Länge (A380) --- */
+function drawSuper(a){ return `
+  <path d="M300 96 186 40 166 43 282 110Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M138 88 58 62C52 60 48 67 54 70L122 108C130 112 140 108 140 100Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  ${tail(a, FIN_JET, false)}
+  <path d="M452 124C449 110 430 100 400 96L118 84C88 83 70 81 58 79 54 78 52 82 55 84L142 142C152 148 162 152 174 152L392 152C426 150 448 138 452 124Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
+  <rect x="196" y="100" width="164" height="13" rx="6.5" fill="${a.c}"/>
+  <rect x="188" y="126" width="176" height="13" rx="6.5" fill="${a.c}"/>
+  <path d="M398 99C414 102 428 108 436 114L402 108Z" fill="${LINE}"/>
+  <path d="M320 130 200 210 176 222 244 152Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
+  <rect x="198" y="186" width="68" height="30" rx="15" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
+  <path d="M251 187.5a15 15 0 0 1 0 27Z" fill="${BODY}"/>
+  <rect x="248" y="152" width="78" height="34" rx="17" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
+  <path d="M309 153.5a17 17 0 0 1 0 31Z" fill="${BODY}"/>`;
+}
+
+/* --- Beluga: Buckel über fast die ganze Länge --- */
+function drawBeluga(a){ return `
+  <path d="M296 96 190 44 170 47 278 110Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M134 84 60 60C54 58 50 65 56 68L120 102C128 106 136 102 136 94Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  ${tail(a, FIN_JET, false)}
+  <path d="M452 122C449 110 438 102 422 98L406 96C400 66 370 44 320 42 258 40 198 54 166 78L118 83C88 82 70 80 58 78 54 77 52 81 55 83L140 130C150 135 160 138 172 138L392 138C426 136 449 134 452 122Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
+  <rect x="206" y="106" width="140" height="13" rx="6.5" fill="${a.c}"/>
+  <path d="M404 100C418 102 430 107 438 113L408 108Z" fill="${LINE}"/>
+  <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
+  <rect x="226" y="150" width="84" height="37" rx="18.5" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
+  <path d="M292 151.5a18.5 18.5 0 0 1 0 34Z" fill="${BODY}"/>`;
+}
+
+function craftSVG(kind, a, flipped){
+  const draw = { heli:drawHeli, prop:drawProp, regional:drawRegional,
+                 jumbo:drawJumbo, super:drawSuper, beluga:drawBeluga }[kind] || drawJet;
+  const inner = draw(a);
+  const box = kind==="heli" ? "40 40 440 160"
+            : kind==="super" ? "40 0 430 245" : "40 0 420 235";
+  return `<svg viewBox="${box}" role="img">
+    <g transform="${flipped?"scale(-1,1) translate(-500,0)":""}">${inner}</g></svg>`;
+}
+function kindOf(ac, info, rare){
+  if(rare.kind==="heli") return "heli";
+  const t=((info&&info.icao)||ac.t||"").toUpperCase();
+  if(/^A388/.test(t)) return "super";
+  if(/^(B74|BLCF|BSCA)/.test(t)) return "jumbo";
+  if(/^(A3ST|A37L|BLGA)/.test(t)) return "beluga";
+  if(/^(AT4|AT5|AT7|DH8|SF3|SW4|C20|C4|PC1|PC2|TBM|BE2|BE9|B19|D22|AN2|L410|C82|C17|A40|SB20)/.test(t)) return "prop";
+  if(/^(E13|E14|E17|CRJ|GLF|CL3|CL6|C55|C56|C68|C25|F2T|FA7|FA8|E55|E50|E35|LJ|BE4|GL5|GL7|H25)/.test(t)) return "regional";
+  return "jet";
+}
+function airlineOf(callsign){
+  const p=(callsign||"").slice(0,3).toUpperCase();
+  return AIRLINES[p] || DEFAULT_AIRLINE;
+}
+
+
+/* ============ Datenblatt je Muster ============
+   Länge (m), Spannweite (m), max. Abflugmasse (t), Erstflug des Musters. */
+const SPECS = {
+  A319:[33.8,35.8,75.5,1995], A320:[37.6,35.8,78,1987], A20N:[37.6,35.8,79,2014],
+  A321:[44.5,35.8,93.5,1993], A21N:[44.5,35.8,97,2016], A332:[58.8,60.3,242,1992],
+  A333:[63.7,60.3,242,1992],  A339:[63.7,64,251,2017],  A359:[66.8,64.8,280,2013],
+  A35K:[73.8,64.8,319,2016],  A388:[72.7,79.8,575,2005], A3ST:[56.2,44.8,155,1994],
+  A346:[75.4,63.5,380,2001],
+  B733:[33.4,28.9,63,1984], B735:[31,28.9,60.5,1989], B737:[33.6,34.3,66,1996],
+  B738:[39.5,35.8,79,1997], B38M:[39.5,35.9,82.2,2016], B739:[42.1,34.3,85.1,2000],
+  B752:[47.3,38,116,1982], B763:[54.9,47.6,187,1982], B764:[61.4,51.9,204,1999],
+  B77W:[73.9,64.8,352,2003], B77L:[63.7,64.8,347,2005], B788:[56.7,60.1,228,2009],
+  B789:[62.8,60.1,254,2013], B78X:[68.3,60.1,254,2017], B744:[70.7,64.4,397,1988],
+  B748:[76.3,68.4,448,2011], B77F:[63.7,64.8,347,2008],
+  E190:[36.2,28.7,51,2004], E195:[38.7,28.7,52.3,2004], E290:[36.2,33.7,56.4,2018],
+  E295:[41.5,35.1,61.5,2017], E145:[29.9,20,22,1995], E135:[26.3,20,20,1998],
+  BCS1:[35,35.1,63.1,2013], BCS3:[38.7,35.1,69.9,2015],
+  CRJ9:[36.4,24.9,38.3,2001], CRJX:[39.1,26.2,41.6,2008],
+  AT75:[27.2,27.1,23,1988], AT76:[27.2,27.1,23,1988], DH8D:[32.8,28.4,29.6,1998],
+  SF34:[19.7,21.4,13.2,1983], SW4:[14.8,17.4,7.5,1979],
+  H135:[12.2,10.2,2.9,1994], H145:[13.6,11,3.7,1999], EC35:[12.2,10.2,2.8,1994],
+  A109:[13.0,11.0,3.0,1971], B407:[12.9,10.7,2.5,1995],
+  GLF6:[29.4,30.4,45.2,2012], CL60:[20.9,19.6,21.9,1978], C25C:[15.5,15.1,7.8,2013],
+  PC12:[14.4,16.3,4.7,1991], TBM9:[10.7,12.8,3.4,2005], C172:[8.3,11,1.1,1955]
+};
+
+/* Typische Bestuhlung. Schwankt je nach Airline stark, daher als Richtwert. */
+const SEATS = {
+  A319:140,A320:170,A20N:180,A321:200,A21N:220,A332:250,A333:290,A339:300,
+  A359:320,A35K:370,A388:500,A346:320,A3ST:"Frachter",
+  B733:140,B735:110,B737:130,B738:180,B38M:180,B739:190,B752:200,B763:220,
+  B764:250,B77W:350,B77L:300,B788:240,B789:290,B78X:330,B744:400,B748:410,
+  B77F:"Frachter",
+  E190:100,E195:120,E290:100,E295:130,E145:50,E135:37,
+  BCS1:130,BCS3:145,CRJ9:90,CRJX:100,
+  AT75:70,AT76:70,DH8D:78,SF34:34,SW4:19,
+  H135:7,H145:9,EC35:7,A109:7,B407:6,
+  GLF6:16,CL60:12,C25C:8,PC12:9,TBM9:5,C172:4
+};
+
+/* ============ Wetter ============ */
+const WMO=[[[0],"Klar"],[[1,2],"Leicht bewölkt"],[[3],"Bedeckt"],[[45,48],"Nebel"],
+  [[51,53,55,56,57],"Nieselregen"],[[61,63,65,66,67,80,81,82],"Regen"],
+  [[71,73,75,77,85,86],"Schnee"],[[95,96,99],"Gewitter"]];
+const condName=c=>{for(const[k,n]of WMO)if(k.includes(c))return n;return"";};
+/* Wettercode -> Aussehen des Himmels */
+function wxClass(c){
+  if(c==null) return "wx-cloudy";
+  if(c===0) return "wx-clear";
+  if(c===1||c===2) return "wx-cloudy";
+  if(c===3) return "wx-overcast";
+  if(c===45||c===48) return "wx-fog";
+  if(c>=51&&c<=57) return "wx-drizzle";
+  if(c>=71&&c<=77||c===85||c===86) return "wx-snow";
+  if(c>=95) return "wx-storm";
+  if(c>=61&&c<=82) return "wx-rain";
+  return "wx-cloudy";
+}
+function applyWeather(w){
+  document.querySelector(".frame").className="frame "+wxClass(w?w.weather_code:null);
+}
+let weather={};
+async function getWeather(p){
+  if(weather.key===p.key&&Date.now()-weather.t<600000) return weather.d;
+  try{
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lon}&current=temperature_2m,weather_code`;
+    let d; try{ d=await fetchJSON(u); }
+    catch(e){ d=await fetchJSON("https://api.allorigins.win/raw?url="+encodeURIComponent(u)); }
+    weather={key:p.key,t:Date.now(),d:d.current}; return d.current;
+  }catch(e){ return weather.key===p.key?weather.d:null; }
+}
+
+/* ============ Zustand ============ */
+let place=PLACES[Math.min(1,Math.max(0,store.get("place",0)))];
+let shownHex=null, timer=null, lastOk=0;
+
+function clock(){
+  const t=new Date().toLocaleTimeString("de-AT",{hour:"2-digit",minute:"2-digit"});
+  $("clock").textContent=t; $("clock2").textContent=t;
+}
+setInterval(clock,20000); clock();
+
+function phase(rate){
+  if(typeof rate!=="number") return null;
+  if(rate>300) return "im Steigflug";
+  if(rate<-300) return "im Sinkflug";
+  return "im Horizontalflug";
+}
+
+async function showPlane(ac){
+  const call=(ac.flight||"").trim();
+  const [route,info]=await Promise.all([
+    call?lookupRoute(call):Promise.resolve(null), lookupAircraft(ac.hex)
+  ]);
+  const rare=rarity(ac,info,place.key);
+  const a=airlineOf(call);
+  const kind=kindOf(ac,info,rare);
+  const flipped=((ac.track||90)%360)>180;
+  const changed=shownHex!==ac.hex;
+  shownHex=ac.hex;
+
+  const paint=()=>{
+    $("craft").innerHTML=craftSVG(kind,a,flipped);
+    $("craft").classList.remove("hide");
+    $("empty").classList.remove("show");
+
+    const typeName=info&&(info.type||info.icao)
+      ? (info.manufacturer?info.manufacturer+" "+info.type:(info.type||info.icao))
+      : (ac.desc||ac.t||"");
+    const airlineName=(route&&route.airline)||a.n||"";
+    $("metaText").textContent=[airlineName,call,typeName].filter(Boolean).join(" · ").toUpperCase();
+    $("rare").classList.toggle("on",rare.rare);
+
+    $("route").innerHTML = route&&route.from&&route.to
+      ? `${route.from}<span class="arrow">→</span>${route.to}`
+      : (call||"Unbekannter Flug");
+
+    const km=haversine(place.lat,place.lon,ac.lat,ac.lon);
+    const brg=bearing(place.lat,place.lon,ac.lat,ac.lon);
+    const bits=[];
+    if(typeof ac.alt_baro==="number") bits.push(thou(ac.alt_baro*0.3048)+" m hoch");
+    if(typeof ac.gs==="number") bits.push(Math.round(ac.gs*1.852)+" km/h");
+    bits.push(dec1(km)+" km im "+dirOf(brg));
+    const ph=phase(ac.baro_rate); if(ph) bits.push(ph);
+    $("detail").textContent=bits.join(" · ");
+
+    $("reg").textContent=(info&&info.reg)||ac.r||"";
+    last={kind,a,typeName,icao:(info&&info.icao)||ac.t||null,
+          reg:(info&&info.reg)||ac.r||"",call};
+    if($("tech").classList.contains("on")) paintTech();
+    $("compassBox").hidden=false;
+    $("needle").style.transform=`rotate(${brg}deg)`;
+  };
+
+  if(changed){
+    $("craft").classList.add("hide"); $("info").classList.add("out");
+    await new Promise(r=>setTimeout(r,300));
+    paint(); $("info").classList.remove("out");
+  } else paint();
+}
+
+async function showEmpty(note){
+  shownHex=null; last=null;
+  if($("tech").classList.contains("on")) paintTech();
+  const w=await getWeather(place);
+  $("craft").classList.add("hide");
+  $("empty").classList.add("show");
+  applyWeather(w);
+  $("temp").innerHTML=w?`${Math.round(w.temperature_2m)}<span>°</span>`:"";
+  $("cond").textContent=w?condName(w.weather_code):"Wetterdaten nicht erreichbar";
+  $("metaText").textContent="";
+  $("rare").classList.remove("on");
+  $("route").textContent = note ? "Keine Verbindung" : "Kein Flugzeug in Reichweite";
+  $("detail").textContent = note ? note : ("Umkreis "+RADIUS_KM+" km · "+place.name);
+  $("reg").textContent="";
+  $("compassBox").hidden=true;
+}
+
+/* ============ Daten ============ */
+async function planes(){
+  const nm=RADIUS_NM.toFixed(1);
+  let err=null;
+  for(const url of SOURCES){
+    try{ const d=await fetchJSON(url(place.lat.toFixed(4),place.lon.toFixed(4),nm));
+      return d.ac||d.aircraft||[]; }catch(e){ err=e; }
+  }
+  throw err||new Error("keine Quelle");
+}
+function nearest(list){
+  let best=null,bk=Infinity;
+  for(const ac of list){
+    if(typeof ac.lat!=="number"||typeof ac.lon!=="number") continue;
+    if(ac.alt_baro==="ground"||ac.gs===0) continue;
+    if(typeof ac.alt_baro==="number"&&ac.alt_baro<300) continue;
+    const km=haversine(place.lat,place.lon,ac.lat,ac.lon);
+    if(km<=RADIUS_KM&&km<bk){best=ac;bk=km;}
+  }
+  return best;
+}
+
+/* ============ Demo ============ */
+const SAMPLES=[
+  {hex:"4b1810",flight:"SWR14  ",t:"A333",r:"HB-JHM",lat:48.25,lon:16.44,track:290,gs:191,alt_baro:4050,baro_rate:1400,
+   _route:{airline:"Swiss",from:"Zürich",to:"New York"},_ac:{manufacturer:"Airbus",type:"A330-300",icao:"A333",reg:"HB-JHM"}},
+  {hex:"440123",flight:"AUA342 ",t:"A20N",r:"OE-LZA",lat:48.20,lon:16.36,track:100,gs:330,alt_baro:7000,baro_rate:0,
+   _route:{airline:"Austrian Airlines",from:"Wien",to:"Frankfurt"},_ac:{manufacturer:"Airbus",type:"A320neo",icao:"A20N",reg:"OE-LZA"}},
+  {hex:"896180",flight:"UAE127 ",t:"A388",r:"A6-EOV",lat:48.24,lon:16.42,track:95,gs:410,alt_baro:9200,baro_rate:-900,
+   _route:{airline:"Emirates",from:"Dubai",to:"Wien"},_ac:{manufacturer:"Airbus",type:"A380-800",icao:"A388",reg:"A6-EOV"}},
+  {hex:"3c4dc2",flight:"DLH716 ",t:"B748",r:"D-ABYT",lat:48.19,lon:16.38,track:280,gs:390,alt_baro:11500,baro_rate:1100,
+   _route:{airline:"Lufthansa",from:"Frankfurt",to:"Tokio"},_ac:{manufacturer:"Boeing",type:"747-8",icao:"B748",reg:"D-ABYT"}},
+  {hex:"3946a2",flight:"BGA24C ",t:"A3ST",r:"F-GSTA",lat:48.22,lon:16.41,track:70,gs:330,alt_baro:5600,baro_rate:400,
+   _route:{airline:"Airbus Transport",from:"Toulouse",to:"Hamburg"},_ac:{manufacturer:"Airbus",type:"A300-600ST Beluga",icao:"A3ST",reg:"F-GSTA"}},
+  {hex:"44f001",flight:"OEXVA  ",t:"H135",r:"OE-XVA",lat:48.21,lon:16.40,track:200,category:"A7",gs:107,alt_baro:1400,baro_rate:-500,
+   _route:null,_ac:{manufacturer:"Airbus Helicopters",type:"H135",icao:"H135",reg:"OE-XVA"}},
+  null
+];
+let di=0;
+function demoTick(){
+  const s=SAMPLES[di++%SAMPLES.length];
+  if(!s){ shownHex=null; $("craft").classList.add("hide"); $("empty").classList.add("show");
+    $("temp").innerHTML="24<span>°</span>"; $("cond").textContent="Leicht bewölkt";
+    $("metaText").textContent=""; $("rare").classList.remove("on");
+    $("route").textContent="Kein Flugzeug in Reichweite";
+    $("detail").textContent="Umkreis 10 km · "+place.name;
+    $("reg").textContent=""; $("compassBox").hidden=true; return; }
+  cSet("cs:"+s.flight.trim(),s._route); cSet("hx:"+s.hex,s._ac);
+  showPlane(s);
+}
+
+/* ============ Schleife ============ */
+async function tick(){
+  if(DEMO) return demoTick();
+  try{
+    const ac=nearest(await planes()); lastOk=Date.now();
+    if(ac){ await showPlane(ac); applyWeather(await getWeather(place)); }
+    else await showEmpty();
+  }catch(e){
+    await showEmpty("ADS-B-Netz gerade nicht erreichbar · "+place.name);
+  }
+}
+function loop(){ clearInterval(timer); tick(); timer=setInterval(tick, DEMO?6000:REFRESH_MS); }
+
+function markActive(which){
+  $("btn-0").setAttribute("aria-pressed",String(which===0));
+  $("btn-1").setAttribute("aria-pressed",String(which===1));
+  $("btn-geo").setAttribute("aria-pressed",String(which==="geo"));
+}
+function applyPlace(p, which){
+  place=p; markActive(which);
+  $("here").textContent="Der Himmel über "+place.name;
+  shownHex=null; last=null; weather={}; loop();
+}
+function selectPlace(i){ store.set("place",i); applyPlace(PLACES[i], i); }
+
+/* Aktueller Standort. Braucht HTTPS - über http vom Pi verweigert Safari den Zugriff. */
+function useGeo(){
+  const back=()=>setTimeout(()=>{$("here").textContent="Der Himmel über "+place.name;},3500);
+  if(!navigator.geolocation){ $("here").textContent="Standort wird nicht unterstützt"; return back(); }
+  $("here").textContent="Standort wird bestimmt …";
+  navigator.geolocation.getCurrentPosition(
+    pos=>applyPlace({key:"geo",name:"deinem Standort",
+                     lat:pos.coords.latitude,lon:pos.coords.longitude},"geo"),
+    err=>{ $("here").textContent = err.code===1 ? "Standortzugriff abgelehnt"
+             : err.code===3 ? "Standortsuche dauert zu lange" : "Standort nicht gefunden";
+           back(); },
+    {enableHighAccuracy:false, timeout:9000, maximumAge:300000});
+}
+
+/* ============ Technische Zeichnung ============ */
+let last = null;
+const numDe = n => n.toLocaleString("de-AT",{maximumFractionDigits:1});
+function paintTech(){
+  if(!last){
+    $("techDraw").innerHTML="";
+    $("techL1").textContent="Kein Flugzeug in Reichweite";
+    $("techL2").textContent=""; $("techL3").textContent="";
+    $("techT1").textContent="Typ: —";
+    $("techT2").textContent="Kennzeichen: —";
+    $("techT3").textContent="Schematische Darstellung · Daten: adsb.fi";
+    return;
+  }
+  $("techDraw").innerHTML=craftSVG(last.kind,last.a,false);
+  const s=SPECS[last.icao];
+  if(s){
+    $("techL1").textContent="Länge "+numDe(s[0])+" m";
+    $("techL2").textContent="Spannweite "+numDe(s[1])+" m · "+numDe(s[2])+" t max. · Erstflug "+s[3];
+  }else{
+    $("techL1").textContent="Keine Maße hinterlegt";
+    $("techL2").textContent=last.icao?("Muster "+last.icao):"";
+  }
+  const seat=SEATS[last.icao];
+  $("techL3").textContent = seat===undefined ? ""
+    : (typeof seat==="string" ? seat+" · keine Sitzplätze"
+                              : "Typisch rund "+seat+" Sitzplätze");
+  $("techT1").textContent="Typ: "+(last.typeName||last.icao||"unbekannt").toUpperCase();
+  $("techT2").textContent="Kennzeichen: "+[last.reg,last.call].filter(Boolean).join(" · ").toUpperCase();
+  $("techT3").textContent="Schematische Darstellung · Daten: adsb.fi";
+}
+function toggleTech(on){
+  const t=$("tech");
+  const show = on===undefined ? !t.classList.contains("on") : on;
+  t.classList.toggle("on",show);
+  $("btn-tech").setAttribute("aria-pressed",String(show));
+  if(show){ clock(); paintTech(); }
+}
+$("btn-tech").addEventListener("click",()=>toggleTech());
+$("btn-tech2").addEventListener("click",()=>toggleTech(false));
+
+PLACES.forEach((_,i)=>$("btn-"+i).addEventListener("click",()=>selectPlace(i)));
+$("btn-geo").addEventListener("click",useGeo);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden){clock();loop();} });
+selectPlace(Math.min(1,Math.max(0,store.get("place",0))));
+</script>
+</body>
+</html>
