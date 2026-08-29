@@ -29,8 +29,12 @@ def fetch(la, lo, di):
             ac = data.get("ac") or data.get("aircraft")
             if isinstance(ac, list):
                 return {"ac": ac, "src": name}
+        except urllib.error.HTTPError as e:
+            errs.append(f"{name} HTTP {e.code}")
         except Exception as e:
             errs.append(f"{name} {type(e).__name__}")
+        else:
+            errs.append(f"{name} ohne ac-Liste")
     return {"ac": [], "src": "keine", "error": " · ".join(errs)}
 
 class Handler(BaseHTTPRequestHandler):
