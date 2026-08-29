@@ -336,8 +336,8 @@ const RADIUS_KM = 15, RADIUS_NM = RADIUS_KM/1.852, REFRESH_MS = 15000;
    dist ist in nautischen Meilen. adsb.fi bittet um Nennung der Quelle. */
 /* Eigener Cloudflare Worker. Sobald hier eine Adresse steht, wird sie zuerst
    gefragt - damit ist Schluss mit blockierten Quellen und Ratelimits.
-   Beispiel: const MY_PROXY = "https://himmel.yugeen48.workers.dev"; */
-const MY_PROXY = "https://flightworker.eugen-643.workers.dev";
+   Läuft über den Pi (Tailscale). Braucht aktives Tailscale auf dem Gerät. */
+const MY_PROXY = "https://raspberry.taila0e018.ts.net";
 
 const ADSBFI = (la,lo,nm)=>`https://opendata.adsb.fi/api/v3/lat/${la}/lon/${lo}/dist/${nm}`;
 const VIA = {
