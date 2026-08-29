@@ -101,6 +101,29 @@
   .empty .temp span{color:#6E7480;font-weight:300}
   .empty .cond{margin-top:6px;font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#5B6068}
 
+  /* ---------------- Nacht ---------------- */
+  .night .bands i:nth-child(1){background:#131A2B}
+  .night .bands i:nth-child(2){background:#182136}
+  .night .bands i:nth-child(3){background:#1E2840}
+  .night .bands i:nth-child(4){background:#25304A}
+  .night .bands i:nth-child(5){background:#2C3852}
+  .night .bands i:nth-child(6){background:#333F59}
+  .night .bands i{filter:none !important}
+  .night .glow{background:radial-gradient(120% 90% at 78% 18%,rgba(200,215,255,.16),transparent 60%)}
+  .night .cloud{fill:#3A465F !important;opacity:.75}
+  .night .sun{                       /* wird zur Mondsichel */
+    background:#E9E7DA;border-color:#0E1524;
+    box-shadow:inset -15px 7px 0 -3px #1A2438;
+  }
+  .night .top{color:#9FB0CC}
+  .night .top .live b{color:#E6ECF7}
+  .night .place{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.28);color:#9FB0CC}
+  .night .place[aria-pressed="true"]{background:rgba(255,255,255,.92);border-color:#fff;color:#16202F}
+  .night .empty h2{color:#EEF2FA}
+  .night .empty p{color:#A9B8D2}
+  .night .empty .temp{color:#fff}
+  .night .empty .temp span{color:#8FA0BD}
+  .night .empty .cond{color:#A9B8D2}
   /* ---------------- Infoleiste ---------------- */
   .info{
     flex:0 0 auto;background:var(--panel);border-top:2.5px solid var(--ink);
@@ -108,7 +131,7 @@
   }
   .meta{
     font-family:var(--mono);font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;
-    color:#6B675E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:120px;
+    color:#6B675E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:360px;
   }
   .rare{
     display:none;margin-right:12px;color:var(--needle);letter-spacing:.22em;
@@ -128,6 +151,13 @@
     position:absolute;right:26px;bottom:14px;font-family:var(--mono);
     font-size:11px;letter-spacing:.1em;color:#9A958A;
   }
+  .second{
+    position:absolute;right:112px;top:16px;max-width:230px;text-align:right;
+    font-family:var(--mono);font-size:11px;line-height:1.5;color:#8A857A;
+  }
+  .second b{display:block;font-weight:400;color:#4E4A42;letter-spacing:.08em;text-transform:uppercase}
+  .second:empty{display:none}
+  @media (max-width:900px){ .second{display:none} }
   .compass{position:absolute;right:24px;top:14px;width:74px;text-align:center}
   .compass .n{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:#6B675E;margin-bottom:2px}
   .compass svg{width:52px;height:52px;display:block;margin:0 auto}
@@ -318,6 +348,7 @@
         <circle cx="50" cy="50" r="4.5" fill="#1A1A18"/>
       </svg>
     </div>
+    <div class="second" id="second"></div>
     <div class="reg" id="reg"></div>
   </div>
 </div>
@@ -575,17 +606,22 @@ function drawProp(a){ return `
 
 /* --- Hubschrauber --- */
 function drawHeli(a){ return `
-  <path d="M212 116 78 106C70 105 66 113 73 117L126 140 212 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  <path d="M86 108 62 72C59 67 52 69 52 75L58 112Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  <circle cx="62" cy="86" r="21" fill="none" stroke="${LINE}" stroke-width="3"/>
-  <path d="M48 72 76 100M76 72 48 100" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
-  <path d="M296 90C328 90 354 102 370 122 376 130 370 140 360 140L216 140C190 140 172 128 172 114 172 100 194 90 216 90Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <path d="M336 104C348 110 358 118 364 126L318 126C314 126 312 122 314 118L322 106C325 102 331 101 336 104Z" fill="${a.c}"/>
-  <rect x="214" y="98" width="88" height="16" rx="8" fill="${a.c}"/>
-  <rect x="268" y="58" width="16" height="34" rx="5" fill="${LINE}"/>
-  <path d="M96 54H456C463 54 463 64 456 64L96 64C89 64 89 54 96 54Z" fill="${LINE}"/>
-  <path d="M206 176H352" stroke="${LINE}" stroke-width="8" stroke-linecap="round"/>
-  <path d="M232 140 224 176M320 140 328 176" stroke="${LINE}" stroke-width="6" stroke-linecap="round"/>`;
+  <path d="M214 118 74 108C66 107 62 115 69 119L124 142 214 142Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
+  <path d="M92 112 66 70C63 65 56 67 56 73L62 116Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M120 116 96 92C93 89 89 93 91 97L104 122Z" fill="${BODY}" stroke="${LINE}" stroke-width="2.6" stroke-linejoin="round"/>
+  <circle cx="64" cy="88" r="20" fill="none" stroke="${LINE}" stroke-width="3"/>
+  <path d="M50 74 78 102M78 74 50 102" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
+  <path d="M300 88C334 88 360 101 376 122 382 131 375 142 364 142L218 142C190 142 170 129 170 114 170 98 194 88 218 88Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
+  <path d="M330 100C346 107 358 116 366 126L320 126C315 126 312 121 314 116L320 103C322 99 326 98 330 100Z" fill="#2C3E5A" stroke="${LINE}" stroke-width="2.6" stroke-linejoin="round"/>
+  <rect x="216" y="98" width="86" height="18" rx="9" fill="#2C3E5A" stroke="${LINE}" stroke-width="2.6"/>
+  <path d="M216 124h150" stroke="${a.c}" stroke-width="9"/>
+  <path d="M244 60h46c6 0 10 4 10 10v18h-66V70c0-6 4-10 10-10Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  <rect x="258" y="40" width="18" height="24" rx="6" fill="${LINE}"/>
+  <path d="M78 44h396c7 0 7 11 0 11H78c-7 0-7-11 0-11Z" fill="${LINE}"/>
+  <path d="M258 30h18v12h-18z" fill="${LINE}"/>
+  <path d="M204 176h152" stroke="${LINE}" stroke-width="8" stroke-linecap="round"/>
+  <path d="M236 142 226 176M324 142 334 176" stroke="${LINE}" stroke-width="6" stroke-linecap="round"/>
+  <path d="M204 176h152" stroke="${a.c}" stroke-width="3" stroke-linecap="round" opacity=".9"/>`;
 }
 
 /* --- Jumbo: Buckel hinter dem Cockpit, vier Triebwerke (747) --- */
@@ -653,9 +689,18 @@ function kindOf(ac, info, rare){
   if(/^(E13|E14|E17|CRJ|GLF|CL3|CL6|C55|C56|C68|C25|F2T|FA7|FA8|E55|E50|E35|LJ|BE4|GL5|GL7|H25)/.test(t)) return "regional";
   return "jet";
 }
-function airlineOf(callsign){
-  const p=(callsign||"").slice(0,3).toUpperCase();
-  return AIRLINES[p] || DEFAULT_AIRLINE;
+/* Hubschrauber tragen keine Airline. In Österreich verrät das Kennzeichen
+   den Betreiber: OE-X.. ist der ÖAMTC (Christophorus), OE-B.. das
+   Innenministerium (Polizei, Rufname Libelle). */
+const OEAMTC = { n:"ÖAMTC Christophorus", c:"#F2C300", e:"bars", ink:true };
+const POLIZEI= { n:"Polizei Österreich",  c:"#123A8C", e:"bars" };
+function airlineOf(callsign, reg, kind){
+  const cs=(callsign||"").toUpperCase(), r=(reg||"").toUpperCase().replace("-","");
+  if(kind==="heli"){
+    if(/CHRISTOPH/.test(cs) || /^OEX/.test(r) || /^OEX/.test(cs)) return OEAMTC;
+    if(/LIBELLE/.test(cs)   || /^OEB/.test(r) || /^OEB/.test(cs)) return POLIZEI;
+  }
+  return AIRLINES[cs.slice(0,3)] || DEFAULT_AIRLINE;
 }
 
 
@@ -718,13 +763,14 @@ function wxClass(c){
   return "wx-cloudy";
 }
 function applyWeather(w){
-  document.querySelector(".frame").className="frame "+wxClass(w?w.weather_code:null);
+  document.querySelector(".frame").className="frame "+wxClass(w?w.weather_code:null)
+    + (w && w.is_day===0 ? " night" : "");
 }
 let weather={};
 async function getWeather(p){
   if(weather.key===p.key&&Date.now()-weather.t<600000) return weather.d;
   try{
-    const u=`https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lon}&current=temperature_2m,weather_code`;
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lon}&current=temperature_2m,weather_code,is_day`;
     let d; try{ d=await fetchJSON(u); }
     catch(e){ d=await fetchJSON("https://api.allorigins.win/raw?url="+encodeURIComponent(u)); }
     weather={key:p.key,t:Date.now(),d:d.current}; return d.current;
@@ -754,8 +800,8 @@ async function showPlane(ac, second){
     call?lookupRoute(call):Promise.resolve(null), lookupAircraft(ac.hex)
   ]);
   const rare=rarity(ac,info,place.key);
-  const a=airlineOf(call);
   const kind=kindOf(ac,info,rare);
+  const a=airlineOf(call,(info&&info.reg)||ac.r||"",kind);
   const flipped=((ac.track||90)%360)>180;
   const changed=shownHex!==ac.hex;
   shownHex=ac.hex;
@@ -767,12 +813,20 @@ async function showPlane(ac, second){
     /* zweite Maschine ohne zusätzliche Abfragen, nur aus den ADS-B-Feldern */
     const c2=$("craft2");
     if(second){
-      const call2=(second.flight||"").trim();
-      const a2=airlineOf(call2);
-      const r2=(second.category||"").toUpperCase()==="A7"?{kind:"heli"}:{kind:null};
-      c2.innerHTML=craftSVG(kindOf(second,null,r2),a2,((second.track||90)%360)>180);
+      const s=second.ac, call2=(s.flight||"").trim();
+      const r2=(s.category||"").toUpperCase()==="A7"?{kind:"heli"}:{kind:null};
+      const k2=kindOf(s,null,r2);
+      const a2=airlineOf(call2,s.r||"",k2);
+      c2.innerHTML=craftSVG(k2,a2,((s.track||90)%360)>180);
       c2.classList.remove("hide");
-    } else c2.classList.add("hide");
+      const b2=[];
+      if(typeof s.alt_baro==="number") b2.push(thou(s.alt_baro*0.3048)+" m");
+      if(typeof s.gs==="number") b2.push(Math.round(s.gs*1.852)+" km/h");
+      $("second").innerHTML="<b>"+((a2.n?a2.n+" ":"")+(call2||"unbekannt"))+"</b>"
+        + (s.t?s.t+" · ":"") + dec1(second.km)+" km im "
+        + dirOf(bearing(place.lat,place.lon,s.lat,s.lon))
+        + (b2.length?"<br>"+b2.join(" · "):"");
+    } else { c2.classList.add("hide"); $("second").innerHTML=""; }
     $("empty").classList.remove("show");
 
     const typeName=info&&(info.type||info.icao)
@@ -826,7 +880,7 @@ async function showEmpty(note, raw, ok){
   $("detail").textContent = note ? note
     : "Umkreis "+RADIUS_KM+" km · "+place.name
       + (srcStatus ? " · "+srcStatus : "");
-  $("reg").textContent="";
+  $("reg").textContent=""; $("second").innerHTML="";
   $("compassBox").hidden=true;
 }
 
@@ -888,6 +942,45 @@ function ranked(list){
   return out;
 }
 
+/* ============ Demo (nur für die Vorschau) ============ */
+const SAMPLES=[
+  {hex:"4b1810",flight:"SWR14  ",t:"A333",r:"HB-JHM",lat:48.25,lon:16.44,track:290,gs:191,alt_baro:4050,baro_rate:1400,
+   _route:{airline:"Swiss",from:"Zürich",to:"New York"},_ac:{manufacturer:"Airbus",type:"A330-300",icao:"A333",reg:"HB-JHM"}},
+  {hex:"896180",flight:"UAE127 ",t:"A388",r:"A6-EOV",lat:48.24,lon:16.42,track:95,gs:410,alt_baro:9200,baro_rate:-900,
+   _route:{airline:"Emirates",from:"Dubai",to:"Wien"},_ac:{manufacturer:"Airbus",type:"A380-800",icao:"A388",reg:"A6-EOV"}},
+  {hex:"3c4dc2",flight:"DLH716 ",t:"B748",r:"D-ABYT",lat:48.19,lon:16.38,track:280,gs:390,alt_baro:11500,baro_rate:1100,
+   _route:{airline:"Lufthansa",from:"Frankfurt",to:"Tokio"},_ac:{manufacturer:"Boeing",type:"747-8",icao:"B748",reg:"D-ABYT"}},
+  {hex:"3946a2",flight:"BGA24C ",t:"A3ST",r:"F-GSTA",lat:48.22,lon:16.41,track:70,gs:330,alt_baro:5600,baro_rate:400,
+   _route:{airline:"Airbus Transport",from:"Toulouse",to:"Hamburg"},_ac:{manufacturer:"Airbus",type:"A300-600ST Beluga",icao:"A3ST",reg:"F-GSTA"}},
+  {hex:"440420",flight:"OEXVA  ",t:"EC35",r:"OE-XVA",lat:48.21,lon:16.40,track:200,category:"A7",gs:107,alt_baro:1400,baro_rate:-500,
+   _route:null,_ac:{manufacturer:"Airbus Helicopters",type:"H135",icao:"EC35",reg:"OE-XVA"}},
+  {hex:"440421",flight:"OEBXA  ",t:"EC35",r:"OE-BXA",lat:48.23,lon:16.41,track:20,category:"A7",gs:96,alt_baro:1900,baro_rate:300,
+   _route:null,_ac:{manufacturer:"Airbus Helicopters",type:"H135",icao:"EC35",reg:"OE-BXA"}},
+  {hex:"440123",flight:"AUA342 ",t:"A20N",r:"OE-LZA",lat:48.20,lon:16.36,track:100,gs:330,alt_baro:7000,baro_rate:0,
+   _route:{airline:"Austrian Airlines",from:"Wien",to:"Frankfurt"},_ac:{manufacturer:"Airbus",type:"A320neo",icao:"A20N",reg:"OE-LZA"}},
+  null
+];
+let di=0;
+function demoTick(){
+  const s=SAMPLES[di++%SAMPLES.length];
+  if(!s){
+    shownHex=null; last=null;
+    $("craft").classList.add("hide"); $("craft2").classList.add("hide");
+    $("empty").classList.add("show");
+    applyWeather({weather_code:2,is_day:(new Date().getHours()<7||new Date().getHours()>20)?0:1});
+    $("temp").innerHTML="24<span>°</span>"; $("cond").textContent="Leicht bewölkt";
+    $("metaText").textContent=""; $("rare").classList.remove("on");
+    $("route").textContent="Kein Flugzeug in Reichweite";
+    $("detail").textContent="Umkreis "+RADIUS_KM+" km · "+place.name;
+    $("reg").textContent=""; $("second").innerHTML="";
+    $("compassBox").hidden=true; return;
+  }
+  const partner=SAMPLES[di%SAMPLES.length];
+  cSet("cs:"+s.flight.trim(),s._route); cSet("hx:"+s.hex,s._ac);
+  applyWeather({weather_code:2,is_day:(new Date().getHours()<7||new Date().getHours()>20)?0:1});
+  showPlane(s, partner?{ac:partner,km:9.4}:undefined);
+}
+
 async function tick(){
   if(DEMO) return demoTick();
   const g=gen;
@@ -895,7 +988,7 @@ async function tick(){
     const {list,ok}=await planes();
     if(g!==gen) return;              /* Standort wurde inzwischen gewechselt */
     const near=ranked(list); lastOk=Date.now();
-    if(near.length){ await showPlane(near[0].ac, near[1]&&near[1].ac);
+    if(near.length){ await showPlane(near[0].ac, near[1]);
       if(g===gen) applyWeather(await getWeather(place)); }
     else await showEmpty(null, list.length, ok);
   }catch(e){
