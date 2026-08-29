@@ -37,6 +37,9 @@ def fetch(la, lo, di):
             errs.append(f"{name} ohne ac-Liste")
     return {"ac": [], "src": "keine", "error": " · ".join(errs)}
 
+LAST = {}          # letzte brauchbare Antwort je Standort
+LAST_TTL = 90      # so lange darf sie im Notfall weiterverwendet werden
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         q  = parse_qs(urlparse(self.path).query)
@@ -48,7 +51,16 @@ class Handler(BaseHTTPRequestHandler):
         if key in CACHE and now - CACHE[key][0] < TTL:
             body = CACHE[key][1]
         else:
-            body = json.dumps(fetch(la, lo, di)).encode()
+            data = fetch(la, lo, di)
+            if data["src"] == "keine" and key in LAST and now - LAST[key][0] < LAST_TTL:
+                # Alle Quellen haben gerade gezickt: letzte gute Antwort
+                # weiterreichen, damit die Anzeige nicht flackert.
+                data = json.loads(LAST[key][1])
+                data["stale"] = round(now - LAST[key][0])
+            else:
+                if data["src"] != "keine":
+                    LAST[key] = (now, json.dumps(data).encode())
+            body = json.dumps(data).encode()
             CACHE[key] = (now, body)
 
         self.send_response(200)
