@@ -150,15 +150,18 @@
   /* Fallblatt-Anzeige wie am Flughafen */
   .route{display:flex;gap:4px;flex-wrap:nowrap;overflow:hidden;text-transform:none}
   .flap{
-    position:relative;flex:0 0 auto;width:.66em;height:1.16em;line-height:1.16em;
-    background:#1A1A18;color:#F4F1E6;border-radius:3px;text-align:center;
-    font-weight:700;overflow:hidden;
+    position:relative;flex:0 0 auto;width:.82em;height:1.22em;
+    background:#1A1A18;color:#F4F1E6;border-radius:3px;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
   }
-  .flap.gap{background:none;width:.34em}
-  .flap.wide{width:.86em}
+  .flap.gap{background:none;width:.3em}
+  .flap.wide{width:.95em}
   .flap::after{content:"";position:absolute;left:0;right:0;top:50%;
     height:1px;background:rgba(255,255,255,.22)}
-  .flap b{display:block;font-weight:700;transform-origin:50% 0%}
+  .flap b{
+    display:block;font-weight:700;font-size:.8em;line-height:1;
+    transform-origin:50% 0%;font-variant-numeric:tabular-nums;
+  }
   .flap.turn b{animation:flap 110ms ease-in}
   @keyframes flap{0%{transform:rotateX(0)}55%{transform:rotateX(-88deg)}
     56%{transform:rotateX(88deg)}100%{transform:rotateX(0)}}
@@ -706,90 +709,18 @@ function drawProp(a){ return `
   <path d="M302 80a15 15 0 0 1 0 26Z" fill="${BODY}"/>`;
 }
 
-/* --- Einmotorige Propellermaschine (PC-12, Cessna, TBM) --- */
+/* --- Einmotorige Propellermaschine mit T-Leitwerk (PC-12, TBM, Cessna) --- */
 function drawSingle(a){ return `
-  <path d="M120 92 66 74C61 72 58 78 62 81L108 104Z" fill="${BODY}" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>
-  <path d="M148 96 116 44C114 40 110 38 106 38L94 38C89 38 86 43 88 48L104 96Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  <path d="M372 108C368 100 356 94 338 92L128 86C104 85 86 84 76 82 72 81 70 85 73 87L134 122C142 126 150 128 160 128L330 128C356 126 370 118 372 108Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  <path d="M300 84 168 96C162 97 162 106 168 107L306 98C313 97 312 85 300 84Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  <g fill="${LINE}"><circle cx="214" cy="102" r="4.5"/><circle cx="238" cy="102" r="4.5"/><circle cx="262" cy="103" r="4.5"/></g>
-  <path d="M300 96C316 98 330 102 340 108L306 104Z" fill="${LINE}"/>
-  <rect x="336" y="96" width="34" height="18" rx="9" fill="${a.c}" stroke="${LINE}" stroke-width="2.8"/>
-  <ellipse cx="374" cy="106" rx="6" ry="38" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="2.4"/>`;
+  <path d="M292 88 216 44 200 47 278 100Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>
+  <path d="M164 84 140 34C138 28 132 25 126 25L112 25C106 25 102 30 104 36L128 86Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M84 20H176C182 20 186 24 186 28 186 32 182 36 176 36L84 36C78 36 74 32 74 28 74 24 78 20 84 20Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M368 104C364 94 352 88 334 86L150 80C126 79 112 78 104 76 100 75 98 79 101 81L152 116C160 120 168 122 178 122L328 122C352 120 366 114 368 104Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
+  <path d="M296 90C310 92 322 96 330 102L300 98Z" fill="${LINE}"/>
+  <g fill="#2C3E5A"><circle cx="206" cy="97" r="6"/><circle cx="232" cy="98" r="6"/><circle cx="258" cy="99" r="6"/></g>
+  <path d="M300 110 208 176 188 186 244 126Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M336 86c14 2 24 6 30 12 5 6 3 13-4 15l-26 4Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  <ellipse cx="374" cy="104" rx="6" ry="40" fill="${a.c}" opacity=".22" stroke="${LINE}" stroke-width="2.2"/>`;
 }
-
-/* --- Hubschrauber (EC135-Bauart mit Fenestron im Heck) --- */
-function drawHeli(a){ return `
-  <path d="M208 100 118 94C110 93 108 103 116 106L168 124 208 124Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  <path d="M158 108 126 98C121 96 118 104 123 106L154 120Z" fill="${BODY}" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>
-  <path d="M124 112 108 44C106 34 96 30 86 34L70 40C60 44 56 54 60 63L92 118Z" fill="${a.c}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  <path d="M108 44C106 34 96 30 86 34L70 40 74 52 104 41Z" fill="${a.stripe||"#C1121F"}" stroke="${LINE}" stroke-width="2.6" stroke-linejoin="round"/>
-  <circle cx="86" cy="66" r="17" fill="${BODY}" stroke="${LINE}" stroke-width="3"/>
-  <path d="M91.0 66.0L101.0 66.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M90.3 68.5L99.0 73.5" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M88.5 70.3L93.5 79.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M86.0 71.0L86.0 81.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M83.5 70.3L78.5 79.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M81.7 68.5L73.0 73.5" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M81.0 66.0L71.0 66.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M81.7 63.5L73.0 58.5" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M83.5 61.7L78.5 53.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M86.0 61.0L86.0 51.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M88.5 61.7L93.5 53.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M90.3 63.5L99.0 58.5" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/>
-  <circle cx="86" cy="66" r="5" fill="${LINE}"/>
-  <path d="M96 116 84 138C82 142 88 145 91 141L106 122Z" fill="${a.c}" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>
-  <path d="M234 82C290 82 338 95 374 120 386 128 382 146 366 146L238 146C208 146 188 131 188 114 188 95 208 82 234 82Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <path d="M330 100C350 109 364 119 373 130L322 130C315 130 311 123 313 117L320 104C323 99 327 98 330 100Z" fill="#2C3E5A" stroke="${LINE}" stroke-width="2.6" stroke-linejoin="round"/>
-  <rect x="212" y="98" width="92" height="19" rx="9.5" fill="#2C3E5A" stroke="${LINE}" stroke-width="2.6"/>
-  <path d="M240 70h72c8 0 12 5 12 11v7h-96v-7c0-6 4-11 12-11Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  <rect x="272" y="48" width="16" height="24" rx="4" fill="${LINE}"/>
-  <ellipse cx="280" cy="46" rx="17" ry="7" fill="${LINE}"/>
-  <path d="M92 38h376c8 0 8 11 0 11H92c-8 0-8-11 0-11Z" fill="${LINE}"/>
-  <path d="M214 178h140" stroke="${LINE}" stroke-width="8" stroke-linecap="round"/>
-  <path d="M244 146 232 178M328 146 340 178" stroke="${LINE}" stroke-width="7" stroke-linecap="round"/>`;
-}
-
-/* --- Jumbo: Buckel hinter dem Cockpit, vier Triebwerke (747) --- */
-function drawJumbo(a){ return `
-  <path d="M298 94 188 40 168 43 280 108Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  ${farNacelle(184,46,54,24,a.c)}
-  ${farNacelle(214,64,68,30,a.c)}
-  <path d="M134 84 60 60C54 58 50 65 56 68L120 102C128 106 136 102 136 94Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  ${tail(a, FIN_JET, false)}
-  <path d="M450 120C447 108 432 99 408 94 400 72 378 60 350 61 326 62 310 72 302 88L118 83C88 82 70 80 58 78 54 77 52 81 55 83L140 130C150 135 160 138 172 138L392 138C426 136 447 132 450 120Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <path d="M168 113H398" stroke="${LINE}" stroke-width="1.6" opacity=".28"/>
-  <rect x="196" y="106" width="176" height="14" rx="7" fill="${a.c}"/>
-  <rect x="318" y="74" width="62" height="12" rx="6" fill="${a.c}"/>
-  <path d="M404 96C418 99 430 104 438 110L408 105Z" fill="${LINE}"/>
-  <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  <rect x="190" y="176" width="66" height="30" rx="15" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
-  <path d="M241 177.5a15 15 0 0 1 0 27Z" fill="${BODY}"/>
-  <rect x="236" y="142" width="78" height="34" rx="17" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
-  <path d="M297 143.5a17 17 0 0 1 0 31Z" fill="${BODY}"/>`;
-}
-
-/* --- Doppelstock über die ganze Länge (A380) --- */
-function drawSuper(a){ return `
-  <path d="M300 96 186 40 166 43 282 110Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  ${farNacelle(182,46,56,25,a.c)}
-  ${farNacelle(214,66,70,31,a.c)}
-  <path d="M138 88 58 62C52 60 48 67 54 70L122 108C130 112 140 108 140 100Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  ${tail(a, FIN_JET, false)}
-  <path d="M452 124C449 110 430 100 400 96L118 84C88 83 70 81 58 79 54 78 52 82 55 84L142 142C152 148 162 152 174 152L392 152C426 150 448 138 452 124Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <rect x="196" y="100" width="164" height="13" rx="6.5" fill="${a.c}"/>
-  <rect x="188" y="126" width="176" height="13" rx="6.5" fill="${a.c}"/>
-  <path d="M398 99C414 102 428 108 436 114L402 108Z" fill="${LINE}"/>
-  <path d="M320 130 200 210 176 222 244 152Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  <rect x="198" y="186" width="68" height="30" rx="15" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
-  <path d="M251 187.5a15 15 0 0 1 0 27Z" fill="${BODY}"/>
-  <rect x="248" y="152" width="78" height="34" rx="17" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
-  <path d="M309 153.5a17 17 0 0 1 0 31Z" fill="${BODY}"/>`;
-}
-
-/* --- Beluga: Buckel über fast die ganze Länge --- */
-function drawBeluga(a){ return `
-  <path d="M296 96 190 44 170 47 278 110Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  ${farNacelle(216,66,66,29,a.c)}
-  <path d="M134 84 60 60C54 58 50 65 56 68L120 102C128 106 136 102 136 94Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  ${tail(a, FIN_JET, false)}
-  <path d="M452 122C449 110 438 102 422 98L406 96C400 66 370 44 320 42 258 40 198 54 166 78L118 83C88 82 70 80 58 78 54 77 52 81 55 83L140 130C150 135 160 138 172 138L392 138C426 136 449 134 452 122Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <rect x="206" y="106" width="140" height="13" rx="6.5" fill="${a.c}"/>
-  <path d="M404 100C418 102 430 107 438 113L408 108Z" fill="${LINE}"/>
-  <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  <rect x="226" y="150" width="84" height="37" rx="18.5" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
-  <path d="M292 151.5a18.5 18.5 0 0 1 0 34Z" fill="${BODY}"/>`;
-}
-
 
 /* Merkmale je Muster: Herstellernase, Winglets, Triebwerkszahl, Größe */
 const FOUR_ENG = /^(A388|A34|B74|B52|IL96|AN12|AN22|AN124|A124)/;
@@ -813,7 +744,7 @@ function craftSVG(kind, a, flipped, opt){
   const draw = { heli:drawHeli, prop:drawProp, single:drawSingle, regional:drawRegional,
                  jumbo:drawJumbo, super:drawSuper, beluga:drawBeluga }[kind] || drawJet;
   const inner = draw(a, opt);
-  const box = kind==="single" ? "50 30 340 130"
+  const box = kind==="single" ? "70 10 340 190"
             : kind==="heli" ? "45 25 435 175"
             : kind==="super" ? "40 0 430 245" : "40 0 420 235";
   return `<svg viewBox="${box}" role="img">
