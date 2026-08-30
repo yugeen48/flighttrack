@@ -129,11 +129,25 @@
   .night .empty .temp span{color:#8FA0BD}
   .night .empty .cond{color:#A9B8D2}
   /* ---------------- Wind und Gesichter ---------------- */
-  .wind{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;
-        transition:opacity 900ms ease-out}
+  .wind{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden;
+        opacity:0;transition:opacity 900ms ease-out}
   .wind.on{opacity:1}
-  .wind path{fill:none;stroke:#FFFFFF;stroke-linecap:round}
-  .night .wind path{stroke:#DCE6FF}
+  .streak{position:absolute;border-radius:99px;background:#6E7F97;opacity:0;will-change:transform}
+  .night .streak{background:#C9D8F5}
+  .wind.left  .streak{animation-name:windL}
+  .wind.right .streak{animation-name:windR}
+  .streak{animation-timing-function:linear;animation-iteration-count:infinite}
+  @keyframes windL{
+    0%{transform:translateX(0);opacity:0}
+    12%{opacity:var(--o)} 82%{opacity:var(--o)}
+    100%{transform:translateX(-140vw);opacity:0}
+  }
+  @keyframes windR{
+    0%{transform:translateX(0);opacity:0}
+    12%{opacity:var(--o)} 82%{opacity:var(--o)}
+    100%{transform:translateX(140vw);opacity:0}
+  }
+  @media (prefers-reduced-motion:reduce){ .wind{display:none} }
 
   .face{position:absolute;z-index:4;pointer-events:none;opacity:0;
         transition:opacity 620ms ease}
@@ -149,8 +163,12 @@
     color:#6B675E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:360px;
   }
   .rare{
-    display:none;margin-right:12px;color:var(--needle);letter-spacing:.22em;
+    display:none;margin-right:12px;color:#E24B3A;letter-spacing:.22em;
+    font-weight:700;
   }
+  .rare.on{display:inline;animation:rarePulse 2.6s ease-in-out infinite}
+  @keyframes rarePulse{ 0%,100%{opacity:1} 50%{opacity:.42} }
+  @media (prefers-reduced-motion:reduce){ .rare{animation:none} }
   .rare.on{display:inline}
   .route{
     margin:5px 0 0;font-size:clamp(26px,5.2vw,50px);font-weight:800;letter-spacing:-.02em;
@@ -340,7 +358,7 @@
     </div>
 
     <div class="craft2 hide" id="craft2"></div>
-    <svg class="wind" id="wind" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true"></svg>
+    <div class="wind" id="wind" aria-hidden="true"></div>
     <div class="craft hide" id="craft"></div>
 
     <div class="empty" id="empty">
@@ -398,7 +416,7 @@
 
 <script>
 "use strict";
-const VERSION = "v16";
+const VERSION = "v21";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -670,6 +688,13 @@ function nacelle(x,y,w,h,c){
 function farNacelle(x,y,w,h,c){
   return nacelle(x,y,w,h,c);
 }
+/* Kabinenfenster als helle Punkte im Farbband. Frachter bekommen keine. */
+function windows(x0, w, y, cargo){
+  if(cargo) return "";
+  let s="";
+  for(let x=x0+12; x<x0+w-8; x+=15) s+=`<circle cx="${x}" cy="${y}" r="2.7" fill="#DCEAF7"/>`;
+  return s;
+}
 function drawJet(a,o){
   o = o || {};
   const nose = o.nose==="boeing" ? "boeing" : "airbus";
@@ -684,6 +709,7 @@ function drawJet(a,o){
   <path d="${FUSE_NOSE[nose]}" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
   <path d="M168 113H${196+band}" stroke="${LINE}" stroke-width="1.6" opacity=".28"/>
   <rect x="204" y="105" width="${band}" height="14" rx="7" fill="${a.c}"/>
+  ${windows(204,band,112,o.cargo)}
   <path d="${COCKPIT[nose]}" fill="${LINE}"/>
   <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
   ${o.winglet?`<path d="M197 197C192 187 189 179 188 172L179 175C181 184 184 193 188 203Z" fill="${BODY}" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>`:""}
@@ -710,6 +736,7 @@ function drawProp(a){ return `
   <path d="M50 16H152C159 16 163 20 163 25 163 30 159 34 152 34L50 34C43 34 39 30 39 25 39 20 43 16 50 16Z" fill="${a.c}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
   <path d="${FUSE_REG}" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
   <rect x="206" y="100" width="150" height="13" rx="6.5" fill="${a.c}"/>
+  ${windows(206,150,106.5,false)}
   <path d="M390 99C406 102 420 107 428 113L394 107Z" fill="${LINE}"/>
   <path d="M352 74 150 92C143 93 143 104 150 105L356 90C364 89 363 75 352 74Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
   <g>
@@ -766,7 +793,9 @@ function drawJumbo(a){ return `
   <path d="M450 120C447 108 432 99 408 94 400 72 378 60 350 61 326 62 310 72 302 88L118 83C88 82 70 80 58 78 54 77 52 81 55 83L140 130C150 135 160 138 172 138L392 138C426 136 447 132 450 120Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
   <path d="M168 113H398" stroke="${LINE}" stroke-width="1.6" opacity=".28"/>
   <rect x="196" y="106" width="176" height="14" rx="7" fill="${a.c}"/>
+  ${windows(196,176,113,a.cargo)}
   <rect x="318" y="74" width="62" height="12" rx="6" fill="${a.c}"/>
+  ${windows(318,62,80,a.cargo)}
   <path d="M404 96C418 99 430 104 438 110L408 105Z" fill="${LINE}"/>
   <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
   ${nacelle(190,176,66,30,a.c)}
@@ -782,7 +811,9 @@ function drawSuper(a){ return `
   ${tail(a, FIN_JET, false)}
   <path d="M452 124C449 110 430 100 400 96L118 84C88 83 70 81 58 79 54 78 52 82 55 84L142 142C152 148 162 152 174 152L392 152C426 150 448 138 452 124Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
   <rect x="196" y="100" width="164" height="13" rx="6.5" fill="${a.c}"/>
+  ${windows(196,164,106.5,a.cargo)}
   <rect x="188" y="126" width="176" height="13" rx="6.5" fill="${a.c}"/>
+  ${windows(188,176,132.5,a.cargo)}
   <path d="M398 99C414 102 428 108 436 114L402 108Z" fill="${LINE}"/>
   <path d="M320 130 200 210 176 222 244 152Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
   ${nacelle(198,186,68,30,a.c)}
@@ -805,6 +836,11 @@ function drawBeluga(a){ return `
 /* Merkmale je Muster: Herstellernase, Winglets, Triebwerkszahl, Größe */
 const FOUR_ENG = /^(A388|A34|B74|B52|IL96|AN12|AN22|AN124|A124)/;
 const WINGLET  = /^(A20N|A21N|A19N|B38M|B39M|B3XM|B738|B739|B737|B77W|B78|B789|B788|A35|A359|A35K|A339|A33N|BCS|E29|E19[05]W|B748|A321|A320|A319|CRJ9|CRJX|E75|E75L)/;
+const CARGO_OP = /^(BCS|GEC|UPS|FDX|ABW|ABR|CLX|GTI|BOX|MSX|QAC|TAY|SQC|CKS|NCA)/;
+function isCargo(call, icao){
+  const t=(icao||"").toUpperCase();
+  return /F$/.test(t) || /^(B74S|A3ST|B77F|B76F)/.test(t) || CARGO_OP.test((call||"").toUpperCase());
+}
 function features(icao){
   const t=(icao||"").toUpperCase();
   const s=SPECS[t];
@@ -959,82 +995,51 @@ function flap(el, text){
 }
 
 
-/* ============ Wind beim Umblättern ============
-   Drei Varianten, je Auslösung wird zufällig eine gewählt.
-   Länge und Tempo richten sich nach der Geschwindigkeit der Maschine. */
+/* ============ Wind ============
+   Die Striche laufen quer über den ganzen Himmel, das Flugzeug steht mittendrin.
+   Richtung: immer von der Nase zum Heck. Ob die Maschine gespiegelt gezeichnet
+   ist, wird direkt am fertigen Bild abgelesen - so kann nichts auseinanderlaufen.
+   Drei Stilvarianten, bei jeder Böe wird zufällig eine gewählt. */
 const REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-let windTimer=null;
+let windTimer=null, craftFlipped=false, lastKmh=400;
 
-function windLines(kmh, box){
-  /* box = ungefähre Lage des Flugzeugs im 1000x600-Raster */
-  const f=Math.max(.35, Math.min(1.6, kmh/650));      /* Tempofaktor */
-  const dur=(1.9-0.9*f).toFixed(2);
-  let s="", n=7;
-  for(let i=0;i<n;i++){
-    const y=box.y + 30 + i*(box.h-60)/(n-1);
-    const len=(70+150*f)*(0.6+Math.random()*0.7);
-    const x0=box.x+box.w*0.55+Math.random()*box.w*0.3;
-    const w=(1.4+Math.random()*1.2).toFixed(1);
-    s+=`<path d="M${x0} ${y}h-${len}" stroke-width="${w}" opacity="0">
-      <animate attributeName="opacity" values="0;.5;0" dur="${dur}s" begin="${(i*0.07).toFixed(2)}s" repeatCount="indefinite"/>
-      <animateTransform attributeName="transform" type="translate" from="60 0" to="-${(120+180*f).toFixed(0)} 0"
-        dur="${dur}s" begin="${(i*0.07).toFixed(2)}s" repeatCount="indefinite"/></path>`;
-  }
-  return s;
-}
-function windVortex(kmh, box){
-  const f=Math.max(.35, Math.min(1.6, kmh/650));
-  const dur=(2.4-1.0*f).toFixed(2);
-  const tips=[{x:box.x+box.w*0.30,y:box.y+box.h*0.86},{x:box.x+box.w*0.34,y:box.y+box.h*0.16}];
-  let s="";
-  tips.forEach((t,k)=>{
-    for(let i=0;i<3;i++){
-      const r=12+i*9, o=(0.42-i*0.1).toFixed(2);
-      s+=`<path d="M${t.x} ${t.y}c${-r} ${-r*0.5} ${-r*1.4} ${r*0.4} ${-r*2} ${r*0.1}"
-        stroke-width="${(1.8-i*0.35).toFixed(1)}" opacity="0">
-        <animate attributeName="opacity" values="0;${o};0" dur="${dur}s"
-          begin="${(k*0.3+i*0.22).toFixed(2)}s" repeatCount="indefinite"/>
-        <animateTransform attributeName="transform" type="translate" from="20 0"
-          to="-${(70+90*f).toFixed(0)} ${(i-1)*6}" dur="${dur}s"
-          begin="${(k*0.3+i*0.22).toFixed(2)}s" repeatCount="indefinite"/></path>`;
-    }
-  });
-  return s;
-}
-function windTrails(kmh, box){
-  const f=Math.max(.35, Math.min(1.6, kmh/650));
-  const dur=(2.6-1.1*f).toFixed(2);
-  const eng=[{x:box.x+box.w*0.44,y:box.y+box.h*0.70},{x:box.x+box.w*0.46,y:box.y+box.h*0.34}];
-  let s="";
-  eng.forEach((e,k)=>{
-    for(let i=0;i<2;i++){
-      const len=(110+190*f);
-      s+=`<path d="M${e.x} ${e.y+i*5-2}h-${len}" stroke-width="${(3.4-i*1.2).toFixed(1)}" opacity="0">
-        <animate attributeName="opacity" values="0;${(0.34-i*0.12).toFixed(2)};0" dur="${dur}s"
-          begin="${(k*0.35+i*0.18).toFixed(2)}s" repeatCount="indefinite"/>
-        <animateTransform attributeName="transform" type="translate" from="40 0"
-          to="-${(90+120*f).toFixed(0)} 0" dur="${dur}s"
-          begin="${(k*0.35+i*0.18).toFixed(2)}s" repeatCount="indefinite"/></path>`;
-    }
-  });
-  return s;
-}
 function gustFor(kmh, ms){
   if(REDUCED) return;
-  const el=$("wind"); if(!el) return;
-  const c=$("craft");
-  if(!c || c.classList.contains("hide")) return;
-  /* Lage des Flugzeugs grob ins 1000x600-Raster übersetzen */
+  const el=$("wind"), c=$("craft");
+  if(!el||!c||c.classList.contains("hide")) return;
+
+  /* Nase rechts -> Wind nach links. Gespiegelt -> umgekehrt. */
+  const toLeft = !/scale\(-1,1\)/.test(c.innerHTML);
+  const f=Math.max(.35, Math.min(1.7, (kmh||400)/650));
+  const dur=2.9-1.5*f;                       /* schneller bei hohem Tempo */
+  const style=Math.floor(Math.random()*3);   /* 0 fein, 1 kurz gestrichelt, 2 breit */
+
   const sky=$("sky").getBoundingClientRect(), r=c.getBoundingClientRect();
-  const box={ x:(r.left-sky.left)/sky.width*1000, y:(r.top-sky.top)/sky.height*600,
-              w:r.width/sky.width*1000, h:r.height/sky.height*600 };
-  const kind=[windLines,windVortex,windTrails][Math.floor(Math.random()*3)];
-  el.innerHTML=kind(kmh||400, box);
-  el.classList.add("on");
+  const mid=((r.top-sky.top)+r.height/2)/sky.height*100;   /* Höhe der Maschine in % */
+
+  const n = style===1 ? 16 : 11;
+  let html="";
+  for(let i=0;i<n;i++){
+    const spread = style===2 ? 26 : 40;
+    const top = Math.max(4, Math.min(92, mid + (Math.random()-0.5)*spread));
+    const len = style===0 ? (90+190*f)*(0.6+Math.random()*0.9)
+              : style===1 ? (34+70*f)*(0.6+Math.random()*0.8)
+              :             (150+260*f)*(0.7+Math.random()*0.7);
+    const h   = style===2 ? (3.5+Math.random()*2.5) : (2+Math.random()*1.6);
+    const o   = style===2 ? (0.30+Math.random()*0.18) : (0.45+Math.random()*0.35);
+    const d   = (dur*(0.8+Math.random()*0.45)).toFixed(2);
+    const del = (Math.random()*dur*0.9).toFixed(2);
+    html+=`<i class="streak" style="top:${top.toFixed(1)}%;${toLeft?"left:104%":"right:104%"};
+      width:${len|0}px;height:${h.toFixed(1)}px;--o:${o.toFixed(2)};
+      animation-duration:${d}s;animation-delay:-${del}s"></i>`;
+  }
+  el.innerHTML=html;
+  el.classList.remove("left","right");
+  el.classList.add(toLeft?"left":"right","on");
   clearTimeout(windTimer);
   windTimer=setTimeout(()=>{ el.classList.remove("on");
     setTimeout(()=>{ if(!el.classList.contains("on")) el.innerHTML=""; }, 1000);
-  }, (ms||1800)+2500);
+  }, (ms||1400)+2500);
 }
 
 /* ============ Gesicht an Sonne, Mond oder Wolke ============ */
@@ -1101,6 +1106,8 @@ function scheduleFace(){
   faceTimer=setTimeout(()=>{ showFace(); scheduleFace(); }, wait);
 }
 if(!REDUCED) scheduleFace();
+/* Wind alle 30 Sekunden, unabhängig von der Tafel */
+if(!REDUCED) setInterval(()=>gustFor(lastKmh, 1400), 30000);
 
 /* ============ Zustand ============ */
 let place=PLACES[Math.min(1,Math.max(0,store.get("place",0)))];
@@ -1131,9 +1138,11 @@ async function showPlane(ac, second){
   const flipped=((ac.track||90)%360)>180;
   const changed=shownHex!==ac.hex;
   shownHex=ac.hex;
+  craftFlipped = flipped;
+  lastKmh = typeof ac.gs==="number" ? Math.round(ac.gs*1.852) : 400;
 
   const icao=(info&&info.icao)||ac.t||"";
-  const f=features(icao);
+  const f=features(icao); f.cargo=isCargo(call,icao); a.cargo=f.cargo;
   const paint=()=>{
     $("craft").innerHTML=craftSVG(kind,a,flipped,f);
     $("craft").style.width=craftWidth(f.len)+"%";
@@ -1172,8 +1181,6 @@ async function showPlane(ac, second){
     if(bigText!==lastBig || Date.now()-lastFlapAt > FLAP_IDLE){
       lastBig=bigText; lastFlapAt=Date.now();
       flap($("route"), bigText);
-      const kmh = typeof ac.gs==="number" ? Math.round(ac.gs*1.852) : 400;
-      setTimeout(()=>gustFor(kmh, bigText.length*40+600), 60);
     }
 
     const km=haversine(place.lat,place.lon,ac.lat,ac.lon);
