@@ -660,6 +660,7 @@ function drawJet(a,o){
   const band = Math.max(96, Math.min(208, o.band||146));
   return `
   <path d="M298 94 188 40 168 43 280 108Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  ${o.winglet?`<path d="M186 42C184 35 183 30 183 25L175 27C176 33 178 39 181 46Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="2.6" stroke-linejoin="round"/>`:""}
   ${o.engines>=4?farNacelle(184,46,54,24,a.c):""}
   ${farNacelle(214,64,68,30,a.c)}
   <path d="M134 84 60 60C54 58 50 65 56 68L120 102C128 106 136 102 136 94Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
@@ -669,7 +670,7 @@ function drawJet(a,o){
   <rect x="204" y="105" width="${band}" height="14" rx="7" fill="${a.c}"/>
   <path d="${COCKPIT[nose]}" fill="${LINE}"/>
   <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  ${o.winglet?`<path d="M199 198 191 168 178 172 184 206Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>`:""}
+  ${o.winglet?`<path d="M197 197C192 187 189 179 188 172L179 175C181 184 184 193 188 203Z" fill="${BODY}" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>`:""}
   ${o.engines>=4?nacelle(190,176,66,30,a.c):""}
   ${nacelle(226,150,84,37,a.c)}`;
 }
@@ -717,13 +718,16 @@ function drawSingle(a){ return `
   <ellipse cx="374" cy="106" rx="6" ry="38" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="2.4"/>`;
 }
 
-/* --- Hubschrauber --- */
+/* --- Hubschrauber (EC135-Bauart mit Fenestron im Heck) --- */
 function drawHeli(a){ return `
-  <path d="M206 98 88 92C80 91 77 101 85 104L146 126 206 126Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  <path d="M140 106 106 96C101 94 98 101 103 103L136 118Z" fill="${BODY}" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>
-  <path d="M100 98 80 40C77 32 66 34 66 43L70 102Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  <circle cx="72" cy="80" r="19" fill="${BODY}" stroke="${LINE}" stroke-width="3"/>
-  <path d="M58 66 86 94M86 66 58 94" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
+  <path d="M208 100 118 94C110 93 108 103 116 106L168 124 208 124Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
+  <path d="M158 108 126 98C121 96 118 104 123 106L154 120Z" fill="${BODY}" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>
+  <path d="M124 112 108 44C106 34 96 30 86 34L70 40C60 44 56 54 60 63L92 118Z" fill="${a.c}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
+  <path d="M108 44C106 34 96 30 86 34L70 40 74 52 104 41Z" fill="${a.stripe||"#C1121F"}" stroke="${LINE}" stroke-width="2.6" stroke-linejoin="round"/>
+  <circle cx="86" cy="66" r="17" fill="${BODY}" stroke="${LINE}" stroke-width="3"/>
+  <path d="M91.0 66.0L101.0 66.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M90.3 68.5L99.0 73.5" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M88.5 70.3L93.5 79.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M86.0 71.0L86.0 81.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M83.5 70.3L78.5 79.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M81.7 68.5L73.0 73.5" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M81.0 66.0L71.0 66.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M81.7 63.5L73.0 58.5" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M83.5 61.7L78.5 53.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M86.0 61.0L86.0 51.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M88.5 61.7L93.5 53.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M90.3 63.5L99.0 58.5" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/>
+  <circle cx="86" cy="66" r="5" fill="${LINE}"/>
+  <path d="M96 116 84 138C82 142 88 145 91 141L106 122Z" fill="${a.c}" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>
   <path d="M234 82C290 82 338 95 374 120 386 128 382 146 366 146L238 146C208 146 188 131 188 114 188 95 208 82 234 82Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
   <path d="M330 100C350 109 364 119 373 130L322 130C315 130 311 123 313 117L320 104C323 99 327 98 330 100Z" fill="#2C3E5A" stroke="${LINE}" stroke-width="2.6" stroke-linejoin="round"/>
   <rect x="212" y="98" width="92" height="19" rx="9.5" fill="#2C3E5A" stroke="${LINE}" stroke-width="2.6"/>
@@ -732,8 +736,7 @@ function drawHeli(a){ return `
   <ellipse cx="280" cy="46" rx="17" ry="7" fill="${LINE}"/>
   <path d="M92 38h376c8 0 8 11 0 11H92c-8 0-8-11 0-11Z" fill="${LINE}"/>
   <path d="M214 178h140" stroke="${LINE}" stroke-width="8" stroke-linecap="round"/>
-  <path d="M244 146 232 178M328 146 340 178" stroke="${LINE}" stroke-width="7" stroke-linecap="round"/>
-  <path d="M214 178h140" stroke="${a.c}" stroke-width="3" stroke-linecap="round"/>`;
+  <path d="M244 146 232 178M328 146 340 178" stroke="${LINE}" stroke-width="7" stroke-linecap="round"/>`;
 }
 
 /* --- Jumbo: Buckel hinter dem Cockpit, vier Triebwerke (747) --- */
@@ -811,7 +814,7 @@ function craftSVG(kind, a, flipped, opt){
                  jumbo:drawJumbo, super:drawSuper, beluga:drawBeluga }[kind] || drawJet;
   const inner = draw(a, opt);
   const box = kind==="single" ? "50 30 340 130"
-            : kind==="heli" ? "50 25 430 175"
+            : kind==="heli" ? "45 25 435 175"
             : kind==="super" ? "40 0 430 245" : "40 0 420 235";
   return `<svg viewBox="${box}" role="img">
     <g transform="${flipped?"scale(-1,1) translate(-500,0)":""}">${inner}</g></svg>`;
@@ -830,8 +833,8 @@ function kindOf(ac, info, rare){
 /* Hubschrauber tragen keine Airline. In Österreich verrät das Kennzeichen
    den Betreiber: OE-X.. ist der ÖAMTC (Christophorus), OE-B.. das
    Innenministerium (Polizei, Rufname Libelle). */
-const OEAMTC = { n:"ÖAMTC Christophorus", c:"#F2C300", e:"bars", ink:true };
-const POLIZEI= { n:"Polizei Österreich",  c:"#123A8C", e:"bars" };
+const OEAMTC = { n:"ÖAMTC Christophorus", c:"#F2C300", e:"bars", ink:true, stripe:"#C1121F" };
+const POLIZEI= { n:"Polizei Österreich",  c:"#123A8C", e:"bars", stripe:"#C1121F" };
 function airlineOf(callsign, reg, kind){
   const cs=(callsign||"").toUpperCase(), r=(reg||"").toUpperCase().replace("-","");
   if(kind==="heli"){
