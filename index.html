@@ -128,6 +128,17 @@
   .night .empty .temp{color:#fff}
   .night .empty .temp span{color:#8FA0BD}
   .night .empty .cond{color:#A9B8D2}
+  /* ---------------- Wind und Gesichter ---------------- */
+  .wind{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;
+        transition:opacity 900ms ease-out}
+  .wind.on{opacity:1}
+  .wind path{fill:none;stroke:#FFFFFF;stroke-linecap:round}
+  .night .wind path{stroke:#DCE6FF}
+
+  .face{position:absolute;z-index:4;pointer-events:none;opacity:0;
+        transition:opacity 620ms ease}
+  .face.on{opacity:1}
+  .face .eye{transition:transform 520ms ease, height 120ms ease}
   /* ---------------- Infoleiste ---------------- */
   .info{
     flex:0 0 auto;background:var(--panel);border-top:2.5px solid var(--ink);
@@ -329,6 +340,7 @@
     </div>
 
     <div class="craft2 hide" id="craft2"></div>
+    <svg class="wind" id="wind" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true"></svg>
     <div class="craft hide" id="craft"></div>
 
     <div class="empty" id="empty">
@@ -386,7 +398,7 @@
 
 <script>
 "use strict";
-const VERSION = "v14";
+const VERSION = "v16";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -946,9 +958,154 @@ function flap(el, text){
   });
 }
 
+
+/* ============ Wind beim Umblättern ============
+   Drei Varianten, je Auslösung wird zufällig eine gewählt.
+   Länge und Tempo richten sich nach der Geschwindigkeit der Maschine. */
+const REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let windTimer=null;
+
+function windLines(kmh, box){
+  /* box = ungefähre Lage des Flugzeugs im 1000x600-Raster */
+  const f=Math.max(.35, Math.min(1.6, kmh/650));      /* Tempofaktor */
+  const dur=(1.9-0.9*f).toFixed(2);
+  let s="", n=7;
+  for(let i=0;i<n;i++){
+    const y=box.y + 30 + i*(box.h-60)/(n-1);
+    const len=(70+150*f)*(0.6+Math.random()*0.7);
+    const x0=box.x+box.w*0.55+Math.random()*box.w*0.3;
+    const w=(1.4+Math.random()*1.2).toFixed(1);
+    s+=`<path d="M${x0} ${y}h-${len}" stroke-width="${w}" opacity="0">
+      <animate attributeName="opacity" values="0;.5;0" dur="${dur}s" begin="${(i*0.07).toFixed(2)}s" repeatCount="indefinite"/>
+      <animateTransform attributeName="transform" type="translate" from="60 0" to="-${(120+180*f).toFixed(0)} 0"
+        dur="${dur}s" begin="${(i*0.07).toFixed(2)}s" repeatCount="indefinite"/></path>`;
+  }
+  return s;
+}
+function windVortex(kmh, box){
+  const f=Math.max(.35, Math.min(1.6, kmh/650));
+  const dur=(2.4-1.0*f).toFixed(2);
+  const tips=[{x:box.x+box.w*0.30,y:box.y+box.h*0.86},{x:box.x+box.w*0.34,y:box.y+box.h*0.16}];
+  let s="";
+  tips.forEach((t,k)=>{
+    for(let i=0;i<3;i++){
+      const r=12+i*9, o=(0.42-i*0.1).toFixed(2);
+      s+=`<path d="M${t.x} ${t.y}c${-r} ${-r*0.5} ${-r*1.4} ${r*0.4} ${-r*2} ${r*0.1}"
+        stroke-width="${(1.8-i*0.35).toFixed(1)}" opacity="0">
+        <animate attributeName="opacity" values="0;${o};0" dur="${dur}s"
+          begin="${(k*0.3+i*0.22).toFixed(2)}s" repeatCount="indefinite"/>
+        <animateTransform attributeName="transform" type="translate" from="20 0"
+          to="-${(70+90*f).toFixed(0)} ${(i-1)*6}" dur="${dur}s"
+          begin="${(k*0.3+i*0.22).toFixed(2)}s" repeatCount="indefinite"/></path>`;
+    }
+  });
+  return s;
+}
+function windTrails(kmh, box){
+  const f=Math.max(.35, Math.min(1.6, kmh/650));
+  const dur=(2.6-1.1*f).toFixed(2);
+  const eng=[{x:box.x+box.w*0.44,y:box.y+box.h*0.70},{x:box.x+box.w*0.46,y:box.y+box.h*0.34}];
+  let s="";
+  eng.forEach((e,k)=>{
+    for(let i=0;i<2;i++){
+      const len=(110+190*f);
+      s+=`<path d="M${e.x} ${e.y+i*5-2}h-${len}" stroke-width="${(3.4-i*1.2).toFixed(1)}" opacity="0">
+        <animate attributeName="opacity" values="0;${(0.34-i*0.12).toFixed(2)};0" dur="${dur}s"
+          begin="${(k*0.35+i*0.18).toFixed(2)}s" repeatCount="indefinite"/>
+        <animateTransform attributeName="transform" type="translate" from="40 0"
+          to="-${(90+120*f).toFixed(0)} 0" dur="${dur}s"
+          begin="${(k*0.35+i*0.18).toFixed(2)}s" repeatCount="indefinite"/></path>`;
+    }
+  });
+  return s;
+}
+function gustFor(kmh, ms){
+  if(REDUCED) return;
+  const el=$("wind"); if(!el) return;
+  const c=$("craft");
+  if(!c || c.classList.contains("hide")) return;
+  /* Lage des Flugzeugs grob ins 1000x600-Raster übersetzen */
+  const sky=$("sky").getBoundingClientRect(), r=c.getBoundingClientRect();
+  const box={ x:(r.left-sky.left)/sky.width*1000, y:(r.top-sky.top)/sky.height*600,
+              w:r.width/sky.width*1000, h:r.height/sky.height*600 };
+  const kind=[windLines,windVortex,windTrails][Math.floor(Math.random()*3)];
+  el.innerHTML=kind(kmh||400, box);
+  el.classList.add("on");
+  clearTimeout(windTimer);
+  windTimer=setTimeout(()=>{ el.classList.remove("on");
+    setTimeout(()=>{ if(!el.classList.contains("on")) el.innerHTML=""; }, 1000);
+  }, (ms||1800)+2500);
+}
+
+/* ============ Gesicht an Sonne, Mond oder Wolke ============ */
+let faceEl=null, faceTimer=null;
+function makeFace(){
+  if(faceEl) return faceEl;
+  faceEl=document.createElement("div");
+  faceEl.className="face";
+  faceEl.innerHTML=`<svg viewBox="0 0 100 60" width="100%" height="100%">
+    <g id="eyes"><rect class="eye" id="eyeL" x="26" y="20" width="11" height="14" rx="5.5" fill="#1A1A18"/>
+    <rect class="eye" id="eyeR" x="63" y="20" width="11" height="14" rx="5.5" fill="#1A1A18"/></g></svg>`;
+  $("sky").appendChild(faceEl);
+  return faceEl;
+}
+function faceHost(){
+  const f=document.querySelector(".frame");
+  const dark=f.classList.contains("night");
+  const hidden=/wx-(overcast|rain|storm|snow|fog|drizzle)/.test(f.className);
+  if(!hidden) return { el:document.querySelector(".sun"), sleepy:dark };
+  const clouds=[...document.querySelectorAll(".cloud")].filter(c=>getComputedStyle(c).opacity>0.2);
+  return clouds.length ? { el:clouds[Math.floor(Math.random()*clouds.length)], sleepy:false } : null;
+}
+function showFace(){
+  if(REDUCED) return;
+  const host=faceHost(); if(!host||!host.el) return;
+  const sky=$("sky").getBoundingClientRect(), h=host.el.getBoundingClientRect();
+  const el=makeFace();
+  const w=Math.min(h.width*0.62, 74);
+  el.style.width=w+"px"; el.style.height=(w*0.6)+"px";
+  el.style.left=(h.left-sky.left + h.width/2 - w/2)+"px";
+  el.style.top =(h.top -sky.top  + h.height*0.42 - w*0.3)+"px";
+  const L=el.querySelector("#eyeL"), R=el.querySelector("#eyeR"), G=el.querySelector("#eyes");
+  L.setAttribute("height","14"); R.setAttribute("height","14");
+  G.style.transform="translateX(0)";
+  el.classList.add("on");
+
+  const seq=[];
+  if(host.sleepy){
+    /* müdes Blinzeln: Augen fallen langsam zu und öffnen sich wieder */
+    const blink=(t)=>{
+      seq.push(setTimeout(()=>{ L.style.transition=R.style.transition="height 420ms ease";
+        L.setAttribute("height","2"); R.setAttribute("height","2"); }, t));
+      seq.push(setTimeout(()=>{ L.setAttribute("height","14"); R.setAttribute("height","14"); }, t+620));
+    };
+    blink(500); blink(1600);
+    seq.push(setTimeout(()=>el.classList.remove("on"), 3000));
+  }else{
+    /* kurzer Blick zum Flugzeug, dann ein Zwinkern */
+    const c=$("craft");
+    if(c && !c.classList.contains("hide")){
+      const r=c.getBoundingClientRect();
+      const dir=(r.left+r.width/2) < (h.left+h.width/2) ? -1 : 1;
+      seq.push(setTimeout(()=>{ G.style.transform="translateX("+(dir*7)+"px)"; }, 420));
+      seq.push(setTimeout(()=>{ G.style.transform="translateX(0)"; }, 1500));
+    }
+    seq.push(setTimeout(()=>{ L.style.transition="height 90ms ease"; L.setAttribute("height","2"); }, 1900));
+    seq.push(setTimeout(()=>{ L.setAttribute("height","14"); }, 2080));
+    seq.push(setTimeout(()=>el.classList.remove("on"), 2900));
+  }
+}
+function scheduleFace(){
+  clearTimeout(faceTimer);
+  const wait=(120+Math.random()*180)*1000;      /* 2 bis 5 Minuten */
+  faceTimer=setTimeout(()=>{ showFace(); scheduleFace(); }, wait);
+}
+if(!REDUCED) scheduleFace();
+
 /* ============ Zustand ============ */
 let place=PLACES[Math.min(1,Math.max(0,store.get("place",0)))];
-let shownHex=null, timer=null, lastOk=0, gen=0;
+let shownHex=null, timer=null, lastOk=0, gen=0, lastBig=null, lastFlapAt=0;
+const FLAP_IDLE = 45000;   /* auch ohne Wechsel ab und zu durchblättern */
 
 function clock(){
   const t=new Date().toLocaleTimeString("de-AT",{hour:"2-digit",minute:"2-digit"});
@@ -1012,7 +1169,12 @@ async function showPlane(ac, second){
     const bigText = route&&route.from&&route.to
       ? route.from+" → "+route.to
       : (typeName || call || "Unbekannter Flug");
-    flap($("route"), bigText);
+    if(bigText!==lastBig || Date.now()-lastFlapAt > FLAP_IDLE){
+      lastBig=bigText; lastFlapAt=Date.now();
+      flap($("route"), bigText);
+      const kmh = typeof ac.gs==="number" ? Math.round(ac.gs*1.852) : 400;
+      setTimeout(()=>gustFor(kmh, bigText.length*40+600), 60);
+    }
 
     const km=haversine(place.lat,place.lon,ac.lat,ac.lon);
     const brg=bearing(place.lat,place.lon,ac.lat,ac.lon);
@@ -1050,7 +1212,10 @@ async function showEmpty(note, raw, ok){
   $("cond").textContent=w?condName(w.weather_code):"Wetterdaten nicht erreichbar";
   $("metaText").textContent="";
   $("rare").classList.remove("on");
-  flap($("route"), note ? "Keine Verbindung" : "Kein Flugzeug in Reichweite");
+  const emptyText = note ? "Keine Verbindung" : "Kein Flugzeug in Reichweite";
+  if(emptyText!==lastBig || Date.now()-lastFlapAt > FLAP_IDLE){
+    lastBig=emptyText; lastFlapAt=Date.now(); flap($("route"), emptyText);
+  }
   if(note) $("detail").textContent = note;
   else     $("detail").innerHTML = "Umkreis "+RADIUS_KM+" km · "+place.name
                                  + ' · <span class="ok">Online</span>';
