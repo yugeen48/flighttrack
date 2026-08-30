@@ -412,7 +412,7 @@
 
 <script>
 "use strict";
-const VERSION = "v22";
+const VERSION = "v23";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1138,7 +1138,7 @@ function showFace(){
 }
 function scheduleFace(){
   clearTimeout(faceTimer);
-  const wait=(120+Math.random()*180)*1000;      /* 2 bis 5 Minuten */
+  const wait=70*1000;                           /* alle 70 Sekunden */
   faceTimer=setTimeout(()=>{ showFace(); scheduleFace(); }, wait);
 }
 if(!REDUCED) scheduleFace();
@@ -1205,6 +1205,7 @@ async function showPlane(ac, second){
         + dirOf(bearing(place.lat,place.lon,s.lat,s.lon))
         + (b2.length?"<br>"+b2.join(" · "):"");
     } else { c2.classList.add("hide"); $("second").innerHTML=""; }
+    requestAnimationFrame(fitSecond);
     $("empty").classList.remove("show");
 
 
@@ -1419,6 +1420,16 @@ function useGeo(){
 /* ============ Technische Zeichnung ============ */
 let last = null;
 const numDe = n => n.toLocaleString("de-AT",{maximumFractionDigits:1});
+/* Wird der Ortsname lang, überschneidet die Tafel den Block des zweiten
+   Flugzeugs. Dann wird der Block ausgeblendet - die Route hat Vorrang. */
+function fitSecond(){
+  const r=$("route"), s=$("second"), info=$("info");
+  if(!s || !s.innerHTML) return;
+  s.style.display="";
+  const avail = info.clientWidth - 52 - 120;      /* Ränder und Kompassrose */
+  if(r.scrollWidth > avail - 250) s.style.display="none";
+}
+
 function paintTech(){
   if(!last){
     $("techDraw").innerHTML="";
