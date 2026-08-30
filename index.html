@@ -112,13 +112,9 @@
   .night .bands i:nth-child(6){background:#333F59}
   .night .glow{background:radial-gradient(120% 90% at 78% 18%,rgba(200,215,255,.16),transparent 60%)}
   .night .cloud{fill:#3A465F !important;opacity:.75}
-  .night .sun{                       /* wird zur Mondsichel */
-    background:#EFEDE0;border-color:rgba(239,237,224,.4);overflow:hidden;
-  }
-  .night .sun::after{                /* versetzter Schatten schneidet die Sichel */
-    content:"";position:absolute;inset:-2px;border-radius:50%;
-    background:#1B2540;transform:translate(30%,-18%);
-  }
+  .moon{display:none;position:absolute;inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px)}
+  .night .sun{background:none;border-color:transparent}
+  .night .moon{display:block}
   .night .top{color:#9FB0CC}
   .night .top .live b{color:#E6ECF7}
   .night .place{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.28);color:#9FB0CC}
@@ -330,7 +326,7 @@
     <svg class="cloud c1" viewBox="0 0 200 80"><path d="M28 78h150c14 0 22-10 22-21s-9-20-22-20c-3 0-6 .5-9 1.6C163 22 148 11 130 11c-14 0-26 6.6-33 17-4-2.6-9-4-14-4-13 0-24 9.6-26 22C25 47 0 53 0 65c0 8 7 13 15 13h13Z"/></svg>
     <svg class="cloud c2" viewBox="0 0 200 80"><path d="M28 78h150c14 0 22-10 22-21s-9-20-22-20c-3 0-6 .5-9 1.6C163 22 148 11 130 11c-14 0-26 6.6-33 17-4-2.6-9-4-14-4-13 0-24 9.6-26 22C25 47 0 53 0 65c0 8 7 13 15 13h13Z"/></svg>
     <svg class="cloud c3" viewBox="0 0 200 80"><path d="M28 78h150c14 0 22-10 22-21s-9-20-22-20c-3 0-6 .5-9 1.6C163 22 148 11 130 11c-14 0-26 6.6-33 17-4-2.6-9-4-14-4-13 0-24 9.6-26 22C25 47 0 53 0 65c0 8 7 13 15 13h13Z"/></svg>
-    <div class="sun"></div>
+    <div class="sun" id="sun"><svg class="moon" id="moon" viewBox="0 0 100 100" aria-hidden="true"></svg></div>
 
     <div class="top">
       <button class="place" id="btn-0" aria-pressed="true" aria-label="Home">
@@ -416,7 +412,7 @@
 
 <script>
 "use strict";
-const VERSION = "v21";
+const VERSION = "v22";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1001,8 +997,13 @@ function flap(el, text){
    ist, wird direkt am fertigen Bild abgelesen - so kann nichts auseinanderlaufen.
    Drei Stilvarianten, bei jeder Böe wird zufällig eine gewählt. */
 const REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-let windTimer=null, craftFlipped=false, lastKmh=400;
+let windTimer=null, craftFlipped=false, lastKmh=400, windFlip=null;
 
+function stopWind(){
+  const el=$("wind"); if(!el) return;
+  clearTimeout(windTimer);
+  el.classList.remove("on"); el.innerHTML="";
+}
 function gustFor(kmh, ms){
   if(REDUCED) return;
   const el=$("wind"), c=$("craft");
@@ -1042,6 +1043,33 @@ function gustFor(kmh, ms){
   }, (ms||1400)+2500);
 }
 
+
+/* ============ Mondphase ============
+   Näherung über den mittleren synodischen Monat. Gezeichnet wird nur der
+   beleuchtete Teil - der dunkle bleibt Himmel. */
+let moonLit={cx:50,w:92};
+function moonPhase(d){
+  const ref=Date.UTC(2000,0,6,18,14);
+  const days=((d||new Date()).getTime()-ref)/86400000;
+  return ((days/29.530588853)%1+1)%1;
+}
+function drawMoon(){
+  const el=$("moon"); if(!el) return;
+  const p=moonPhase();
+  const x=Math.cos(2*Math.PI*p);          /* +1 Neumond, -1 Vollmond */
+  const rx=(Math.abs(x)*46).toFixed(1);
+  const inner=x>0?0:1;
+  const waxing=p<0.5;
+  const d=`M50 4 A46 46 0 0 1 50 96 A${rx} 46 0 0 ${inner} 50 4 Z`;
+  el.innerHTML=`<g transform="${waxing?"":"scale(-1,1) translate(-100,0)"}">
+      <path d="${d}" fill="#EFEDE0"/></g>`;
+  /* Lage und Breite des hellen Teils merken, damit die Augen darin sitzen */
+  const te=50+46*x, cx=(te+96)/2, w=96-te;
+  moonLit = waxing ? {cx:cx, w:w} : {cx:100-cx, w:w};
+}
+drawMoon();
+setInterval(drawMoon, 3600000);
+
 /* ============ Gesicht an Sonne, Mond oder Wolke ============ */
 let faceEl=null, faceTimer=null;
 function makeFace(){
@@ -1067,11 +1095,19 @@ function showFace(){
   const host=faceHost(); if(!host||!host.el) return;
   const sky=$("sky").getBoundingClientRect(), h=host.el.getBoundingClientRect();
   const el=makeFace();
-  const w=Math.min(h.width*0.62, 74);
+  const isMoon = host.sleepy && host.el.id==="sun";
+  /* Beim Mond sitzen die Augen mittig im beleuchteten Teil und rücken
+     enger zusammen, je schmaler die Sichel ist. */
+  const s   = isMoon ? Math.max(0.22, Math.min(1, moonLit.w/92)) : 1;
+  const w   = Math.min(h.width*0.62*(isMoon?Math.max(0.5,s):1), 74);
+  const midX= isMoon ? h.width*(moonLit.cx/100) : h.width/2;
   el.style.width=w+"px"; el.style.height=(w*0.6)+"px";
-  el.style.left=(h.left-sky.left + h.width/2 - w/2)+"px";
+  el.style.left=(h.left-sky.left + midX - w/2)+"px";
   el.style.top =(h.top -sky.top  + h.height*0.42 - w*0.3)+"px";
   const L=el.querySelector("#eyeL"), R=el.querySelector("#eyeR"), G=el.querySelector("#eyes");
+  const gap=28*s;
+  L.setAttribute("x", (50-gap/2-11).toFixed(1));
+  R.setAttribute("x", (50+gap/2).toFixed(1));
   L.setAttribute("height","14"); R.setAttribute("height","14");
   G.style.transform="translateX(0)";
   el.classList.add("on");
@@ -1144,6 +1180,9 @@ async function showPlane(ac, second){
   const icao=(info&&info.icao)||ac.t||"";
   const f=features(icao); f.cargo=isCargo(call,icao); a.cargo=f.cargo;
   const paint=()=>{
+    /* Läuft noch eine Böe aus der alten Blickrichtung, sofort abbrechen -
+       sonst zieht der Wind kurz in die falsche Richtung. */
+    if(flipped!==windFlip || changed){ windFlip=flipped; stopWind(); }
     $("craft").innerHTML=craftSVG(kind,a,flipped,f);
     $("craft").style.width=craftWidth(f.len)+"%";
     $("craft").classList.remove("hide");
@@ -1213,6 +1252,7 @@ async function showEmpty(note, raw, ok){
   const w=await getWeather(place);
   $("craft").classList.add("hide");
   $("craft2").classList.add("hide");
+  stopWind();
   $("empty").classList.add("show");
   applyWeather(w);
   $("temp").innerHTML=w?`${Math.round(w.temperature_2m)}<span>°</span>`:"";
