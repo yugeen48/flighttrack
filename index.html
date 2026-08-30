@@ -386,6 +386,7 @@
 
 <script>
 "use strict";
+const VERSION = "v14";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1213,7 +1214,7 @@ function paintTech(){
     $("techL2").textContent=""; $("techL3").textContent="";
     $("techT1").textContent="Typ: —";
     $("techT2").textContent="Kennzeichen: —";
-    $("techT3").textContent="Schematische Darstellung · Daten: adsb.fi";
+    $("techT3").textContent="Schematische Darstellung · Daten: adsb.fi · "+VERSION;
     return;
   }
   $("techDraw").innerHTML=craftSVG(last.kind,last.a,false);
@@ -1231,7 +1232,7 @@ function paintTech(){
                               : "Typisch rund "+seat+" Sitzplätze");
   $("techT1").textContent="Typ: "+(last.typeName||last.icao||"unbekannt").toUpperCase();
   $("techT2").textContent="Kennzeichen: "+[last.reg,last.call].filter(Boolean).join(" · ").toUpperCase();
-  $("techT3").textContent="Schematische Darstellung · Daten: adsb.fi";
+  $("techT3").textContent="Schematische Darstellung · Daten: adsb.fi · "+VERSION;
 }
 function toggleTech(on){
   const t=$("tech");
