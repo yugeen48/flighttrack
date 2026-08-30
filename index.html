@@ -147,6 +147,22 @@
     padding-right:120px;
   }
   .route .arrow{font-weight:400;margin:0 .18em}
+  /* Fallblatt-Anzeige wie am Flughafen */
+  .route{display:flex;gap:4px;flex-wrap:nowrap;overflow:hidden;text-transform:none}
+  .flap{
+    position:relative;flex:0 0 auto;width:.66em;height:1.16em;line-height:1.16em;
+    background:#1A1A18;color:#F4F1E6;border-radius:3px;text-align:center;
+    font-weight:700;overflow:hidden;
+  }
+  .flap.gap{background:none;width:.34em}
+  .flap.wide{width:.86em}
+  .flap::after{content:"";position:absolute;left:0;right:0;top:50%;
+    height:1px;background:rgba(255,255,255,.22)}
+  .flap b{display:block;font-weight:700;transform-origin:50% 0%}
+  .flap.turn b{animation:flap 110ms ease-in}
+  @keyframes flap{0%{transform:rotateX(0)}55%{transform:rotateX(-88deg)}
+    56%{transform:rotateX(88deg)}100%{transform:rotateX(0)}}
+  .night .flap{background:#0E1524}
   .detail{
     margin:7px 0 0;font-family:var(--mono);font-size:12.5px;color:#4E4A42;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:120px;
@@ -445,6 +461,47 @@ const AIRLINES = {
   ABW:{n:"AirBridgeCargo",    c:"#2A5C9A", e:"bars"},
   GAC:{n:"Gulf Air",          c:"#B8912F", e:"bars"}
 };
+/* Töchter und weitere häufige Gesellschaften über Wien */
+Object.assign(AIRLINES, {
+  WMT:{n:"Wizz Air Malta",c:"#C6007E",e:"bars"}, WUK:{n:"Wizz Air UK",c:"#C6007E",e:"bars"},
+  WAZ:{n:"Wizz Air Abu Dhabi",c:"#C6007E",e:"bars"},
+  RUK:{n:"Ryanair UK",c:"#073590",e:"circle",ec:"#F1C933"},
+  MAY:{n:"Malta Air",c:"#073590",e:"circle",ec:"#F1C933"},
+  RYS:{n:"Buzz",c:"#073590",e:"circle",ec:"#F1C933"},
+  EZS:{n:"easyJet Switzerland",c:"#FF6600",e:"bars"},
+  OCN:{n:"Discover Airlines",c:"#0A1E4F",e:"bars"},
+  CLH:{n:"Lufthansa CityLine",c:"#0A1E4F",e:"circle",ec:"#F0BE00"},
+  BEL:{n:"Brussels Airlines",c:"#0A2C57",e:"bars"},
+  FHY:{n:"Freebird Airlines",c:"#0E5AA8",e:"bars"},
+  ASL:{n:"Air Serbia",c:"#1B3F8B",e:"bars"},
+  LZB:{n:"Bulgaria Air",c:"#0B4DA1",e:"bars"},
+  TAR:{n:"Tunisair",c:"#B01B2E",e:"bars"},
+  MSC:{n:"Air Cairo",c:"#0A5CA8",e:"bars"},
+  ISR:{n:"Israir",c:"#1D3F94",e:"bars"},
+  FDB:{n:"flydubai",c:"#1B2E6E",e:"bars"},
+  KZR:{n:"Air Astana",c:"#0E7DC2",e:"bars"},
+  UZB:{n:"Uzbekistan Airways",c:"#0B57A4",e:"bars"},
+  AHY:{n:"Azerbaijan Airlines",c:"#0E4C92",e:"bars"},
+  TGZ:{n:"Georgian Airways",c:"#B01B2E",e:"bars"},
+  CYP:{n:"Cyprus Airways",c:"#1E4C8A",e:"bars"},
+  SEH:{n:"Sky Express",c:"#1B4FA0",e:"bars"},
+  MBU:{n:"Marabu",c:"#0F8C8C",e:"bars"},
+  BCS:{n:"DHL Air",c:"#D4A00A",e:"bars",ink:true},
+  ABR:{n:"ASL Airlines",c:"#0B4DA1",e:"bars"},
+  QTR:{n:"Qatar Airways",c:"#5C0632",e:"bars"},
+  MEA:{n:"Middle East Airlines",c:"#0E5C3A",e:"bars"},
+  IAW:{n:"Iraqi Airways",c:"#0B7A4B",e:"bars"},
+  RJA:{n:"Royal Jordanian",c:"#4A2B6B",e:"bars"},
+  SVA:{n:"Saudia",c:"#0E6E4A",e:"bars"},
+  AFL:{n:"Aeroflot",c:"#0B3B8C",e:"bars"},
+  TRA:{n:"Transavia",c:"#0BAF5A",e:"bars"},
+  HLX:{n:"Hahn Air",c:"#2C3E5A",e:"bars"},
+  GEC:{n:"Lufthansa Cargo",c:"#0A1E4F",e:"circle",ec:"#F0BE00"},
+  UPS:{n:"UPS Airlines",c:"#4A2C10",e:"bars"},
+  FDX:{n:"FedEx",c:"#4B0F82",e:"bars"},
+  AEE:{n:"Aegean",c:"#003A70",e:"bars"},
+  NSZ:{n:"Norse Atlantic",c:"#D81939",e:"bars"}
+});
 const DEFAULT_AIRLINE = { c:"#54637A", e:"bars" };
 
 /* ============ Helfer ============ */
@@ -576,18 +633,45 @@ const tail = (a, path, t) => `
   <path d="${path}" fill="${a.c}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
   <g clip-path="url(#finclip)">${emblem(a,t)}</g>`;
 
-/* --- Verkehrsflugzeug --- */
-function drawJet(a){ return `
+/* --- Verkehrsflugzeug, parametrisch ---
+   nose: airbus rund, boeing spitzer · engines 2 oder 4 · winglet · band = Länge
+   des Fensterbands, richtet sich nach der echten Rumpflänge. */
+const FUSE_NOSE = {
+  airbus:"M446 118C443 106 424 97 396 94L118 83C88 82 70 80 58 78 54 77 52 81 55 83L140 130C150 135 160 138 172 138L390 138C424 136 444 130 446 118Z",
+  boeing:"M456 121C449 108 428 97 398 94L118 83C88 82 70 80 58 78 54 77 52 81 55 83L140 130C150 135 160 138 172 138L392 138C430 137 452 131 456 121Z"
+};
+const COCKPIT = {
+  airbus:"M396 97C411 100 425 106 433 112L400 106Z",
+  boeing:"M398 97C414 100 430 107 440 114L402 106Z"
+};
+function nacelle(x,y,w,h,c){
+  const r=h/2, cx=x+w-r;
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${c}" stroke="${LINE}" stroke-width="3.2"/>`
+       + `<path d="M${cx} ${y+1.6}A${r-1.6} ${r-1.6} 0 0 1 ${cx} ${y+h-1.6}Z" fill="${BODY}"/>`;
+}
+/* Triebwerke am hinteren Flügel: etwas kleiner, blasser, vor dem Rumpf
+   gezeichnet - der Rumpf deckt sie danach teilweise ab. */
+function farNacelle(x,y,w,h,c){
+  return nacelle(x,y,w,h,c);
+}
+function drawJet(a,o){
+  o = o || {};
+  const nose = o.nose==="boeing" ? "boeing" : "airbus";
+  const band = Math.max(96, Math.min(208, o.band||146));
+  return `
   <path d="M298 94 188 40 168 43 280 108Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  ${o.engines>=4?farNacelle(184,46,54,24,a.c):""}
+  ${farNacelle(214,64,68,30,a.c)}
   <path d="M134 84 60 60C54 58 50 65 56 68L120 102C128 106 136 102 136 94Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
   ${tail(a, FIN_JET, false)}
-  <path d="${FUSE_JET}" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <path d="M168 113H396" stroke="${LINE}" stroke-width="1.6" opacity=".28"/>
-  <rect x="204" y="105" width="146" height="14" rx="7" fill="${a.c}"/>
-  <path d="M396 98C412 101 427 107 435 113L400 107Z" fill="${LINE}"/>
+  <path d="${FUSE_NOSE[nose]}" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
+  <path d="M168 113H${196+band}" stroke="${LINE}" stroke-width="1.6" opacity=".28"/>
+  <rect x="204" y="105" width="${band}" height="14" rx="7" fill="${a.c}"/>
+  <path d="${COCKPIT[nose]}" fill="${LINE}"/>
   <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  <rect x="226" y="150" width="84" height="37" rx="18.5" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
-  <path d="M292 151.5a18.5 18.5 0 0 1 0 34Z" fill="${BODY}"/>`;
+  ${o.winglet?`<path d="M199 198 191 168 178 172 184 206Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>`:""}
+  ${o.engines>=4?nacelle(190,176,66,30,a.c):""}
+  ${nacelle(226,150,84,37,a.c)}`;
 }
 
 /* --- Regionaljet: T-Leitwerk, Triebwerke am Heck --- */
@@ -597,48 +681,66 @@ function drawRegional(a){ return `
   <path d="M50 16H152C159 16 163 20 163 25 163 30 159 34 152 34L50 34C43 34 39 30 39 25 39 20 43 16 50 16Z" fill="${a.c}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
   <path d="${FUSE_REG}" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
   <path d="M296 116 206 190 184 200 240 136Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  <rect x="148" y="92" width="78" height="35" rx="17.5" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
-  <path d="M208 93.5a17.5 17.5 0 0 1 0 32Z" fill="${BODY}"/>
+  ${nacelle(148,92,78,35,a.c)}
+  ${farNacelle(160,74,66,28,a.c)}
   <g fill="${LINE}"><circle cx="252" cy="103" r="5"/><circle cx="276" cy="104" r="5"/><circle cx="300" cy="105" r="5"/><circle cx="324" cy="106" r="5"/><circle cx="348" cy="107" r="5"/></g>
   <path d="M390 99C406 102 420 107 428 113L394 107Z" fill="${LINE}"/>`;
 }
 
-/* --- Turboprop: Hochdecker mit Propeller --- */
+/* --- Turboprop mit zwei Motoren am Hochdecker (ATR, Dash 8) --- */
 function drawProp(a){ return `
   ${tail(a, FIN_T, true)}
   <path d="M50 16H152C159 16 163 20 163 25 163 30 159 34 152 34L50 34C43 34 39 30 39 25 39 20 43 16 50 16Z" fill="${a.c}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
   <path d="${FUSE_REG}" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <rect x="212" y="102" width="138" height="13" rx="6.5" fill="${a.c}"/>
+  <rect x="206" y="100" width="150" height="13" rx="6.5" fill="${a.c}"/>
   <path d="M390 99C406 102 420 107 428 113L394 107Z" fill="${LINE}"/>
-  <path d="M360 78 154 96C147 97 147 108 154 109L364 96C372 95 371 79 360 78Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  <rect x="238" y="82" width="76" height="32" rx="16" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
-  <ellipse cx="316" cy="96" rx="7" ry="46" fill="${a.c}" opacity=".22" stroke="${LINE}" stroke-width="2.4"/>
-  <path d="M304 84a16 16 0 0 1 0 28Z" fill="${BODY}"/>`;
+  <path d="M352 74 150 92C143 93 143 104 150 105L356 90C364 89 363 75 352 74Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
+  <g>
+    <rect x="176" y="86" width="62" height="27" rx="13.5" fill="${a.c}" stroke="${LINE}" stroke-width="3"/>
+    <ellipse cx="240" cy="99" rx="6" ry="36" fill="${a.c}" opacity=".25" stroke="${LINE}" stroke-width="2.2"/>
+    <path d="M231 87.5a13 13 0 0 1 0 24Z" fill="${BODY}"/>
+  </g>
+  <rect x="236" y="78" width="74" height="32" rx="16" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
+  <ellipse cx="312" cy="92" rx="7" ry="44" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="2.4"/>
+  <path d="M302 80a15 15 0 0 1 0 26Z" fill="${BODY}"/>`;
+}
+
+/* --- Einmotorige Propellermaschine (PC-12, Cessna, TBM) --- */
+function drawSingle(a){ return `
+  <path d="M120 92 66 74C61 72 58 78 62 81L108 104Z" fill="${BODY}" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>
+  <path d="M148 96 116 44C114 40 110 38 106 38L94 38C89 38 86 43 88 48L104 96Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M372 108C368 100 356 94 338 92L128 86C104 85 86 84 76 82 72 81 70 85 73 87L134 122C142 126 150 128 160 128L330 128C356 126 370 118 372 108Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
+  <path d="M300 84 168 96C162 97 162 106 168 107L306 98C313 97 312 85 300 84Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  <g fill="${LINE}"><circle cx="214" cy="102" r="4.5"/><circle cx="238" cy="102" r="4.5"/><circle cx="262" cy="103" r="4.5"/></g>
+  <path d="M300 96C316 98 330 102 340 108L306 104Z" fill="${LINE}"/>
+  <rect x="336" y="96" width="34" height="18" rx="9" fill="${a.c}" stroke="${LINE}" stroke-width="2.8"/>
+  <ellipse cx="374" cy="106" rx="6" ry="38" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="2.4"/>`;
 }
 
 /* --- Hubschrauber --- */
 function drawHeli(a){ return `
-  <path d="M214 118 74 108C66 107 62 115 69 119L124 142 214 142Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  <path d="M92 112 66 70C63 65 56 67 56 73L62 116Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  <path d="M120 116 96 92C93 89 89 93 91 97L104 122Z" fill="${BODY}" stroke="${LINE}" stroke-width="2.6" stroke-linejoin="round"/>
-  <circle cx="64" cy="88" r="20" fill="none" stroke="${LINE}" stroke-width="3"/>
-  <path d="M50 74 78 102M78 74 50 102" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
-  <path d="M300 88C334 88 360 101 376 122 382 131 375 142 364 142L218 142C190 142 170 129 170 114 170 98 194 88 218 88Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <path d="M330 100C346 107 358 116 366 126L320 126C315 126 312 121 314 116L320 103C322 99 326 98 330 100Z" fill="#2C3E5A" stroke="${LINE}" stroke-width="2.6" stroke-linejoin="round"/>
-  <rect x="216" y="98" width="86" height="18" rx="9" fill="#2C3E5A" stroke="${LINE}" stroke-width="2.6"/>
-  <path d="M216 124h150" stroke="${a.c}" stroke-width="9"/>
-  <path d="M244 60h46c6 0 10 4 10 10v18h-66V70c0-6 4-10 10-10Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  <rect x="258" y="40" width="18" height="24" rx="6" fill="${LINE}"/>
-  <path d="M78 44h396c7 0 7 11 0 11H78c-7 0-7-11 0-11Z" fill="${LINE}"/>
-  <path d="M258 30h18v12h-18z" fill="${LINE}"/>
-  <path d="M204 176h152" stroke="${LINE}" stroke-width="8" stroke-linecap="round"/>
-  <path d="M236 142 226 176M324 142 334 176" stroke="${LINE}" stroke-width="6" stroke-linecap="round"/>
-  <path d="M204 176h152" stroke="${a.c}" stroke-width="3" stroke-linecap="round" opacity=".9"/>`;
+  <path d="M206 98 88 92C80 91 77 101 85 104L146 126 206 126Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
+  <path d="M140 106 106 96C101 94 98 101 103 103L136 118Z" fill="${BODY}" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>
+  <path d="M100 98 80 40C77 32 66 34 66 43L70 102Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="72" cy="80" r="19" fill="${BODY}" stroke="${LINE}" stroke-width="3"/>
+  <path d="M58 66 86 94M86 66 58 94" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
+  <path d="M234 82C290 82 338 95 374 120 386 128 382 146 366 146L238 146C208 146 188 131 188 114 188 95 208 82 234 82Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
+  <path d="M330 100C350 109 364 119 373 130L322 130C315 130 311 123 313 117L320 104C323 99 327 98 330 100Z" fill="#2C3E5A" stroke="${LINE}" stroke-width="2.6" stroke-linejoin="round"/>
+  <rect x="212" y="98" width="92" height="19" rx="9.5" fill="#2C3E5A" stroke="${LINE}" stroke-width="2.6"/>
+  <path d="M240 70h72c8 0 12 5 12 11v7h-96v-7c0-6 4-11 12-11Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  <rect x="272" y="48" width="16" height="24" rx="4" fill="${LINE}"/>
+  <ellipse cx="280" cy="46" rx="17" ry="7" fill="${LINE}"/>
+  <path d="M92 38h376c8 0 8 11 0 11H92c-8 0-8-11 0-11Z" fill="${LINE}"/>
+  <path d="M214 178h140" stroke="${LINE}" stroke-width="8" stroke-linecap="round"/>
+  <path d="M244 146 232 178M328 146 340 178" stroke="${LINE}" stroke-width="7" stroke-linecap="round"/>
+  <path d="M214 178h140" stroke="${a.c}" stroke-width="3" stroke-linecap="round"/>`;
 }
 
 /* --- Jumbo: Buckel hinter dem Cockpit, vier Triebwerke (747) --- */
 function drawJumbo(a){ return `
   <path d="M298 94 188 40 168 43 280 108Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  ${farNacelle(184,46,54,24,a.c)}
+  ${farNacelle(214,64,68,30,a.c)}
   <path d="M134 84 60 60C54 58 50 65 56 68L120 102C128 106 136 102 136 94Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
   ${tail(a, FIN_JET, false)}
   <path d="M450 120C447 108 432 99 408 94 400 72 378 60 350 61 326 62 310 72 302 88L118 83C88 82 70 80 58 78 54 77 52 81 55 83L140 130C150 135 160 138 172 138L392 138C426 136 447 132 450 120Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
@@ -656,6 +758,8 @@ function drawJumbo(a){ return `
 /* --- Doppelstock über die ganze Länge (A380) --- */
 function drawSuper(a){ return `
   <path d="M300 96 186 40 166 43 282 110Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  ${farNacelle(182,46,56,25,a.c)}
+  ${farNacelle(214,66,70,31,a.c)}
   <path d="M138 88 58 62C52 60 48 67 54 70L122 108C130 112 140 108 140 100Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
   ${tail(a, FIN_JET, false)}
   <path d="M452 124C449 110 430 100 400 96L118 84C88 83 70 81 58 79 54 78 52 82 55 84L142 142C152 148 162 152 174 152L392 152C426 150 448 138 452 124Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
@@ -672,6 +776,7 @@ function drawSuper(a){ return `
 /* --- Beluga: Buckel über fast die ganze Länge --- */
 function drawBeluga(a){ return `
   <path d="M296 96 190 44 170 47 278 110Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  ${farNacelle(216,66,66,29,a.c)}
   <path d="M134 84 60 60C54 58 50 65 56 68L120 102C128 106 136 102 136 94Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
   ${tail(a, FIN_JET, false)}
   <path d="M452 122C449 110 438 102 422 98L406 96C400 66 370 44 320 42 258 40 198 54 166 78L118 83C88 82 70 80 58 78 54 77 52 81 55 83L140 130C150 135 160 138 172 138L392 138C426 136 449 134 452 122Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
@@ -682,11 +787,31 @@ function drawBeluga(a){ return `
   <path d="M292 151.5a18.5 18.5 0 0 1 0 34Z" fill="${BODY}"/>`;
 }
 
-function craftSVG(kind, a, flipped){
-  const draw = { heli:drawHeli, prop:drawProp, regional:drawRegional,
+
+/* Merkmale je Muster: Herstellernase, Winglets, Triebwerkszahl, Größe */
+const FOUR_ENG = /^(A388|A34|B74|B52|IL96|AN12|AN22|AN124|A124)/;
+const WINGLET  = /^(A20N|A21N|A19N|B38M|B39M|B3XM|B738|B739|B737|B77W|B78|B789|B788|A35|A359|A35K|A339|A33N|BCS|E29|E19[05]W|B748|A321|A320|A319|CRJ9|CRJX|E75|E75L)/;
+function features(icao){
+  const t=(icao||"").toUpperCase();
+  const s=SPECS[t];
+  const len = s ? s[0] : 38;
+  return {
+    nose: /^B[0-9]/.test(t) ? "boeing" : "airbus",
+    winglet: WINGLET.test(t),
+    engines: FOUR_ENG.test(t) ? 4 : 2,
+    band: Math.round(96 + (len-30)*3.2),
+    len: len
+  };
+}
+/* Bildbreite nach echter Rumpflänge - eine 747 soll größer wirken als ein Regionaljet */
+function craftWidth(len){ return Math.max(46, Math.min(94, 40 + len*0.78)); }
+
+function craftSVG(kind, a, flipped, opt){
+  const draw = { heli:drawHeli, prop:drawProp, single:drawSingle, regional:drawRegional,
                  jumbo:drawJumbo, super:drawSuper, beluga:drawBeluga }[kind] || drawJet;
-  const inner = draw(a);
-  const box = kind==="heli" ? "40 40 440 160"
+  const inner = draw(a, opt);
+  const box = kind==="single" ? "50 30 340 130"
+            : kind==="heli" ? "50 25 430 175"
             : kind==="super" ? "40 0 430 245" : "40 0 420 235";
   return `<svg viewBox="${box}" role="img">
     <g transform="${flipped?"scale(-1,1) translate(-500,0)":""}">${inner}</g></svg>`;
@@ -697,7 +822,8 @@ function kindOf(ac, info, rare){
   if(/^A388/.test(t)) return "super";
   if(/^(B74|BLCF|BSCA)/.test(t)) return "jumbo";
   if(/^(A3ST|A37L|BLGA)/.test(t)) return "beluga";
-  if(/^(AT4|AT5|AT7|DH8|SF3|SW4|C20|C4|PC1|PC2|TBM|BE2|BE9|B19|D22|AN2|L410|C82|C17|A40|SB20)/.test(t)) return "prop";
+  if(/^(PC12|PC6|TBM|C82|C72|C17|C20|C21|SR2|DA4|DA6|M20|P28|BE33|BE35|BE36|BE58|AC|EPIC|EVOT|PA46|P46|TB2)/.test(t)) return "single";
+  if(/^(AT4|AT5|AT7|DH8|SF3|SW4|C4|PC2|BE2|BE9|B19|D22|AN2|L410|A40|SB20|F50|F27|E12)/.test(t)) return "prop";
   if(/^(E13|E14|E17|CRJ|GLF|CL3|CL6|C55|C56|C68|C25|F2T|FA7|FA8|E55|E50|E35|LJ|BE4|GL5|GL7|H25)/.test(t)) return "regional";
   return "jet";
 }
@@ -789,6 +915,35 @@ async function getWeather(p){
   }catch(e){ return weather.key===p.key?weather.d:null; }
 }
 
+
+/* ============ Fallblatt-Anzeige ============ */
+const FLAP_CHARS="ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ0123456789→·-";
+let flapTimers=[];
+function flap(el, text){
+  flapTimers.forEach(clearTimeout); flapTimers=[];
+  const chars=[...String(text).toUpperCase()];
+  el.innerHTML="";
+  const cells=chars.map(ch=>{
+    const d=document.createElement("div");
+    d.className="flap"+(ch===" "?" gap":"")+(ch==="→"?" wide":"");
+    d.innerHTML="<b>"+(ch===" "?"&nbsp;":ch)+"</b>";
+    el.appendChild(d); return d;
+  });
+  if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  cells.forEach((cell,i)=>{
+    const ch=chars[i];
+    if(ch===" ") return;
+    const steps=4+(i%6);
+    for(let s=0;s<steps;s++){
+      flapTimers.push(setTimeout(()=>{
+        const b=cell.firstChild;
+        b.textContent = s===steps-1 ? ch : FLAP_CHARS[Math.floor(Math.random()*FLAP_CHARS.length)];
+        cell.classList.remove("turn"); void cell.offsetWidth; cell.classList.add("turn");
+      }, i*38 + s*105));
+    }
+  });
+}
+
 /* ============ Zustand ============ */
 let place=PLACES[Math.min(1,Math.max(0,store.get("place",0)))];
 let shownHex=null, timer=null, lastOk=0, gen=0;
@@ -818,8 +973,11 @@ async function showPlane(ac, second){
   const changed=shownHex!==ac.hex;
   shownHex=ac.hex;
 
+  const icao=(info&&info.icao)||ac.t||"";
+  const f=features(icao);
   const paint=()=>{
-    $("craft").innerHTML=craftSVG(kind,a,flipped);
+    $("craft").innerHTML=craftSVG(kind,a,flipped,f);
+    $("craft").style.width=craftWidth(f.len)+"%";
     $("craft").classList.remove("hide");
 
     /* zweite Maschine ohne zusätzliche Abfragen, nur aus den ADS-B-Feldern */
@@ -829,7 +987,8 @@ async function showPlane(ac, second){
       const r2=(s.category||"").toUpperCase()==="A7"?{kind:"heli"}:{kind:null};
       const k2=kindOf(s,null,r2);
       const a2=airlineOf(call2,s.r||"",k2);
-      c2.innerHTML=craftSVG(k2,a2,((s.track||90)%360)>180);
+      const f2=features(s.t||"");
+      c2.innerHTML=craftSVG(k2,a2,((s.track||90)%360)>180,f2);
       c2.classList.remove("hide");
       const b2=[];
       if(typeof s.alt_baro==="number") b2.push(thou(s.alt_baro*0.3048)+" m");
@@ -841,16 +1000,17 @@ async function showPlane(ac, second){
     } else { c2.classList.add("hide"); $("second").innerHTML=""; }
     $("empty").classList.remove("show");
 
+
     const typeName=info&&(info.type||info.icao)
       ? (info.manufacturer?info.manufacturer+" "+info.type:(info.type||info.icao))
       : (ac.desc||ac.t||"");
     const airlineName=(route&&route.airline)||a.n||"";
     $("metaText").textContent=[airlineName,call,typeName].filter(Boolean).join(" · ").toUpperCase();
     $("rare").classList.toggle("on",rare.rare);
-
-    $("route").innerHTML = route&&route.from&&route.to
-      ? `${route.from}<span class="arrow">→</span>${route.to}`
-      : (call||"Unbekannter Flug");
+    const bigText = route&&route.from&&route.to
+      ? route.from+" → "+route.to
+      : (typeName || call || "Unbekannter Flug");
+    flap($("route"), bigText);
 
     const km=haversine(place.lat,place.lon,ac.lat,ac.lon);
     const brg=bearing(place.lat,place.lon,ac.lat,ac.lon);
@@ -888,7 +1048,7 @@ async function showEmpty(note, raw, ok){
   $("cond").textContent=w?condName(w.weather_code):"Wetterdaten nicht erreichbar";
   $("metaText").textContent="";
   $("rare").classList.remove("on");
-  $("route").textContent = note ? "Keine Verbindung" : "Kein Flugzeug in Reichweite";
+  flap($("route"), note ? "Keine Verbindung" : "Kein Flugzeug in Reichweite");
   if(note) $("detail").textContent = note;
   else     $("detail").innerHTML = "Umkreis "+RADIUS_KM+" km · "+place.name
                                  + ' · <span class="ok">Online</span>';
@@ -982,7 +1142,7 @@ function demoTick(){
     applyWeather({weather_code:2,is_day:(new Date().getHours()<7||new Date().getHours()>20)?0:1});
     $("temp").innerHTML="24<span>°</span>"; $("cond").textContent="Leicht bewölkt";
     $("metaText").textContent=""; $("rare").classList.remove("on");
-    $("route").textContent="Kein Flugzeug in Reichweite";
+    flap($("route"),"Kein Flugzeug in Reichweite");
     $("detail").textContent="Umkreis "+RADIUS_KM+" km · "+place.name;
     $("reg").textContent=""; $("second").innerHTML="";
     $("compassBox").hidden=true; return;
