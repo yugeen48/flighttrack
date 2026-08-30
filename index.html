@@ -82,6 +82,7 @@
   }
   .craft svg{width:100%;height:auto;display:block;overflow:visible}
   .craft.hide{opacity:0}
+  .craft{cursor:pointer;pointer-events:auto}
   /* Zweite Maschine: kleiner, höher, blasser - liegt hinter der ersten */
   .craft2{
     position:absolute;z-index:1;left:31%;top:24%;width:30%;max-width:340px;
@@ -291,6 +292,12 @@
   .tech .spec{margin:12px 26px 22px;align-self:flex-end;border:1px solid #6E88C6;font-size:11.5px;letter-spacing:.1em}
   .tech .spec div{padding:6px 12px;border-bottom:1px solid #6E88C6;white-space:nowrap}
   .tech .spec div:last-child{border-bottom:0;color:#A9BEEC}
+  .tech .rarelist{padding:0 26px;font-size:11px;letter-spacing:.08em;color:#A9BEEC;
+    max-height:22%;overflow:auto}
+  .tech .rarelist h4{margin:0 0 6px;font-size:10px;letter-spacing:.22em;
+    text-transform:uppercase;color:#7E93C8;font-weight:400}
+  .tech .rarelist div{padding:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tech .rarelist:empty{display:none}
   .gear[aria-pressed="true"]{color:var(--ink);border-color:var(--ink);background:#fff}
   .tech .place{background:rgba(255,255,255,.10);border-color:#8FA6DC;color:#CFDCFF}
   @media (max-width:700px){
@@ -378,6 +385,7 @@
       <span>Live · <b id="clock2">–</b></span>
     </div>
     <div class="draw" id="techDraw"></div>
+    <div class="rarelist" id="rareList"></div>
     <div class="dims">
       <svg class="bar" viewBox="0 0 600 16" aria-hidden="true">
         <path d="M6 8h588M6 8l14-6M6 8l14 6M594 8l-14-6M594 8l-14 6" fill="none" stroke="#DCE6FF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -390,6 +398,7 @@
       <div id="techT1">Typ: —</div>
       <div id="techT2">Kennzeichen: —</div>
       <div id="techT3">Schematische Darstellung</div>
+      <div id="techT4"></div>
     </div>
   </div>
 
@@ -414,7 +423,7 @@
 
 <script>
 "use strict";
-const VERSION = "v26";
+const VERSION = "v27";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -588,7 +597,7 @@ async function lookupRoute(cs){
   try{
     const d=await adsbdb("callsign/"+encodeURIComponent(cs));
     const fr=d?.response?.flightroute;
-    if(fr){ const pl=p=>p?(p.municipality||p.name||p.iata_code||""):"";
+    if(fr){ const pl=p=>p?cityOf(p.municipality||p.name, p.iata_code):"";
       out={airline:fr.airline?.name||null,from:pl(fr.origin),to:pl(fr.destination)}; }
   }catch(e){}
   cSet(k,out); return out;
@@ -930,6 +939,89 @@ const SEATS = {
   GLF6:16,CL60:12,C25C:8,PC12:9,TBM9:5,C172:4
 };
 
+
+/* ============ Flughäfen und Zielschätzung ============ */
+const AIRPORTS = [
+  { iata:"VIE", name:"Wien",       lat:48.1103, lon:16.5697 },
+  { iata:"BTS", name:"Bratislava", lat:48.1702, lon:17.2127 }
+];
+/* Ortsnamen für Codes, die die Datenbank nur als Kürzel liefert */
+const IATA = {
+  VIE:"Wien", BTS:"Bratislava", FRA:"Frankfurt", MUC:"München", DUS:"Düsseldorf",
+  TXL:"Berlin", BER:"Berlin", HAM:"Hamburg", CGN:"Köln", STR:"Stuttgart",
+  ZRH:"Zürich", GVA:"Genf", BSL:"Basel", SZG:"Salzburg", INN:"Innsbruck",
+  GRZ:"Graz", LNZ:"Linz", KLU:"Klagenfurt", PRG:"Prag", BUD:"Budapest",
+  WAW:"Warschau", KRK:"Krakau", OTP:"Bukarest", SOF:"Sofia", BEG:"Belgrad",
+  ZAG:"Zagreb", LJU:"Ljubljana", SKP:"Skopje", TIA:"Tirana", PRN:"Pristina",
+  SJJ:"Sarajevo", TGD:"Podgorica", IST:"Istanbul", SAW:"Istanbul", AYT:"Antalya",
+  ADB:"Izmir", ESB:"Ankara", ATH:"Athen", SKG:"Thessaloniki", HER:"Heraklion",
+  RHO:"Rhodos", CFU:"Korfu", JMK:"Mykonos", JTR:"Santorin", FCO:"Rom",
+  MXP:"Mailand", LIN:"Mailand", BGY:"Bergamo", VCE:"Venedig", NAP:"Neapel",
+  CTA:"Catania", PMO:"Palermo", BRI:"Bari", CDG:"Paris", ORY:"Paris",
+  NCE:"Nizza", LYS:"Lyon", MRS:"Marseille", BCN:"Barcelona", MAD:"Madrid",
+  AGP:"Malaga", PMI:"Mallorca", ALC:"Alicante", VLC:"Valencia", IBZ:"Ibiza",
+  LIS:"Lissabon", OPO:"Porto", FAO:"Faro", LHR:"London", LGW:"London",
+  STN:"London", LTN:"London", MAN:"Manchester", EDI:"Edinburgh", DUB:"Dublin",
+  AMS:"Amsterdam", BRU:"Brüssel", CPH:"Kopenhagen", ARN:"Stockholm",
+  OSL:"Oslo", HEL:"Helsinki", KEF:"Reykjavik", RIX:"Riga", TLL:"Tallinn",
+  VNO:"Vilnius", KBP:"Kiew", DXB:"Dubai", AUH:"Abu Dhabi", DOH:"Doha",
+  TLV:"Tel Aviv", CAI:"Kairo", HRG:"Hurghada", SSH:"Sharm el-Sheikh",
+  JFK:"New York", EWR:"New York", ORD:"Chicago", YYZ:"Toronto",
+  PEK:"Peking", PVG:"Shanghai", HND:"Tokio", NRT:"Tokio", BKK:"Bangkok",
+  SIN:"Singapur", DEL:"Delhi", TAS:"Taschkent", ALA:"Almaty", GYD:"Baku",
+  TBS:"Tiflis", EVN:"Jerewan", DTM:"Dortmund", NUE:"Nürnberg", LEJ:"Leipzig",
+  HAJ:"Hannover", BRE:"Bremen", FMM:"Memmingen", CRL:"Charleroi",
+  ORD2:"", ODS:"Odessa", RMO:"Chisinau", OMR:"Oradea", CLJ:"Cluj",
+  TSR:"Timisoara", IAS:"Iasi", SBZ:"Sibiu", VAR:"Varna", BOJ:"Burgas",
+  PDV:"Plovdiv", TZL:"Tuzla", BNX:"Banja Luka", OHD:"Ohrid"
+};
+const cityOf = (name, iata) => name || IATA[(iata||"").toUpperCase()] || iata || "";
+
+function nearestAirport(lat, lon){
+  let best=null, bk=Infinity;
+  for(const a of AIRPORTS){
+    const km=haversine(lat,lon,a.lat,a.lon);
+    if(km<bk){ bk=km; best=a; }
+  }
+  return { ap:best, km:bk };
+}
+/* Tief, im Sinkflug und nahe an einem Flughafen: dann ist das Ziel klar,
+   auch wenn die Routendatenbank noch einen alten Flugplan kennt. */
+function guessRoute(ac, route){
+  const ft = typeof ac.alt_baro==="number" ? ac.alt_baro : null;
+  const rate = typeof ac.baro_rate==="number" ? ac.baro_rate : 0;
+  if(ft===null || ft>10000) return { route, guess:null };
+  const n = nearestAirport(ac.lat, ac.lon);
+  if(!n.ap || n.km>45) return { route, guess:null };
+  const r = route ? {airline:route.airline, from:route.from, to:route.to} : {airline:null,from:"",to:""};
+  if(rate < -250 && r.to !== n.ap.name){ r.to = n.ap.name; return { route:r, guess:"Ziel geschätzt" }; }
+  if(rate >  250 && r.from !== n.ap.name){ r.from = n.ap.name; return { route:r, guess:"Start geschätzt" }; }
+  return { route, guess:null };
+}
+
+/* ============ Seltene Gäste und Wiedersehen ============ */
+function logRare(placeKey, entry){
+  const k="rarelog-"+placeKey;
+  const cut=Date.now()-14*24*3600*1000;
+  let list=store.get(k,[]).filter(e=>e.t>cut);
+  if(!list.some(e=>e.reg===entry.reg && Date.now()-e.t < 6*3600*1000)) list.push(entry);
+  store.set(k, list.slice(-120));
+}
+function rareWeek(placeKey){
+  const cut=Date.now()-7*24*3600*1000;
+  return store.get("rarelog-"+placeKey,[]).filter(e=>e.t>cut).reverse();
+}
+function countSighting(placeKey, reg){
+  if(!reg) return 0;
+  const k="regseen-"+placeKey;
+  const m=store.get(k,{});
+  m[reg]=(m[reg]||0)+1;
+  const keys=Object.keys(m);
+  if(keys.length>1500) delete m[keys[0]];
+  store.set(k,m);
+  return m[reg];
+}
+
 /* ============ Wetter ============ */
 const WMO=[[[0],"Klar"],[[1,2],"Leicht bewölkt"],[[3],"Bedeckt"],[[45,48],"Nebel"],
   [[51,53,55,56,57],"Nieselregen"],[[61,63,65,66,67,80,81,82],"Regen"],
@@ -1149,7 +1241,7 @@ if(!REDUCED) setInterval(()=>gustFor(lastKmh, 1400), 30000);
 
 /* ============ Zustand ============ */
 let place=PLACES[Math.min(1,Math.max(0,store.get("place",0)))];
-let shownHex=null, timer=null, lastOk=0, gen=0, lastBig=null, lastFlapAt=0;
+let shownHex=null, timer=null, lastOk=0, gen=0, lastBig=null, lastFlapAt=0, sightings=0;
 const FLAP_IDLE = 45000;   /* auch ohne Wechsel ab und zu durchblättern */
 
 function clock(){
@@ -1167,11 +1259,13 @@ function phase(rate){
 
 async function showPlane(ac, second){
   const call=(ac.flight||"").trim();
-  const [route,info]=await Promise.all([
+  let [route,info]=await Promise.all([
     call?lookupRoute(call):Promise.resolve(null), lookupAircraft(ac.hex)
   ]);
   const rare=rarity(ac,info,place.key);
   const kind=kindOf(ac,info,rare);
+  const g = guessRoute(ac, route);
+  route = g.route;
   const a=airlineOf(call,(info&&info.reg)||ac.r||"",kind);
   const flipped=((ac.track||90)%360)>180;
   const changed=shownHex!==ac.hex;
@@ -1232,11 +1326,18 @@ async function showPlane(ac, second){
     if(typeof ac.gs==="number") bits.push(Math.round(ac.gs*1.852)+" km/h");
     bits.push(dec1(km)+" km im "+dirOf(brg));
     const ph=phase(ac.baro_rate); if(ph) bits.push(ph);
+    if(g.guess) bits.push(g.guess);
     $("detail").textContent=bits.join(" · ");
 
     $("reg").textContent=(info&&info.reg)||ac.r||"";
+    const regNow=(info&&info.reg)||ac.r||"";
+    if(changed){
+      sightings=countSighting(place.key, regNow);
+      if(rare.rare) logRare(place.key,{ t:Date.now(), reg:regNow,
+        type:(info&&info.icao)||ac.t||"", name:(a.n||airlineName||call||"") });
+    }
     last={kind,a,typeName,icao:(info&&info.icao)||ac.t||null,
-          reg:(info&&info.reg)||ac.r||"",call};
+          reg:regNow, call, sightings, guess:g.guess};
     if($("tech").classList.contains("on")) paintTech();
     $("compassBox").hidden=false;
     $("needle").style.transform=`rotate(${brg}deg)`;
@@ -1445,6 +1546,8 @@ function paintTech(){
     $("techT1").textContent="Typ: —";
     $("techT2").textContent="Kennzeichen: —";
     $("techT3").textContent="Schematische Darstellung · Daten: adsb.fi · "+VERSION;
+    $("techT4").textContent="";
+    $("rareList").innerHTML="";
     return;
   }
   $("techDraw").innerHTML=craftSVG(last.kind,last.a,false);
@@ -1463,6 +1566,19 @@ function paintTech(){
   $("techT1").textContent="Typ: "+(last.typeName||last.icao||"unbekannt").toUpperCase();
   $("techT2").textContent="Kennzeichen: "+[last.reg,last.call].filter(Boolean).join(" · ").toUpperCase();
   $("techT3").textContent="Schematische Darstellung · Daten: adsb.fi · "+VERSION;
+  $("techT4").textContent = last.sightings>1
+    ? "Zum "+last.sightings+". Mal über dir"
+    : "Erstmals über dir";
+  const week=rareWeek(place.key);
+  $("rareList").innerHTML = week.length
+    ? "<h4>Seltene Gäste dieser Woche</h4>" + week.slice(0,10).map(e=>{
+        const d=new Date(e.t);
+        const day=d.toLocaleDateString("de-AT",{weekday:"short"});
+        const hm=d.toLocaleTimeString("de-AT",{hour:"2-digit",minute:"2-digit"});
+        return "<div>"+day+" "+hm+" · "+(e.name||"unbekannt")+(e.type?" · "+e.type:"")
+             + (e.reg?" · "+e.reg:"")+"</div>";
+      }).join("")
+    : "";
 }
 function toggleTech(on){
   const t=$("tech");
@@ -1476,6 +1592,17 @@ $("btn-tech2").addEventListener("click",()=>toggleTech(false));
 
 PLACES.forEach((_,i)=>$("btn-"+i).addEventListener("click",()=>selectPlace(i)));
 $("btn-geo").addEventListener("click",useGeo);
+
+/* Tipp aufs Flugzeug öffnet Flightradar24 - Website oder App, je nachdem
+   was auf dem Gerät vorhanden ist. */
+$("craft").addEventListener("click",()=>{
+  if(!last) return;
+  const cs=(last.call||"").trim(), reg=(last.reg||"").trim();
+  const url = cs ? "https://www.flightradar24.com/"+encodeURIComponent(cs)
+            : reg ? "https://www.flightradar24.com/data/aircraft/"+encodeURIComponent(reg.toLowerCase())
+            : null;
+  if(url) window.open(url,"_blank","noopener");
+});
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){clock();loop();} });
 selectPlace(Math.min(1,Math.max(0,store.get("place",0))));
 </script>
