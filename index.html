@@ -201,12 +201,14 @@
     font-size:11px;letter-spacing:.1em;color:#9A958A;
   }
   .second{
-    position:absolute;right:112px;top:16px;max-width:230px;text-align:right;
-    font-family:var(--mono);font-size:11px;line-height:1.5;color:#8A857A;
+    position:absolute;z-index:4;left:28px;top:76px;max-width:120px;
+    font-family:var(--mono);font-size:11px;line-height:1.6;letter-spacing:.1em;
+    color:#4A4F57;opacity:.7;pointer-events:none;
   }
-  .second b{display:block;font-weight:400;color:#4E4A42;letter-spacing:.08em;text-transform:uppercase}
+  .second b{display:block;font-weight:400;text-transform:uppercase;letter-spacing:.14em}
   .second:empty{display:none}
-  @media (max-width:900px){ .second{display:none} }
+  .night .second{color:#9FB0CC}
+  @media (max-width:700px){ .second{left:16px;top:58px;font-size:10px;max-width:200px} }
   .compass{position:absolute;right:24px;top:14px;width:74px;text-align:center}
   .compass .n{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:#6B675E;margin-bottom:2px}
   .compass svg{width:52px;height:52px;display:block;margin:0 auto}
@@ -354,6 +356,7 @@
     </div>
 
     <div class="craft2 hide" id="craft2"></div>
+    <div class="second" id="second"></div>
     <div class="wind" id="wind" aria-hidden="true"></div>
     <div class="craft hide" id="craft"></div>
 
@@ -405,14 +408,13 @@
         <circle cx="50" cy="50" r="4.5" fill="#1A1A18"/>
       </svg>
     </div>
-    <div class="second" id="second"></div>
     <div class="reg" id="reg"></div>
   </div>
 </div>
 
 <script>
 "use strict";
-const VERSION = "v23";
+const VERSION = "v26";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1200,12 +1202,12 @@ async function showPlane(ac, second){
       const b2=[];
       if(typeof s.alt_baro==="number") b2.push(thou(s.alt_baro*0.3048)+" m");
       if(typeof s.gs==="number") b2.push(Math.round(s.gs*1.852)+" km/h");
-      $("second").innerHTML="<b>"+((a2.n?a2.n+" ":"")+(call2||"unbekannt"))+"</b>"
-        + (s.t?s.t+" · ":"") + dec1(second.km)+" km im "
-        + dirOf(bearing(place.lat,place.lon,s.lat,s.lon))
-        + (b2.length?"<br>"+b2.join(" · "):"");
+      const line2=[s.t||"", dec1(second.km)+" km im "
+        +dirOf(bearing(place.lat,place.lon,s.lat,s.lon)), b2.join(" · ")]
+        .filter(Boolean).join(" · ");
+      $("second").innerHTML="<b>"+((a2.n?a2.n+" ":"")+(call2||"unbekannt"))+"</b>"+line2;
     } else { c2.classList.add("hide"); $("second").innerHTML=""; }
-    requestAnimationFrame(fitSecond);
+    requestAnimationFrame(placeSecond);
     $("empty").classList.remove("show");
 
 
@@ -1420,15 +1422,20 @@ function useGeo(){
 /* ============ Technische Zeichnung ============ */
 let last = null;
 const numDe = n => n.toLocaleString("de-AT",{maximumFractionDigits:1});
-/* Wird der Ortsname lang, überschneidet die Tafel den Block des zweiten
-   Flugzeugs. Dann wird der Block ausgeblendet - die Route hat Vorrang. */
-function fitSecond(){
-  const r=$("route"), s=$("second"), info=$("info");
+/* Der Textblock darf die zweite Maschine nie überdecken: Er endet immer
+   ein Stück vor deren linkem Rand. Bleibt zu wenig Platz, entfällt er. */
+function placeSecond(){
+  const s=$("second"), c2=$("craft2"), sky=$("sky");
   if(!s || !s.innerHTML) return;
-  s.style.display="";
-  const avail = info.clientWidth - 52 - 120;      /* Ränder und Kompassrose */
-  if(r.scrollWidth > avail - 250) s.style.display="none";
+  s.style.visibility="";
+  if(!c2 || c2.classList.contains("hide")) { s.style.maxWidth="270px"; return; }
+  const a=sky.getBoundingClientRect(), b=c2.getBoundingClientRect();
+  const left=parseFloat(getComputedStyle(s).left)||28;
+  const room=(b.left-a.left)-left-16;
+  if(room<110){ s.style.visibility="hidden"; return; }
+  s.style.maxWidth=Math.min(room,300)+"px";
 }
+addEventListener("resize", placeSecond);
 
 function paintTech(){
   if(!last){
