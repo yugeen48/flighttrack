@@ -420,7 +420,7 @@
 
 <script>
 "use strict";
-const VERSION = "v33";
+const VERSION = "v34";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -808,7 +808,7 @@ function drawHeli(a){ return `
 }
 
 /* --- Jumbo: Buckel hinter dem Cockpit, vier Triebwerke (747) --- */
-function drawJumbo(a){ return `
+function drawJumbo(a,o){ o=o||{}; return `
   <path d="M298 94 188 40 168 43 280 108Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
   ${farNacelle(184,46,54,24,a.c)}
   ${farNacelle(214,64,68,30,a.c)}
@@ -817,9 +817,9 @@ function drawJumbo(a){ return `
   <path d="M450 120C447 108 432 99 408 94 400 72 378 60 350 61 326 62 310 72 302 88L118 83C88 82 70 80 58 78 54 77 52 81 55 83L140 130C150 135 160 138 172 138L392 138C426 136 447 132 450 120Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
   <path d="M168 113H398" stroke="${LINE}" stroke-width="1.6" opacity=".28"/>
   <rect x="196" y="106" width="176" height="14" rx="7" fill="${a.c}"/>
-  ${windows(196,176,113,a.cargo)}
+  ${windows(196,176,113,o.cargo)}
   <rect x="318" y="74" width="62" height="12" rx="6" fill="${a.c}"/>
-  ${windows(318,62,80,a.cargo)}
+  ${windows(318,62,80,o.cargo)}
   <path d="M404 96C418 99 430 104 438 110L408 105Z" fill="${LINE}"/>
   <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
   ${nacelle(190,176,66,30,a.c)}
@@ -828,7 +828,7 @@ function drawJumbo(a){ return `
 }
 
 /* --- Doppelstock über die ganze Länge (A380) --- */
-function drawSuper(a){ return `
+function drawSuper(a,o){ o=o||{}; return `
   <path d="M300 96 186 40 166 43 282 110Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
   ${farNacelle(182,46,56,25,a.c)}
   ${farNacelle(214,66,70,31,a.c)}
@@ -836,9 +836,9 @@ function drawSuper(a){ return `
   ${tail(a, FIN_JET, false)}
   <path d="M452 124C449 110 430 100 400 96L118 84C88 83 70 81 58 79 54 78 52 82 55 84L142 142C152 148 162 152 174 152L392 152C426 150 448 138 452 124Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
   <rect x="196" y="100" width="164" height="13" rx="6.5" fill="${a.c}"/>
-  ${windows(196,164,106.5,a.cargo)}
+  ${windows(196,164,106.5,o.cargo)}
   <rect x="188" y="126" width="176" height="13" rx="6.5" fill="${a.c}"/>
-  ${windows(188,176,132.5,a.cargo)}
+  ${windows(188,176,132.5,o.cargo)}
   <path d="M398 99C414 102 428 108 436 114L402 108Z" fill="${LINE}"/>
   <path d="M320 130 200 210 176 222 244 152Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
   ${nacelle(198,186,68,30,a.c)}
@@ -847,7 +847,7 @@ function drawSuper(a){ return `
 }
 
 /* --- Beluga: Buckel über fast die ganze Länge --- */
-function drawBeluga(a){ return `
+function drawBeluga(a,o){ o=o||{cargo:true}; return `
   <path d="M296 96 190 44 170 47 278 110Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
   ${farNacelle(216,66,66,29,a.c)}
   <path d="M134 84 60 60C54 58 50 65 56 68L120 102C128 106 136 102 136 94Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
@@ -1302,7 +1302,7 @@ async function showPlane(ac, second){
   lastKmh = typeof ac.gs==="number" ? Math.round(ac.gs*1.852) : 400;
 
   const icao=(info&&info.icao)||ac.t||"";
-  const f=features(icao); f.cargo=isCargo(call,icao); a.cargo=f.cargo;
+  const f=features(icao); f.cargo=isCargo(call,icao);
   const paint=()=>{
     /* Läuft noch eine Böe aus der alten Blickrichtung, sofort abbrechen -
        sonst zieht der Wind kurz in die falsche Richtung. */
@@ -1330,7 +1330,7 @@ async function showPlane(ac, second){
       const r2=(s.category||"").toUpperCase()==="A7"?{kind:"heli"}:{kind:null};
       const k2=kindOf(s,null,r2);
       const a2=airlineOf(call2,s.r||"",k2);
-      const f2=features(s.t||"");
+      const f2=features(s.t||""); f2.cargo=isCargo(call2, s.t||"");
       c2.innerHTML=craftSVG(k2,a2,((s.track||90)%360)>180,f2);
       c2.classList.remove("hide");
       const b2=[];
