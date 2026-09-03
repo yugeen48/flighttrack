@@ -83,9 +83,12 @@
   .craft svg{width:100%;height:auto;display:block;overflow:visible}
   .craft.hide{opacity:0}
   .craft{cursor:pointer;pointer-events:auto}
+  .blink{animation:blink 1.5s steps(1,end) infinite}
+  @keyframes blink{0%,8%{opacity:1}9%,100%{opacity:0}}
+  @media (prefers-reduced-motion:reduce){ .blink{animation:none;opacity:.9} }
   /* Zweite Maschine: kleiner, höher, blasser - liegt hinter der ersten */
   .craft2{
-    position:absolute;z-index:1;left:31%;top:24%;width:30%;max-width:340px;
+    position:absolute;z-index:1;left:29%;top:15%;width:25%;max-width:300px;
     transform:translate(-50%,-50%);opacity:.4;transition:opacity var(--t);
   }
   .craft2 svg{width:100%;height:auto;display:block;overflow:visible}
@@ -261,6 +264,20 @@
   .night.wx-snow .bands i{filter:saturate(.3) brightness(1.2)}
   .night .precip{opacity:.55}
 
+  /* ---------------- Dämmerung ---------------- */
+  .dusk .bands i{position:relative}
+  .dusk .bands i::after{
+    content:"";position:absolute;inset:0;opacity:var(--dusk,0);
+    background:linear-gradient(to bottom, #E88C4A, #E2A45F);
+  }
+  .dusk .bands i:nth-child(1)::after{background:linear-gradient(#9A5B8C,#C4707A)}
+  .dusk .bands i:nth-child(2)::after{background:linear-gradient(#C4707A,#E08A5C)}
+  .dusk .bands i:nth-child(3)::after{background:linear-gradient(#E08A5C,#EDA765)}
+  .dusk .bands i:nth-child(4)::after{background:linear-gradient(#EDA765,#F0C089)}
+  .dusk .bands i:nth-child(5)::after{background:linear-gradient(#F0C089,#EBD3AC)}
+  .dusk .bands i:nth-child(6)::after{background:linear-gradient(#EBD3AC,#E8DCC4)}
+  .dusk .sun{opacity:1 !important;transform:none !important}
+
   /* ---------------- Technische Zeichnung ---------------- */
   .tech{
     position:absolute;inset:0;z-index:6;display:none;flex-direction:column;
@@ -403,7 +420,7 @@
 
 <script>
 "use strict";
-const VERSION = "v30";
+const VERSION = "v33";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -676,11 +693,26 @@ function farNacelle(x,y,w,h,c){
   return nacelle(x,y,w,h,c);
 }
 /* Kabinenfenster als helle Punkte im Farbband. Frachter bekommen keine. */
+function isNight(){ return document.querySelector(".frame").classList.contains("night"); }
 function windows(x0, w, y, cargo){
   if(cargo) return "";
+  const col = isNight() ? "#F6D98C" : "#DCEAF7";
   let s="";
-  for(let x=x0+12; x<x0+w-8; x+=15) s+=`<circle cx="${x}" cy="${y}" r="2.7" fill="#DCEAF7"/>`;
+  for(let x=x0+12; x<x0+w-8; x+=15) s+=`<circle cx="${x}" cy="${y}" r="2.7" fill="${col}"/>`;
   return s;
+}
+/* Positionslichter und Blitzlicht, nur nachts. Grün am vorderen Flügel,
+   rot am hinteren, weiß am Heck, dazu ein rot blinkendes Licht am Rumpf. */
+function lights(p){
+  if(!isNight()) return "";
+  const L=p||{};
+  const g=L.green||[176,206], r=L.red||[172,42], t=L.tail||[60,80], b=L.beacon||[300,140];
+  return `<circle cx="${g[0]}" cy="${g[1]}" r="5" fill="#57E08A"/>
+    <circle cx="${g[0]}" cy="${g[1]}" r="9" fill="#57E08A" opacity=".28"/>
+    <circle cx="${r[0]}" cy="${r[1]}" r="5" fill="#FF5C5C"/>
+    <circle cx="${r[0]}" cy="${r[1]}" r="9" fill="#FF5C5C" opacity=".28"/>
+    <circle cx="${t[0]}" cy="${t[1]}" r="4" fill="#FFF3D8" opacity=".85"/>
+    <circle class="blink" cx="${b[0]}" cy="${b[1]}" r="4.5" fill="#FF4040"/>`;
 }
 function drawJet(a,o){
   o = o || {};
@@ -701,7 +733,8 @@ function drawJet(a,o){
   <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
   ${o.winglet?`<path d="M197 197C192 187 189 179 188 172L179 175C181 184 184 193 188 203Z" fill="${BODY}" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>`:""}
   ${o.engines>=4?nacelle(190,176,66,30,a.c):""}
-  ${nacelle(226,150,84,37,a.c)}`;
+  ${nacelle(226,150,84,37,a.c)}
+  ${lights({green:[176,206],red:[172,42],tail:[60,80],beacon:[300,140]})}`;
 }
 
 /* --- Regionaljet: T-Leitwerk, Triebwerke am Heck --- */
@@ -714,7 +747,8 @@ function drawRegional(a){ return `
   ${nacelle(148,92,78,35,a.c)}
   ${farNacelle(160,74,66,28,a.c)}
   <g fill="${LINE}"><circle cx="252" cy="103" r="5"/><circle cx="276" cy="104" r="5"/><circle cx="300" cy="105" r="5"/><circle cx="324" cy="106" r="5"/><circle cx="348" cy="107" r="5"/></g>
-  <path d="M390 99C406 102 420 107 428 113L394 107Z" fill="${LINE}"/>`;
+  <path d="M390 99C406 102 420 107 428 113L394 107Z" fill="${LINE}"/>
+  ${lights({green:[186,198],red:[180,50],tail:[70,84],beacon:[300,134]})}`;
 }
 
 /* --- Turboprop mit zwei Motoren am Hochdecker (ATR, Dash 8) --- */
@@ -733,7 +767,8 @@ function drawProp(a){ return `
   </g>
   <rect x="236" y="78" width="74" height="32" rx="16" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
   <ellipse cx="312" cy="92" rx="7" ry="44" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="2.4"/>
-  <path d="M302 80a15 15 0 0 1 0 26Z" fill="${BODY}"/>`;
+  <path d="M302 80a15 15 0 0 1 0 26Z" fill="${BODY}"/>
+  ${lights({green:[152,106],red:[356,88],tail:[70,84],beacon:[280,130]})}`;
 }
 
 /* --- Einmotorige Propellermaschine mit T-Leitwerk (PC-12, TBM, Cessna) --- */
@@ -746,7 +781,8 @@ function drawSingle(a){ return `
   <g fill="#2C3E5A"><circle cx="206" cy="97" r="6"/><circle cx="232" cy="98" r="6"/><circle cx="258" cy="99" r="6"/></g>
   <path d="M300 110 208 176 188 186 244 126Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
   <path d="M336 86c14 2 24 6 30 12 5 6 3 13-4 15l-26 4Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  <ellipse cx="374" cy="104" rx="6" ry="40" fill="${a.c}" opacity=".22" stroke="${LINE}" stroke-width="2.2"/>`;
+  <ellipse cx="374" cy="104" rx="6" ry="40" fill="${a.c}" opacity=".22" stroke="${LINE}" stroke-width="2.2"/>
+  ${lights({green:[190,184],red:[200,46],tail:[104,80],beacon:[250,126]})}`;
 }
 
 /* --- Hubschrauber (EC135-Bauart mit Fenestron im Heck) --- */
@@ -767,7 +803,8 @@ function drawHeli(a){ return `
   <ellipse cx="280" cy="46" rx="17" ry="7" fill="${LINE}"/>
   <path d="M92 38h376c8 0 8 11 0 11H92c-8 0-8-11 0-11Z" fill="${LINE}"/>
   <path d="M214 178h140" stroke="${LINE}" stroke-width="8" stroke-linecap="round"/>
-  <path d="M244 146 232 178M328 146 340 178" stroke="${LINE}" stroke-width="7" stroke-linecap="round"/>`;
+  <path d="M244 146 232 178M328 146 340 178" stroke="${LINE}" stroke-width="7" stroke-linecap="round"/>
+  ${lights({green:[380,132],red:[210,88],tail:[64,60],beacon:[280,150]})}`;
 }
 
 /* --- Jumbo: Buckel hinter dem Cockpit, vier Triebwerke (747) --- */
@@ -786,7 +823,8 @@ function drawJumbo(a){ return `
   <path d="M404 96C418 99 430 104 438 110L408 105Z" fill="${LINE}"/>
   <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
   ${nacelle(190,176,66,30,a.c)}
-  ${nacelle(236,142,78,34,a.c)}`;
+  ${nacelle(236,142,78,34,a.c)}
+  ${lights({green:[176,206],red:[172,42],tail:[60,80],beacon:[300,140]})}`;
 }
 
 /* --- Doppelstock über die ganze Länge (A380) --- */
@@ -804,7 +842,8 @@ function drawSuper(a){ return `
   <path d="M398 99C414 102 428 108 436 114L402 108Z" fill="${LINE}"/>
   <path d="M320 130 200 210 176 222 244 152Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
   ${nacelle(198,186,68,30,a.c)}
-  ${nacelle(248,152,78,34,a.c)}`;
+  ${nacelle(248,152,78,34,a.c)}
+  ${lights({green:[180,218],red:[170,42],tail:[58,82],beacon:[300,154]})}`;
 }
 
 /* --- Beluga: Buckel über fast die ganze Länge --- */
@@ -817,7 +856,8 @@ function drawBeluga(a){ return `
   <rect x="206" y="106" width="140" height="13" rx="6.5" fill="${a.c}"/>
   <path d="M404 100C418 102 430 107 438 113L408 108Z" fill="${LINE}"/>
   <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  ${nacelle(226,150,84,37,a.c)}`;
+  ${nacelle(226,150,84,37,a.c)}
+  ${lights({green:[176,206],red:[172,42],tail:[60,80],beacon:[300,140]})}`;
 }
 
 /* Merkmale je Muster: Herstellernase, Winglets, Triebwerkszahl, Größe */
@@ -1020,18 +1060,31 @@ function wxClass(c){
   if(c>=61&&c<=82) return "wx-rain";
   return "wx-cloudy";
 }
+/* Innerhalb einer halben Stunde um Sonnenauf- und -untergang liegt
+   Dämmerung über dem Himmel, damit der Wechsel nicht springt. */
+function duskFactor(w){
+  if(!w||!w.sunrise||!w.sunset) return 0;
+  const now=Date.now();
+  const near=t=>{ const d=Math.abs(now-new Date(t).getTime())/60000; return d<30 ? 1-d/30 : 0; };
+  return Math.max(near(w.sunrise), near(w.sunset));
+}
 function applyWeather(w){
-  document.querySelector(".frame").className="frame "+wxClass(w?w.weather_code:null)
-    + (w && w.is_day===0 ? " night" : "");
+  const dusk=duskFactor(w);
+  const f=document.querySelector(".frame");
+  f.className="frame "+wxClass(w?w.weather_code:null)
+    + (w && w.is_day===0 ? " night" : "") + (dusk>0.1 ? " dusk" : "");
+  f.style.setProperty("--dusk", dusk.toFixed(2));
 }
 let weather={};
 async function getWeather(p){
   if(weather.key===p.key&&Date.now()-weather.t<600000) return weather.d;
   try{
-    const u=`https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lon}&current=temperature_2m,weather_code,is_day`;
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lon}&current=temperature_2m,weather_code,is_day&daily=sunrise,sunset&timezone=auto`;
     let d; try{ d=await fetchJSON(u); }
     catch(e){ d=await fetchJSON("https://api.allorigins.win/raw?url="+encodeURIComponent(u)); }
-    weather={key:p.key,t:Date.now(),d:d.current}; return d.current;
+    const cur=Object.assign({}, d.current);
+    if(d.daily && d.daily.sunrise){ cur.sunrise=d.daily.sunrise[0]; cur.sunset=d.daily.sunset[0]; }
+    weather={key:p.key,t:Date.now(),d:cur}; return cur;
   }catch(e){ return weather.key===p.key?weather.d:null; }
 }
 
@@ -1071,39 +1124,40 @@ function flap(el, text){
    ist, wird direkt am fertigen Bild abgelesen - so kann nichts auseinanderlaufen.
    Drei Stilvarianten, bei jeder Böe wird zufällig eine gewählt. */
 const REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-let windTimer=null, craftFlipped=false, lastKmh=400, windFlip=null;
+let craftFlipped=false, lastKmh=400, windFlip=null, windKmh=0;
 
 function stopWind(){
   const el=$("wind"); if(!el) return;
-  clearTimeout(windTimer);
   el.classList.remove("on"); el.innerHTML="";
 }
-function gustFor(kmh, ms){
+/* Der Wind läuft durchgehend, nicht in Böen. Jeder Strich hat eine eigene
+   Dauer, dadurch driften sie auseinander und die Dichte schwankt von selbst -
+   mal ein einzelner, mal mehrere gleichzeitig. Die Menge hängt am Tempo. */
+function setWind(kmh){
   if(REDUCED) return;
   const el=$("wind"), c=$("craft");
-  if(!el||!c||c.classList.contains("hide")) return;
+  if(!el||!c||c.classList.contains("hide")) return stopWind();
 
-  /* Nase rechts -> Wind nach links. Gespiegelt -> umgekehrt. */
   const toLeft = !/scale\(-1,1\)/.test(c.innerHTML);
-  const f=Math.max(.35, Math.min(1.7, (kmh||400)/650));
-  const dur=2.9-1.5*f;                       /* schneller bei hohem Tempo */
-  const style=Math.floor(Math.random()*3);   /* 0 fein, 1 kurz gestrichelt, 2 breit */
+  const f=Math.max(.3, Math.min(1.7, (kmh||400)/650));
+  const base=3.4-1.7*f;
+  const n=Math.round(6+12*f);
+  const style=Math.floor(Math.random()*3);
 
   const sky=$("sky").getBoundingClientRect(), r=c.getBoundingClientRect();
-  const mid=((r.top-sky.top)+r.height/2)/sky.height*100;   /* Höhe der Maschine in % */
+  const mid=((r.top-sky.top)+r.height/2)/sky.height*100;
 
-  const n = style===1 ? 16 : 11;
   let html="";
   for(let i=0;i<n;i++){
-    const spread = style===2 ? 26 : 40;
-    const top = Math.max(4, Math.min(92, mid + (Math.random()-0.5)*spread));
-    const len = style===0 ? (90+190*f)*(0.6+Math.random()*0.9)
-              : style===1 ? (34+70*f)*(0.6+Math.random()*0.8)
-              :             (150+260*f)*(0.7+Math.random()*0.7);
+    const spread = style===2 ? 28 : 44;
+    const top=Math.max(4, Math.min(92, mid+(Math.random()-0.5)*spread));
+    const len = style===0 ? (90+190*f)*(0.5+Math.random()*1.0)
+              : style===1 ? (34+70*f)*(0.5+Math.random()*0.9)
+              :             (150+260*f)*(0.6+Math.random()*0.8);
     const h   = style===2 ? (3.5+Math.random()*2.5) : (2+Math.random()*1.6);
-    const o   = style===2 ? (0.30+Math.random()*0.18) : (0.45+Math.random()*0.35);
-    const d   = (dur*(0.8+Math.random()*0.45)).toFixed(2);
-    const del = (Math.random()*dur*0.9).toFixed(2);
+    const o   = style===2 ? (0.26+Math.random()*0.16) : (0.32+Math.random()*0.34);
+    const d   = (base*(0.55+Math.random()*1.6)).toFixed(2);      /* stark gestreut */
+    const del = (Math.random()*base*3).toFixed(2);
     html+=`<i class="streak" style="top:${top.toFixed(1)}%;${toLeft?"left:104%":"right:104%"};
       width:${len|0}px;height:${h.toFixed(1)}px;--o:${o.toFixed(2)};
       animation-duration:${d}s;animation-delay:-${del}s"></i>`;
@@ -1111,12 +1165,7 @@ function gustFor(kmh, ms){
   el.innerHTML=html;
   el.classList.remove("left","right");
   el.classList.add(toLeft?"left":"right","on");
-  clearTimeout(windTimer);
-  windTimer=setTimeout(()=>{ el.classList.remove("on");
-    setTimeout(()=>{ if(!el.classList.contains("on")) el.innerHTML=""; }, 1000);
-  }, (ms||1400)+2500);
 }
-
 
 /* ============ Mondphase ============
    Näherung über den mittleren synodischen Monat. Gezeichnet wird nur der
@@ -1217,7 +1266,6 @@ function scheduleFace(){
 }
 if(!REDUCED) scheduleFace();
 /* Wind alle 30 Sekunden, unabhängig von der Tafel */
-if(!REDUCED) setInterval(()=>gustFor(lastKmh, 1400), 30000);
 
 /* ============ Zustand ============ */
 let place=PLACES[Math.min(1,Math.max(0,store.get("place",0)))];
@@ -1258,9 +1306,21 @@ async function showPlane(ac, second){
   const paint=()=>{
     /* Läuft noch eine Böe aus der alten Blickrichtung, sofort abbrechen -
        sonst zieht der Wind kurz in die falsche Richtung. */
-    if(flipped!==windFlip || changed){ windFlip=flipped; stopWind(); }
+    if(flipped!==windFlip || changed || Math.abs((lastKmh||0)-windKmh)>60){
+      windFlip=flipped; windKmh=lastKmh; stopWind();
+      requestAnimationFrame(()=>setWind(lastKmh));
+    }
     $("craft").innerHTML=craftSVG(kind,a,flipped,f);
     $("craft").style.width=craftWidth(f.len)+"%";
+    /* Je höher die Maschine fliegt, desto weiter oben steht sie im Bild.
+       Der Bereich ist so gewählt, dass sie immer gut sichtbar bleibt. */
+    const m = typeof ac.alt_baro==="number" ? ac.alt_baro*0.3048 : 3000;
+    const t = Math.max(0, Math.min(1, Math.log10(1+m/120)/Math.log10(1+12000/120)));
+    /* Ist eine zweite Maschine im Bild, bleibt die große weiter unten,
+       damit sie die kleine nicht überdeckt. Der Höhenunterschied bleibt
+       erkennbar, nur der Spielraum ist kleiner. */
+    const lo = second ? 68 : 66, hi = second ? 52 : 30;
+    $("craft").style.top = (lo - t*(lo-hi)).toFixed(1)+"%";
     $("craft").classList.remove("hide");
 
     /* zweite Maschine ohne zusätzliche Abfragen, nur aus den ADS-B-Feldern */
@@ -1305,7 +1365,13 @@ async function showPlane(ac, second){
     if(typeof ac.alt_baro==="number") bits.push(thou(ac.alt_baro*0.3048)+" m hoch");
     if(typeof ac.gs==="number") bits.push(Math.round(ac.gs*1.852)+" km/h");
     bits.push(dec1(km)+" km im "+dirOf(brg));
-    const ph=phase(ac.baro_rate); if(ph) bits.push(ph);
+    let ph=phase(ac.baro_rate);
+    const nearAp=nearestAirport(ac.lat,ac.lon);
+    if(typeof ac.alt_baro==="number" && ac.alt_baro<6500 && nearAp.km<35){
+      if(ac.baro_rate<-250) ph="im Anflug auf "+nearAp.ap.name;
+      else if(ac.baro_rate>250) ph="nach dem Start in "+nearAp.ap.name;
+    }
+    if(ph) bits.push(ph);
     if(g.guess) bits.push(g.guess);
     $("detail").textContent=bits.join(" · ");
 
@@ -1317,7 +1383,7 @@ async function showPlane(ac, second){
         type:(info&&info.icao)||ac.t||"", name:(a.n||airlineName||call||"") });
     }
     last={kind,a,typeName,icao:(info&&info.icao)||ac.t||null,
-          reg:regNow, call, sightings, guess:g.guess};
+          reg:regNow, call, sightings, guess:g.guess, hex:ac.hex};
     if($("tech").classList.contains("on")) paintTech();
   };
 
@@ -1455,8 +1521,11 @@ async function tick(){
     const {list,ok}=await planes();
     if(g!==gen) return;              /* Standort wurde inzwischen gewechselt */
     const near=ranked(list); lastOk=Date.now();
-    if(near.length){ await showPlane(near[0].ac, near[1]);
-      if(g===gen) applyWeather(await getWeather(place)); }
+    if(near.length){
+      /* Wetter zuerst - die Zeichnung braucht die Info, ob gerade Nacht ist */
+      applyWeather(await getWeather(place));
+      if(g!==gen) return;
+      await showPlane(near[0].ac, near[1]); }
     else await showEmpty(null, list.length, ok);
   }catch(e){
     if(g!==gen) return;
@@ -1570,15 +1639,12 @@ $("btn-tech2").addEventListener("click",()=>toggleTech(false));
 PLACES.forEach((_,i)=>$("btn-"+i).addEventListener("click",()=>selectPlace(i)));
 $("btn-geo").addEventListener("click",useGeo);
 
-/* Tipp aufs Flugzeug öffnet Flightradar24 - Website oder App, je nachdem
-   was auf dem Gerät vorhanden ist. */
+/* Tipp aufs Flugzeug öffnet die Karte von adsb.lol - dieselbe Quelle wie
+   hier, also inklusive Polizei und Militär, mit gezeichneter Flugspur. */
 $("craft").addEventListener("click",()=>{
-  if(!last) return;
-  const cs=(last.call||"").trim(), reg=(last.reg||"").trim();
-  const url = cs ? "https://www.flightradar24.com/"+encodeURIComponent(cs)
-            : reg ? "https://www.flightradar24.com/data/aircraft/"+encodeURIComponent(reg.toLowerCase())
-            : null;
-  if(url) window.open(url,"_blank","noopener");
+  if(!last || !last.hex) return;
+  const day=new Date().toISOString().slice(0,10);
+  window.open("https://adsb.lol/?icao="+last.hex+"&showTrace="+day, "_blank", "noopener");
 });
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){clock();loop();} });
 selectPlace(Math.min(1,Math.max(0,store.get("place",0))));
