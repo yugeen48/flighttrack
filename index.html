@@ -528,7 +528,7 @@
 
 <script>
 "use strict";
-const VERSION = "v45";
+const VERSION = "v46";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1219,6 +1219,21 @@ async function getWeather(p){
 /* ============ Fallblatt-Anzeige ============ */
 const FLAP_CHARS="ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ0123456789→·-";
 let flapTimers=[];
+/* Passt die Schriftgröße der Tafel an, bis auch lange Namen wie
+   "Arnavutköy, Istanbul → Amsterdam" vollständig hineinpassen. */
+function fitRoute(){
+  const r=$("route"); if(!r) return;
+  r.style.fontSize="";
+  const max=r.clientWidth;
+  if(!max || !r.children.length) return;
+  const need=r.scrollWidth;
+  if(need>max){
+    const cur=parseFloat(getComputedStyle(r).fontSize)||30;
+    r.style.fontSize=Math.max(13, cur*(max/need)*0.97).toFixed(1)+"px";
+  }
+}
+addEventListener("resize", fitRoute);
+
 function flap(el, text){
   flapTimers.forEach(clearTimeout); flapTimers=[];
   const chars=[...String(text).toUpperCase()];
@@ -1229,6 +1244,7 @@ function flap(el, text){
     d.innerHTML="<b>"+(ch===" "?"&nbsp;":ch)+"</b>";
     el.appendChild(d); return d;
   });
+  requestAnimationFrame(fitRoute);
   if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   cells.forEach((cell,i)=>{
     const ch=chars[i];
