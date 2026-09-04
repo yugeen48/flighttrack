@@ -235,11 +235,11 @@
     position:absolute;right:26px;bottom:14px;font-family:var(--mono);
     font-size:11px;letter-spacing:.1em;color:#9A958A;
   }
-  .rwyplan{position:absolute;z-index:7;right:26px;bottom:26px;width:230px;
+  .rwyplan{position:absolute;z-index:7;right:26px;bottom:26px;width:245px;
     filter:drop-shadow(0 6px 18px rgba(0,0,0,.35))}
   .rwyplan svg{width:100%;height:auto;display:block}
-  .rwyplan .rw{stroke:#8FA6DC}
-  .rwyplan .rw.on{stroke:#57E08A;stroke-width:11}
+  .rwyplan .rw{fill:#9AA0A8;stroke:#5F6570;stroke-width:1.4}
+  .rwyplan .rw.on{fill:#5FBF7E;stroke:#2E7A4C;stroke-width:1.6}
   @media (max-width:560px){ .rwyplan{width:165px;right:14px;bottom:14px} }
   .detail{cursor:pointer}
   .second{
@@ -446,32 +446,36 @@
 
     <div class="craft2 hide" id="craft2"></div>
     <div class="rwyplan" id="rwyPlan" hidden>
-      <svg viewBox="0 0 240 240" aria-hidden="true">
-        <rect width="240" height="240" rx="12" fill="#0E1729" opacity=".95"/>
-        <g opacity=".5">
-          <path d="M18 200q40-26 84-18t70-40 48-16" fill="none" stroke="#1E3A52" stroke-width="9"/>
-          <rect x="20" y="20" width="200" height="200" rx="10" fill="none" stroke="#1B2A44"/>
+      <svg viewBox="0 0 250 250" aria-hidden="true">
+        <rect width="250" height="250" rx="12" fill="#E6E7D6"/>
+        <g opacity=".55" fill="#CBD8B4">
+          <path d="M0 150q60-14 120 4t130-6v102H0Z"/>
+          <path d="M0 0h250v42q-70 16-130-2T0 52Z"/>
         </g>
-        <path d="M136 74h56a6 6 0 0 1 6 6v22a6 6 0 0 1-6 6h-56a6 6 0 0 1-6-6V80a6 6 0 0 1 6-6Z"
-              fill="#22304C" stroke="#33456B" stroke-width="1.5"/>
-        <text x="164" y="92" fill="#7E93C8" font-size="8" font-family="monospace" text-anchor="middle">TERMINAL</text>
-        <g stroke-linecap="round">
-          <path id="rw1129" class="rw" d="M33.5 89.3 L206.5 162.7" stroke-width="9"/>
-          <path d="M33.5 89.3 L206.5 162.7" stroke="#0E1729" stroke-width="1.6" stroke-dasharray="7 8"/>
-          <path id="rw1634" class="rw" d="M83.3 39.5 L156.7 212.5" stroke-width="9"/>
-          <path d="M83.3 39.5 L156.7 212.5" stroke="#0E1729" stroke-width="1.6" stroke-dasharray="7 8"/>
+        <path d="M-6 60q70-20 128 2t134-10" fill="none" stroke="#A8C6DC" stroke-width="16"/>
+        <path d="M-6 60q70-20 128 2t134-10" fill="none" stroke="#8FB4D0" stroke-width="1"/>
+        <g stroke="#B4B7A9" stroke-width="2.5" fill="none" opacity=".9">
+          <path d="M96 128 150 108M150 108 168 150M118 96 140 120"/>
         </g>
-        <g fill="#CFDCFF" font-size="10" font-family="monospace">
-          <text x="18" y="83">11</text>
-          <text x="210" y="175">29</text>
-          <text x="78" y="32">16</text>
-          <text x="152" y="228">34</text>
+        <rect x="126" y="96" width="52" height="30" rx="3" fill="#C9C6BC" stroke="#9A978C"/>
+        <text x="152" y="114" font-size="7.5" font-family="monospace" fill="#5C5A52" text-anchor="middle">TERMINAL</text>
+        <g transform="rotate(23 125 132)">
+          <rect id="rw1129" class="rw" x="26" y="126" width="198" height="12" rx="2"/>
+          <path d="M40 132h170" stroke="#E9EAEE" stroke-width="1.2" stroke-dasharray="8 9"/>
         </g>
-        <g transform="translate(210,26)">
-          <path d="M0 12V-8M-4-4 0-9 4-4" stroke="#9FB0CC" stroke-width="1.6" fill="none"/>
-          <text x="-3" y="24" fill="#9FB0CC" font-size="9" font-family="monospace">N</text>
+        <g transform="rotate(67 125 132)">
+          <rect id="rw1634" class="rw" x="24" y="126" width="202" height="12" rx="2"/>
+          <path d="M38 132h174" stroke="#E9EAEE" stroke-width="1.2" stroke-dasharray="8 9"/>
         </g>
-        <text x="20" y="232" fill="#7E93C8" font-size="8.5" font-family="monospace">WIEN-SCHWECHAT LOWW</text>
+        <g font-size="10" font-family="monospace" fill="#2E3038" font-weight="bold">
+          <text x="14" y="86">11</text><text x="214" y="196">29</text>
+          <text x="66" y="30">16</text><text x="176" y="240">34</text>
+        </g>
+        <g transform="translate(224,28)">
+          <path d="M0 12V-8M-4-4 0-9 4-4" stroke="#3A3D45" stroke-width="1.6" fill="none"/>
+          <text x="-3" y="24" font-size="9" font-family="monospace" fill="#3A3D45">N</text>
+        </g>
+        <text x="12" y="242" font-size="8" font-family="monospace" fill="#5C5A52">WIEN-SCHWECHAT LOWW</text>
       </svg>
     </div>
     <div class="second" id="second"></div>
@@ -524,7 +528,7 @@
 
 <script>
 "use strict";
-const VERSION = "v44";
+const VERSION = "v45";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
