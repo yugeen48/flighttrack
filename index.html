@@ -228,6 +228,7 @@
   .sq.quiet{border:0;background:none;font:inherit;color:inherit;font-weight:400;
     padding:0;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;
     text-underline-offset:3px}
+  .sq.quiet.open{color:#2C7A4B;font-weight:600;text-decoration:none}
   .sq.rot{color:#B3261E} .sq.gelb{color:#9A6B0C} .sq.gruen{color:#2C7A4B}
   .ok{color:#2C7A4B;letter-spacing:.16em;text-transform:uppercase}
   .reg{
@@ -507,7 +508,7 @@
 
 <script>
 "use strict";
-const VERSION = "v40";
+const VERSION = "v41";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1670,7 +1671,7 @@ async function showPlane(ac, second){
       const meaning = sqInfo ? sqInfo[1] : "Kein Standardcode";
       html += tier==="rot"||tier==="gelb"
         ? ` · <span class="sq ${tier}">Squawk ${sq} · ${meaning}</span>`
-        : ` · <button class="sq quiet" data-mean="${meaning}">Squawk ${sq}</button>`;
+        : ` · <button class="sq quiet" data-code="Squawk ${sq}" data-mean="${meaning}">Squawk ${sq}</button>`;
     }
     $("detail").innerHTML=html;
 
@@ -1944,12 +1945,21 @@ $("btn-tech2").addEventListener("click",()=>toggleTech(false));
 PLACES.forEach((_,i)=>$("btn-"+i).addEventListener("click",()=>selectPlace(i)));
 $("btn-geo").addEventListener("click",useGeo);
 
-/* Tipp auf einen unauffälligen Squawk zeigt seine Bedeutung */
+/* Tipp auf einen unauffälligen Squawk zeigt seine Bedeutung. Nochmal
+   tippen blendet sie wieder aus, sonst verschwindet sie nach fünf Sekunden. */
+let sqTimer=null;
 $("detail").addEventListener("click",(e)=>{
   const b=e.target.closest(".sq.quiet");
-  if(b){ e.stopPropagation();
-    b.outerHTML='<span class="sq gruen">'+b.textContent+" · "+b.dataset.mean+"</span>";
-    return; }
+  if(!b) return;
+  e.stopPropagation();
+  clearTimeout(sqTimer);
+  const open=b.classList.toggle("open");
+  b.textContent = open ? b.dataset.code+" · "+b.dataset.mean : b.dataset.code;
+  if(open) sqTimer=setTimeout(()=>{
+    if(b.isConnected && b.classList.contains("open")){
+      b.classList.remove("open"); b.textContent=b.dataset.code;
+    }
+  }, 5000);
 }, true);
 
 /* Tipp auf die Detailzeile zeigt den Pistenplan */
