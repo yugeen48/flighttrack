@@ -76,6 +76,28 @@
   .place:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 
   /* Flugzeug */
+  .radius{display:inline-flex;gap:2px;flex:0 0 auto;background:rgba(255,255,255,.55);
+    border:1px solid rgba(26,26,24,.16);border-radius:999px;padding:2px}
+  .radius button{border:0;background:none;font:inherit;font-size:10px;letter-spacing:.06em;
+    color:inherit;opacity:.55;padding:3px 8px;border-radius:999px;cursor:pointer}
+  .radius button[aria-pressed="true"]{opacity:1;background:rgba(26,26,24,.10);font-weight:600}
+  .night .radius{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.22)}
+  .night .radius button[aria-pressed="true"]{background:rgba(255,255,255,.22)}
+
+  .mute{flex:0 0 auto;border:0;background:none;padding:4px;cursor:pointer;color:inherit;opacity:.6}
+  .mute svg{width:17px;height:17px;display:block;fill:currentColor}
+  .mute .off{display:none}
+  .mute[aria-pressed="true"]{opacity:.95}
+  .mute[aria-pressed="false"] .wave{display:none}
+  .mute[aria-pressed="false"] .off{display:block}
+
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#2C7A4B;
+    vertical-align:middle;margin:0 2px;animation:dotPulse 2.6s ease-in-out infinite}
+  .dot.load{background:#D8A31A;animation-duration:1.1s}
+  .dot.err{background:#C0392B;animation-duration:.9s}
+  @keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.25}}
+  @media (prefers-reduced-motion:reduce){ .dot{animation:none} }
+
   .craft{
     position:absolute;z-index:2;left:50%;top:52%;width:76%;max-width:900px;
     transform:translate(-50%,-50%);transition:opacity var(--t);
@@ -198,11 +220,23 @@
     margin:7px 0 0;font-family:var(--mono);font-size:12.5px;color:#4E4A42;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:120px;
   }
+  .info.emerg{background:#F7E4E0;border-top-color:#C0392B}
+  .info.emerg .detail{color:#8E2A1E}
+  .info.emerg .route .flap{background:#7A1D12}
+  .info.warn{background:#F8F1DE;border-top-color:#BE8C1C}
+  .sq{font-weight:600}
+  .sq.rot{color:#B3261E} .sq.gelb{color:#9A6B0C} .sq.gruen{color:#2C7A4B}
   .ok{color:#2C7A4B;letter-spacing:.16em;text-transform:uppercase}
   .reg{
     position:absolute;right:26px;bottom:14px;font-family:var(--mono);
     font-size:11px;letter-spacing:.1em;color:#9A958A;
   }
+  .rwyplan{position:absolute;z-index:7;right:26px;bottom:26px;width:190px;
+    filter:drop-shadow(0 6px 18px rgba(0,0,0,.35))}
+  .rwyplan svg{width:100%;height:auto;display:block}
+  .rwyplan .on{stroke:#57E08A}
+  @media (max-width:560px){ .rwyplan{width:140px;right:14px;bottom:14px} }
+  .detail{cursor:pointer}
   .second{
     position:absolute;z-index:4;left:28px;top:76px;max-width:120px;
     font-family:var(--mono);font-size:11px;line-height:1.6;letter-spacing:.1em;
@@ -212,6 +246,29 @@
   .second:empty{display:none}
   .night .second{color:#9FB0CC}
   @media (max-width:700px){ .second{left:16px;top:58px;font-size:10px;max-width:200px} }
+  /* ---------------- Schmale Bildschirme, Handy ---------------- */
+  @media (max-width:560px){
+    .top{padding:10px 12px;gap:7px;font-size:9px;letter-spacing:.1em}
+    .place{width:30px;height:30px}
+    .place svg{width:15px;height:15px}
+    .radius button{padding:2px 6px;font-size:9px}
+    .here{font-size:9px}
+    .craft{width:96%}
+    .craft2{width:34%;left:26%;top:13%}
+    .info{padding:10px 14px 12px;border-top-width:2px}
+    .meta{font-size:9.5px;letter-spacing:.1em;padding-right:0}
+    .route{font-size:26px;padding-right:0;gap:2px}
+    .flap{width:.78em;height:1.2em;border-radius:2px}
+    .detail{font-size:10px;padding-right:0;white-space:normal;line-height:1.5}
+    .reg{position:static;text-align:right;margin-top:4px}
+    .empty h2{font-size:22px} .empty .temp{font-size:46px}
+    .tech .spec{align-self:stretch;margin:8px 14px 12px}
+  }
+  /* Hochformat: mehr Himmel, Flugzeug etwas kleiner */
+  @media (orientation:portrait){
+    .craft{max-width:none}
+  }
+
   /* ---------------- Wetterlagen ---------------- */
   .precip{position:absolute;inset:0;z-index:1;pointer-events:none;display:none}
   .wx-rain .precip, .wx-storm .precip{
@@ -291,8 +348,11 @@
     font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#B9CBF2}
   .tech .thead .t{flex:1}
   .tech .draw{flex:1 1 auto;min-height:0;display:grid;place-items:center;padding:0 26px}
-  .tech .draw svg{width:min(62%,620px);height:auto;overflow:visible}
-  .tech .draw svg *{fill:none !important;stroke:#DCE6FF !important;stroke-width:3 !important;opacity:1 !important}
+  .tech .draw svg{width:auto;height:min(100%,460px);max-width:96%;overflow:visible}
+  .tech .draw .riss *{fill:none;stroke:#DCE6FF;stroke-width:2.4;stroke-linejoin:round}
+  .tech .draw .dim path{fill:none;stroke:#7E93C8;stroke-width:1.2}
+  .tech .draw .dim text{fill:#9FB0CC;font-size:11px;letter-spacing:.12em;
+    font-family:var(--mono)}
   .tech .dims{padding:0 26px 6px;text-align:center}
   .tech .dims .bar{display:block;width:min(58%,560px);margin:0 auto 10px}
   .tech .dims .l1{font-size:15px;letter-spacing:.14em}
@@ -365,11 +425,31 @@
       <button class="place gear" id="btn-tech" aria-pressed="false" aria-label="Technische Zeichnung">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8Zm9 4.9v-3l-2.4-.5a6.9 6.9 0 0 0-.8-1.9l1.4-2-2.1-2.1-2 1.4a6.9 6.9 0 0 0-1.9-.8L12.7 2h-3l-.5 2.6c-.7.2-1.3.4-1.9.8l-2-1.4-2.1 2.1 1.4 2c-.4.6-.6 1.2-.8 1.9L1.5 10.5v3l2.4.5c.2.7.4 1.3.8 1.9l-1.4 2 2.1 2.1 2-1.4c.6.4 1.2.6 1.9.8l.5 2.6h3l.5-2.6c.7-.2 1.3-.4 1.9-.8l2 1.4 2.1-2.1-1.4-2c.4-.6.6-1.2.8-1.9l2.4-.5Z"/></svg>
       </button>
+      <span class="radius" id="radius" role="group" aria-label="Umkreis">
+        <button data-km="5">5</button><button data-km="15">15</button><button data-km="30">30</button>
+      </span>
       <span class="here" id="here">Der Himmel über Home</span>
-      <span class="live">Live · <b id="clock">–</b></span>
+      <button class="mute" id="mute" aria-label="Ton">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h4L14 5v14L8 14.5H4z"/><path class="wave" d="M17 8.6a5 5 0 0 1 0 6.8M19.6 6a8.6 8.6 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path class="off" d="M17 9.5 22 14.5M22 9.5 17 14.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+      </button>
+      <span class="live">Live <i class="dot" id="dot"></i> <b id="clock">–</b></span>
     </div>
 
     <div class="craft2 hide" id="craft2"></div>
+    <div class="rwyplan" id="rwyPlan" hidden>
+      <svg viewBox="0 0 200 200" aria-hidden="true">
+        <rect width="200" height="200" rx="10" fill="#101A2E" opacity=".92"/>
+        <g stroke-linecap="round">
+          <path id="rw1129" d="M34 132 166 76" stroke="#4A5A78" stroke-width="11"/>
+          <path id="rw1634" d="M74 26 126 174" stroke="#4A5A78" stroke-width="11"/>
+        </g>
+        <text x="24" y="146" fill="#9FB0CC" font-size="11" font-family="monospace">11</text>
+        <text x="166" y="70" fill="#9FB0CC" font-size="11" font-family="monospace">29</text>
+        <text x="66" y="20" fill="#9FB0CC" font-size="11" font-family="monospace">34</text>
+        <text x="120" y="190" fill="#9FB0CC" font-size="11" font-family="monospace">16</text>
+        <text x="100" y="100" fill="#7E93C8" font-size="9" font-family="monospace" text-anchor="middle">WIEN LOWW</text>
+      </svg>
+    </div>
     <div class="second" id="second"></div>
     <div class="wind" id="wind" aria-hidden="true"></div>
     <div class="craft hide" id="craft"></div>
@@ -420,7 +500,7 @@
 
 <script>
 "use strict";
-const VERSION = "v34";
+const VERSION = "v39";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -428,7 +508,10 @@ const PLACES = [
   { key:"home", name:"Home", lat:48.22868, lon:16.39602 },
   { key:"work", name:"Work", lat:48.28767, lon:16.54102 }
 ];
-const RADIUS_KM = 15, RADIUS_NM = RADIUS_KM/1.852, REFRESH_MS = 15000;
+const RADIUS_OPTIONS = [5,15,30];
+let RADIUS_KM = 15;
+const RADIUS_NM = () => RADIUS_KM/1.852;
+const REFRESH_MS = 15000;
 /* Datenquellen. Erst direkt, dann über Umwege, falls der Browser blockiert.
    dist ist in nautischen Meilen. adsb.fi bittet um Nennung der Quelle. */
 /* Eigener Cloudflare Worker. Sobald hier eine Adresse steht, wird sie zuerst
@@ -623,20 +706,29 @@ function noteType(pk,t){
   for(const k in seen){seen[k]=seen[k].filter(x=>x>cut); if(!seen[k].length) delete seen[k];}
   store.set("seen-"+pk,seen); return before;
 }
+const PRIVATE_JET = /^(GLF|GL5|GL6|GL7|CL30|CL35|CL60|CL64|CL65|C25|C51|C55|C56|C560|C650|C68|C700|E55|E50|E35|LJ|FA5|FA6|FA7|FA8|F2TH|PC24|BE40|H25|ASTR|G150|G280|HDJT|PRM1|MU30|SF50|CRJ2)/;
+const VINTAGE = /^(DC3|C47|DC6|DC4|CVLT|CV24|JU52|AN2|B17|B25|B29|P51|T6|T28|SPIT|HURI|L18|L188|BE18|YK52|PA18|DH82|STAR|CAT)/;
 function rarity(ac,info,pk){
   const type=(info&&info.icao)||ac.t||null;
   const cat=(ac.category||"").toUpperCase();
   const desc=((info&&info.type)||ac.desc||"").toLowerCase();
   const before=noteType(pk,type);
-  if(cat==="A7"||/helicopter|rotorcraft/.test(desc)||
-     (type&&/^(H|EC1|EC3|EC4|A109|A139|B06|B407|B412|R22|R44|R66|S76|AS35|H145|H135|EC35)/.test(type)))
-    return {rare:true,kind:"heli"};
   const f=Number(ac.dbFlags||0);
-  if(f&1) return {rare:true,kind:null};
-  if(type&&!COMMON.has(type)) return {rare:true,kind:null};
-  if(type&&before<3) return {rare:true,kind:null};
-  return {rare:false,kind:null};
+  const T=(type||"").toUpperCase();
+
+  if(cat==="A7"||/helicopter|rotorcraft/.test(desc)||
+     (T&&/^(H|EC1|EC3|EC4|A109|A139|B06|B407|B412|R22|R44|R66|S76|AS35|H145|H135|EC35)/.test(T)))
+    return {rare:true,kind:"heli",label:"Hubschrauber"};
+  if(f&1) return {rare:true,kind:null,label:"Militär"};
+  if(f&8) return {rare:true,kind:null,label:"Behörde"};
+  if(VINTAGE.test(T)) return {rare:true,kind:null,label:"Oldtimer"};
+  if(isCargo((ac.flight||"").trim(), T)) return {rare:true,kind:null,label:"Frachter"};
+  if(PRIVATE_JET.test(T)) return {rare:true,kind:null,label:"Privatjet"};
+  if(T&&!COMMON.has(T)) return {rare:true,kind:null,label:"Ungewöhnlicher Typ"};
+  if(T&&before<3) return {rare:true,kind:null,label: before===0?"Erstmals hier":"Selten hier"};
+  return {rare:false,kind:null,label:""};
 }
+
 
 /* ============ Flugzeug zeichnen ============
    Seitenansicht, Nase rechts. Reihenfolge ist wichtig: erst die Teile,
@@ -693,6 +785,7 @@ function farNacelle(x,y,w,h,c){
   return nacelle(x,y,w,h,c);
 }
 /* Kabinenfenster als helle Punkte im Farbband. Frachter bekommen keine. */
+let drawFlipped=false;
 function isNight(){ return document.querySelector(".frame").classList.contains("night"); }
 function windows(x0, w, y, cargo){
   if(cargo) return "";
@@ -701,16 +794,21 @@ function windows(x0, w, y, cargo){
   for(let x=x0+12; x<x0+w-8; x+=15) s+=`<circle cx="${x}" cy="${y}" r="2.7" fill="${col}"/>`;
   return s;
 }
-/* Positionslichter und Blitzlicht, nur nachts. Grün am vorderen Flügel,
-   rot am hinteren, weiß am Heck, dazu ein rot blinkendes Licht am Rumpf. */
+/* Positionslichter, nur nachts. Rot sitzt an der linken Tragfläche,
+   grün an der rechten. Zeigt die Nase nach rechts, blicken wir auf die
+   linke Seite - dann ist der vordere Flügel der rote. Fliegt sie nach
+   links, sehen wir die rechte Seite und die Farben tauschen. */
 function lights(p){
   if(!isNight()) return "";
   const L=p||{};
-  const g=L.green||[176,206], r=L.red||[172,42], t=L.tail||[60,80], b=L.beacon||[300,140];
-  return `<circle cx="${g[0]}" cy="${g[1]}" r="5" fill="#57E08A"/>
-    <circle cx="${g[0]}" cy="${g[1]}" r="9" fill="#57E08A" opacity=".28"/>
-    <circle cx="${r[0]}" cy="${r[1]}" r="5" fill="#FF5C5C"/>
-    <circle cx="${r[0]}" cy="${r[1]}" r="9" fill="#FF5C5C" opacity=".28"/>
+  const near=L.near||[176,206], far=L.far||[172,42];
+  const t=L.tail||[60,80], b=L.beacon||[300,140];
+  const nearCol = drawFlipped ? "#57E08A" : "#FF5C5C";
+  const farCol  = drawFlipped ? "#FF5C5C" : "#57E08A";
+  return `<circle cx="${near[0]}" cy="${near[1]}" r="5" fill="${nearCol}"/>
+    <circle cx="${near[0]}" cy="${near[1]}" r="9" fill="${nearCol}" opacity=".28"/>
+    <circle cx="${far[0]}" cy="${far[1]}" r="5" fill="${farCol}"/>
+    <circle cx="${far[0]}" cy="${far[1]}" r="9" fill="${farCol}" opacity=".28"/>
     <circle cx="${t[0]}" cy="${t[1]}" r="4" fill="#FFF3D8" opacity=".85"/>
     <circle class="blink" cx="${b[0]}" cy="${b[1]}" r="4.5" fill="#FF4040"/>`;
 }
@@ -734,7 +832,7 @@ function drawJet(a,o){
   ${o.winglet?`<path d="M197 197C192 187 189 179 188 172L179 175C181 184 184 193 188 203Z" fill="${BODY}" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>`:""}
   ${o.engines>=4?nacelle(190,176,66,30,a.c):""}
   ${nacelle(226,150,84,37,a.c)}
-  ${lights({green:[176,206],red:[172,42],tail:[60,80],beacon:[300,140]})}`;
+  ${lights({near:[176,206],far:[172,42],tail:[60,80],beacon:[300,140]})}`;
 }
 
 /* --- Regionaljet: T-Leitwerk, Triebwerke am Heck --- */
@@ -748,7 +846,7 @@ function drawRegional(a){ return `
   ${farNacelle(160,74,66,28,a.c)}
   <g fill="${LINE}"><circle cx="252" cy="103" r="5"/><circle cx="276" cy="104" r="5"/><circle cx="300" cy="105" r="5"/><circle cx="324" cy="106" r="5"/><circle cx="348" cy="107" r="5"/></g>
   <path d="M390 99C406 102 420 107 428 113L394 107Z" fill="${LINE}"/>
-  ${lights({green:[186,198],red:[180,50],tail:[70,84],beacon:[300,134]})}`;
+  ${lights({near:[186,198],far:[180,50],tail:[70,84],beacon:[300,134]})}`;
 }
 
 /* --- Turboprop mit zwei Motoren am Hochdecker (ATR, Dash 8) --- */
@@ -768,7 +866,7 @@ function drawProp(a){ return `
   <rect x="236" y="78" width="74" height="32" rx="16" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
   <ellipse cx="312" cy="92" rx="7" ry="44" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="2.4"/>
   <path d="M302 80a15 15 0 0 1 0 26Z" fill="${BODY}"/>
-  ${lights({green:[152,106],red:[356,88],tail:[70,84],beacon:[280,130]})}`;
+  ${lights({near:[152,106],far:[356,88],tail:[70,84],beacon:[280,130]})}`;
 }
 
 /* --- Einmotorige Propellermaschine mit T-Leitwerk (PC-12, TBM, Cessna) --- */
@@ -782,7 +880,7 @@ function drawSingle(a){ return `
   <path d="M300 110 208 176 188 186 244 126Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
   <path d="M336 86c14 2 24 6 30 12 5 6 3 13-4 15l-26 4Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
   <ellipse cx="374" cy="104" rx="6" ry="40" fill="${a.c}" opacity=".22" stroke="${LINE}" stroke-width="2.2"/>
-  ${lights({green:[190,184],red:[200,46],tail:[104,80],beacon:[250,126]})}`;
+  ${lights({near:[190,184],far:[200,46],tail:[104,80],beacon:[250,126]})}`;
 }
 
 /* --- Hubschrauber (EC135-Bauart mit Fenestron im Heck) --- */
@@ -804,7 +902,7 @@ function drawHeli(a){ return `
   <path d="M92 38h376c8 0 8 11 0 11H92c-8 0-8-11 0-11Z" fill="${LINE}"/>
   <path d="M214 178h140" stroke="${LINE}" stroke-width="8" stroke-linecap="round"/>
   <path d="M244 146 232 178M328 146 340 178" stroke="${LINE}" stroke-width="7" stroke-linecap="round"/>
-  ${lights({green:[380,132],red:[210,88],tail:[64,60],beacon:[280,150]})}`;
+  ${lights({near:[380,132],far:[210,88],tail:[64,60],beacon:[280,150]})}`;
 }
 
 /* --- Jumbo: Buckel hinter dem Cockpit, vier Triebwerke (747) --- */
@@ -824,7 +922,7 @@ function drawJumbo(a,o){ o=o||{}; return `
   <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
   ${nacelle(190,176,66,30,a.c)}
   ${nacelle(236,142,78,34,a.c)}
-  ${lights({green:[176,206],red:[172,42],tail:[60,80],beacon:[300,140]})}`;
+  ${lights({near:[176,206],far:[172,42],tail:[60,80],beacon:[300,140]})}`;
 }
 
 /* --- Doppelstock über die ganze Länge (A380) --- */
@@ -843,7 +941,7 @@ function drawSuper(a,o){ o=o||{}; return `
   <path d="M320 130 200 210 176 222 244 152Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
   ${nacelle(198,186,68,30,a.c)}
   ${nacelle(248,152,78,34,a.c)}
-  ${lights({green:[180,218],red:[170,42],tail:[58,82],beacon:[300,154]})}`;
+  ${lights({near:[180,218],far:[170,42],tail:[58,82],beacon:[300,154]})}`;
 }
 
 /* --- Beluga: Buckel über fast die ganze Länge --- */
@@ -857,7 +955,7 @@ function drawBeluga(a,o){ o=o||{cargo:true}; return `
   <path d="M404 100C418 102 430 107 438 113L408 108Z" fill="${LINE}"/>
   <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
   ${nacelle(226,150,84,37,a.c)}
-  ${lights({green:[176,206],red:[172,42],tail:[60,80],beacon:[300,140]})}`;
+  ${lights({near:[176,206],far:[172,42],tail:[60,80],beacon:[300,140]})}`;
 }
 
 /* Merkmale je Muster: Herstellernase, Winglets, Triebwerkszahl, Größe */
@@ -886,6 +984,7 @@ function craftWidth(len){ return Math.max(46, Math.min(94, 40 + len*0.78)); }
 function craftSVG(kind, a, flipped, opt){
   const draw = { heli:drawHeli, prop:drawProp, single:drawSingle, regional:drawRegional,
                  jumbo:drawJumbo, super:drawSuper, beluga:drawBeluga }[kind] || drawJet;
+  drawFlipped = !!flipped;
   const inner = draw(a, opt);
   const box = kind==="single" ? "70 10 340 190"
             : kind==="heli" ? "45 25 435 175"
@@ -1267,9 +1366,165 @@ function scheduleFace(){
 if(!REDUCED) scheduleFace();
 /* Wind alle 30 Sekunden, unabhängig von der Tafel */
 
+
+
+
+
+/* ============ Draufsicht für den Riss ============
+   Wird aus den echten Maßen des Musters gebaut: Rumpflänge und Spannweite
+   stehen im Verhältnis zueinander, Triebwerkszahl und Bauform kommen dazu.
+   Dadurch stimmt der Riss für jedes Muster, ohne dass ich dreißig
+   Zeichnungen von Hand anlegen muss. */
+function topView(icao, kind){
+  const s=SPECS[(icao||"").toUpperCase()];
+  const L=s?s[0]:38, S=s?s[1]:34;
+  const H=380, cx=220, y0=30;               /* Rumpf senkrecht, Nase oben */
+  const px=H/L;                              /* Meter -> Bildpunkte */
+  const span=Math.min(400, S*px);
+  const fw=Math.max(14, Math.min(46, H*0.075*(38/L)+8));   /* Rumpfbreite */
+  const half=span/2;
+  const wingY=y0+H*0.52, tipY=wingY+H*0.16, rootChord=H*0.20, tipChord=H*0.05;
+  const stabSpan=span*0.36, stabY=y0+H*0.93;
+  const heli = kind==="heli";
+
+  const wing=(dir)=>`M${cx+dir*fw/2} ${wingY}
+    L${cx+dir*half} ${tipY} L${cx+dir*half} ${tipY+tipChord}
+    L${cx+dir*fw/2} ${wingY+rootChord} Z`;
+  const stab=(dir)=>`M${cx+dir*fw/2} ${stabY}
+    L${cx+dir*stabSpan/2} ${stabY+H*0.045} L${cx+dir*stabSpan/2} ${stabY+H*0.075}
+    L${cx+dir*fw/2} ${stabY+H*0.06} Z`;
+
+  let eng="";
+  if(!heli){
+    const pos = (kind==="regional")
+      ? [[0.16,wingY-H*0.05]]
+      : (SPECS[(icao||"").toUpperCase()] && /^(A388|A34|B74)/.test((icao||"").toUpperCase()))
+        ? [[0.32,0],[0.58,0]] : [[0.38,0]];
+    for(const d of [1,-1]) for(const p of pos){
+      const ex=cx+d*half*p[0], ey=(kind==="regional")? p[1] : wingY+H*0.055*(1-p[0])+H*0.02;
+      eng+=`<rect x="${(ex-9).toFixed(1)}" y="${(ey-16).toFixed(1)}" width="18" height="34" rx="9"/>`;
+    }
+  }
+
+  const body = heli
+    ? `<ellipse cx="${cx}" cy="${y0+H*0.33}" rx="${fw*0.9}" ry="${H*0.20}"/>
+       <rect x="${cx-fw*0.22}" y="${y0+H*0.5}" width="${fw*0.44}" height="${H*0.42}" rx="6"/>
+       <circle cx="${cx}" cy="${y0+H*0.33}" r="${span/2}" fill="none" stroke-dasharray="6 7"/>`
+    : `<path d="M${cx} ${y0} C${cx+fw*0.62} ${y0+H*0.10} ${cx+fw/2} ${y0+H*0.18} ${cx+fw/2} ${y0+H*0.30}
+        L${cx+fw/2} ${y0+H*0.86} C${cx+fw/2} ${y0+H*0.95} ${cx+fw*0.18} ${y0+H} ${cx} ${y0+H}
+        C${cx-fw*0.18} ${y0+H} ${cx-fw/2} ${y0+H*0.95} ${cx-fw/2} ${y0+H*0.86}
+        L${cx-fw/2} ${y0+H*0.30} C${cx-fw/2} ${y0+H*0.18} ${cx-fw*0.62} ${y0+H*0.10} ${cx} ${y0}Z"/>`;
+
+  const wings = heli ? "" : `<path d="${wing(1)}"/><path d="${wing(-1)}"/>
+       <path d="${stab(1)}"/><path d="${stab(-1)}"/>`;
+
+  /* Maßlinien */
+  const dimX=cx+half+26, dimY=y0+H+30;
+  const dims=`
+    <path d="M${dimX} ${y0}v${H}M${dimX-6} ${y0}h12M${dimX-6} ${y0+H}h12"/>
+    <text x="${dimX+9}" y="${y0+H/2}" transform="rotate(90 ${dimX+9} ${y0+H/2})">Länge ${L.toLocaleString("de-AT")} m</text>
+    <path d="M${cx-half} ${dimY}h${span}M${cx-half} ${dimY-6}v12M${cx+half} ${dimY-6}v12"/>
+    <text x="${cx}" y="${dimY+18}" text-anchor="middle">Spannweite ${S.toLocaleString("de-AT")} m</text>`;
+
+  return `<svg viewBox="0 -6 ${cx*2} ${H+90}" role="img">
+    <g class="riss">${body}${wings}${eng}</g>
+    <g class="dim">${dims}</g></svg>`;
+}
+
+/* ============ Transpondercodes ============
+   rot = Notfall, gelb = auffällig, gruen = normaler Betriebscode.
+   Alles andere bleibt eine schlichte Zahl ohne Einfärbung. */
+const SQUAWK = {
+  "7500":["rot","Entführung"], "7600":["rot","Funkausfall"], "7700":["rot","Notfall"],
+  "7777":["gelb","Militärischer Abfangflug"], "0000":["gelb","Transponderfehler"],
+  "7400":["gelb","Drohne ohne Verbindung"], "7004":["gelb","Kunstflug"],
+  "7001":["gelb","Militärischer Tiefflug"], "7002":["gelb","Sperrgebiet"],
+  "7003":["gelb","Vorführung"], "0033":["gelb","Fallschirmabsprung"],
+  "7615":["gelb","Rettungsflug"],
+  "7000":["gruen","Sichtflug"], "7010":["gruen","Platzrunde"],
+  "2000":["gruen","Einflug ohne Zuweisung"], "1000":["gruen","Unter Flugsicherung"],
+  "1200":["gruen","Sichtflug"], "7020":["gruen","Nahbereich"]
+};
+
+/* ============ Aktive Piste in Schwechat ============
+   Aus den Kursen der tief anfliegenden Maschinen lässt sich ablesen,
+   welche Bahn gerade benutzt wird. Wien hat 11/29 und 16/34. */
+const RUNWAYS = [
+  { name:"29", hdg:293 }, { name:"11", hdg:113 },
+  { name:"16", hdg:157 }, { name:"34", hdg:337 }
+];
+let activeRwy = store.get("rwy", null);
+function detectRunway(list){
+  const vie=AIRPORTS[0];
+  for(const ac of list){
+    if(typeof ac.lat!=="number"||typeof ac.alt_baro!=="number") continue;
+    if(ac.alt_baro>5000 || typeof ac.track!=="number") continue;
+    if(haversine(ac.lat,ac.lon,vie.lat,vie.lon)>28) continue;
+    let best=null, bd=999;
+    for(const r of RUNWAYS){
+      const d=Math.abs(((ac.track-r.hdg+540)%360)-180);   /* Winkelabstand */
+      if(d<bd){ bd=d; best=r; }
+    }
+    if(best && bd<18){ if(activeRwy!==best.name){ activeRwy=best.name; store.set("rwy",best.name); } return; }
+  }
+}
+
+/* ============ Umkreis, Status und Ton ============ */
+function setRadius(km){
+  RADIUS_KM=km; store.set("radius",km);
+  [...$("radius").children].forEach(b=>b.setAttribute("aria-pressed", String(+b.dataset.km===km)));
+  shownHex=null; lastBig=null; loop();
+}
+[...$("radius").children].forEach(b=>b.addEventListener("click",()=>setRadius(+b.dataset.km)));
+
+function status(state){
+  const d=$("dot"); if(!d) return;
+  d.classList.remove("load","err");
+  if(state!=="ok") d.classList.add(state);
+}
+
+let soundOn = store.get("sound", true);
+function paintMute(){ $("mute").setAttribute("aria-pressed", String(soundOn)); }
+$("mute").addEventListener("click",()=>{ soundOn=!soundOn; store.set("sound",soundOn); paintMute(); if(soundOn) beep("test"); });
+paintMute();
+
+/* Töne werden im Browser erzeugt, keine Dateien. iOS lässt Ton erst nach
+   einer Berührung zu - deshalb wird der Kontext beim ersten Tippen geweckt. */
+let actx=null;
+function audio(){ if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } 
+  if(actx && actx.state==="suspended") actx.resume(); return actx; }
+addEventListener("touchstart", audio, {once:true});
+addEventListener("click", audio, {once:true});
+
+function beep(kind){
+  if(!soundOn) return;
+  const c=audio(); if(!c) return;
+  const t=c.currentTime;
+  if(kind==="rare" || kind==="test"){
+    /* kurzes Funkrauschen */
+    const len=kind==="test"?0.25:0.6, buf=c.createBuffer(1, c.sampleRate*len, c.sampleRate);
+    const dat=buf.getChannelData(0);
+    for(let i=0;i<dat.length;i++) dat[i]=(Math.random()*2-1)*Math.pow(1-i/dat.length,1.5);
+    const s=c.createBufferSource(); s.buffer=buf;
+    const bp=c.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=1400; bp.Q.value=1.2;
+    const g=c.createGain(); g.gain.value=0.16;
+    s.connect(bp).connect(g).connect(c.destination); s.start(t);
+  } else if(kind==="alarm"){
+    /* kurze zweitönige Sirene */
+    [[740,0],[560,0.28],[740,0.56]].forEach(([f,dt])=>{
+      const o=c.createOscillator(), g=c.createGain();
+      o.type="triangle"; o.frequency.value=f;
+      g.gain.setValueAtTime(0.0001,t+dt);
+      g.gain.exponentialRampToValueAtTime(0.13,t+dt+0.04);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+dt+0.26);
+      o.connect(g).connect(c.destination); o.start(t+dt); o.stop(t+dt+0.3);
+    });
+  }
+}
+
 /* ============ Zustand ============ */
 let place=PLACES[Math.min(1,Math.max(0,store.get("place",0)))];
-let shownHex=null, timer=null, lastOk=0, gen=0, lastBig=null, lastFlapAt=0, sightings=0;
+let shownHex=null, timer=null, lastOk=0, gen=0, lastBig=null, lastFlapAt=0, sightings=0, craftSig=null;
 const FLAP_IDLE = 45000;   /* auch ohne Wechsel ab und zu durchblättern */
 
 function clock(){
@@ -1310,7 +1565,8 @@ async function showPlane(ac, second){
       windFlip=flipped; windKmh=lastKmh; stopWind();
       requestAnimationFrame(()=>setWind(lastKmh));
     }
-    $("craft").innerHTML=craftSVG(kind,a,flipped,f);
+    const sig=[kind,a.c,a.e,flipped,f.engines,f.winglet,f.nose,f.cargo,isNight()].join("|");
+    if(sig!==craftSig){ craftSig=sig; $("craft").innerHTML=craftSVG(kind,a,flipped,f); }
     $("craft").style.width=craftWidth(f.len)+"%";
     /* Je höher die Maschine fliegt, desto weiter oben steht sie im Bild.
        Der Bereich ist so gewählt, dass sie immer gut sichtbar bleibt. */
@@ -1327,7 +1583,10 @@ async function showPlane(ac, second){
     const c2=$("craft2");
     if(second){
       const s=second.ac, call2=(s.flight||"").trim();
-      const r2=(s.category||"").toUpperCase()==="A7"?{kind:"heli"}:{kind:null};
+      const t2=(s.t||"").toUpperCase();
+      const isHeli2 = (s.category||"").toUpperCase()==="A7"
+        || /^(H|EC1|EC3|EC4|A109|A139|B06|B407|B412|R22|R44|R66|S76|AS35|H145|H135|EC35)/.test(t2);
+      const r2={kind: isHeli2 ? "heli" : null};
       const k2=kindOf(s,null,r2);
       const a2=airlineOf(call2,s.r||"",k2);
       const f2=features(s.t||""); f2.cargo=isCargo(call2, s.t||"");
@@ -1350,7 +1609,9 @@ async function showPlane(ac, second){
       : (ac.desc||ac.t||"");
     const airlineName=(route&&route.airline)||a.n||"";
     $("metaText").textContent=[airlineName,call,typeName].filter(Boolean).join(" · ").toUpperCase();
+    $("rare").textContent = rare.rare ? ("Seltener Gast"+(rare.label?" · "+rare.label:"")+" ·") : "";
     $("rare").classList.toggle("on",rare.rare);
+    if(rare.rare && changed) beep("rare");
     const bigText = route&&route.from&&route.to
       ? route.from+" → "+route.to
       : (typeName || call || "Unbekannter Flug");
@@ -1365,6 +1626,12 @@ async function showPlane(ac, second){
     if(typeof ac.alt_baro==="number") bits.push(thou(ac.alt_baro*0.3048)+" m hoch");
     if(typeof ac.gs==="number") bits.push(Math.round(ac.gs*1.852)+" km/h");
     bits.push(dec1(km)+" km im "+dirOf(brg));
+    const sq=(ac.squawk||"").trim();
+    const sqInfo = SQUAWK[sq] || null;
+    const tier = sqInfo ? sqInfo[0] : null;
+    $("info").classList.toggle("emerg", tier==="rot");
+    $("info").classList.toggle("warn", tier==="gelb");
+    if(tier==="rot" && changed) beep("alarm");
     let ph=phase(ac.baro_rate);
     const nearAp=nearestAirport(ac.lat,ac.lon);
     if(typeof ac.alt_baro==="number" && ac.alt_baro<6500 && nearAp.km<35){
@@ -1373,7 +1640,13 @@ async function showPlane(ac, second){
     }
     if(ph) bits.push(ph);
     if(g.guess) bits.push(g.guess);
-    $("detail").textContent=bits.join(" · ");
+    if(activeRwy) bits.push("Piste "+activeRwy+" aktiv");
+    let html=bits.join(" · ");
+    if(sq){
+      const txt="Squawk "+sq+(sqInfo?" · "+sqInfo[1]:"");
+      html += " · " + (tier ? `<span class="sq ${tier}">${txt}</span>` : txt);
+    }
+    $("detail").innerHTML=html;
 
     $("reg").textContent=(info&&info.reg)||ac.r||"";
     const regNow=(info&&info.reg)||ac.r||"";
@@ -1400,13 +1673,14 @@ async function showEmpty(note, raw, ok){
   const w=await getWeather(place);
   $("craft").classList.add("hide");
   $("craft2").classList.add("hide");
+  craftSig=null;
   stopWind();
   $("empty").classList.add("show");
   applyWeather(w);
   $("temp").innerHTML=w?`${Math.round(w.temperature_2m)}<span>°</span>`:"";
   $("cond").textContent=w?condName(w.weather_code):"Wetterdaten nicht erreichbar";
   $("metaText").textContent="";
-  $("rare").classList.remove("on");
+  $("rare").classList.remove("on"); $("info").classList.remove("emerg","warn");
   const emptyText = note ? "Keine Verbindung" : "Kein Flugzeug in Reichweite";
   if(emptyText!==lastBig || Date.now()-lastFlapAt > FLAP_IDLE){
     lastBig=emptyText; lastFlapAt=Date.now(); flap($("route"), emptyText);
@@ -1427,7 +1701,7 @@ const errName = e => { const m=String(e&&e.message||e);
   return /^\d+$/.test(m) ? "HTTP "+m : "blockiert"; };
 
 async function planes(){
-  const la=place.lat.toFixed(4), lo=place.lon.toFixed(4), nm=RADIUS_NM.toFixed(1);
+  const la=place.lat.toFixed(4), lo=place.lon.toFixed(4), nm=RADIUS_NM().toFixed(1);
   const notes=[]; let best=[], ok=0;
   if(MY_PROXY){
     try{
@@ -1517,10 +1791,12 @@ function demoTick(){
 async function tick(){
   if(DEMO) return demoTick();
   const g=gen;
+  status("load");
   try{
     const {list,ok}=await planes();
+    status("ok");
     if(g!==gen) return;              /* Standort wurde inzwischen gewechselt */
-    const near=ranked(list); lastOk=Date.now();
+    const near=ranked(list); lastOk=Date.now(); detectRunway(list);
     if(near.length){
       /* Wetter zuerst - die Zeichnung braucht die Info, ob gerade Nacht ist */
       applyWeather(await getWeather(place));
@@ -1534,6 +1810,7 @@ async function tick(){
     }
     /* Kurze Aussetzer nicht ins Bild schreiben - erst nach einer Minute
        ohne brauchbare Antwort auf die Fehleranzeige wechseln. */
+    status("err");
     if(lastOk && Date.now()-lastOk < 60000) return;
     await showEmpty("Keine Quelle erreichbar · "+srcStatus);
   }
@@ -1596,11 +1873,11 @@ function paintTech(){
     $("rareList").innerHTML="";
     return;
   }
-  $("techDraw").innerHTML=craftSVG(last.kind,last.a,false);
+  $("techDraw").innerHTML = topView(last.icao, last.kind);
   const s=SPECS[last.icao];
   if(s){
-    $("techL1").textContent="Länge "+numDe(s[0])+" m";
-    $("techL2").textContent="Spannweite "+numDe(s[1])+" m · "+numDe(s[2])+" t max. · Erstflug "+s[3];
+    $("techL1").textContent=numDe(s[2])+" t maximale Abflugmasse";
+    $("techL2").textContent="Erstflug des Musters "+s[3];
   }else{
     $("techL1").textContent="Keine Maße hinterlegt";
     $("techL2").textContent=last.icao?("Muster "+last.icao):"";
@@ -1639,6 +1916,19 @@ $("btn-tech2").addEventListener("click",()=>toggleTech(false));
 PLACES.forEach((_,i)=>$("btn-"+i).addEventListener("click",()=>selectPlace(i)));
 $("btn-geo").addEventListener("click",useGeo);
 
+/* Tipp auf die Detailzeile zeigt den Pistenplan */
+$("detail").addEventListener("click",()=>{
+  const p=$("rwyPlan");
+  if(!activeRwy) return;
+  const show=p.hidden;
+  p.hidden=!show;
+  if(show){
+    $("rw1129").classList.toggle("on", activeRwy==="11"||activeRwy==="29");
+    $("rw1634").classList.toggle("on", activeRwy==="16"||activeRwy==="34");
+    setTimeout(()=>{ p.hidden=true; }, 6000);
+  }
+});
+
 /* Tipp aufs Flugzeug öffnet die Karte von adsb.lol - dieselbe Quelle wie
    hier, also inklusive Polizei und Militär, mit gezeichneter Flugspur. */
 $("craft").addEventListener("click",()=>{
@@ -1647,6 +1937,7 @@ $("craft").addEventListener("click",()=>{
   window.open("https://adsb.lol/?icao="+last.hex+"&showTrace="+day, "_blank", "noopener");
 });
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){clock();loop();} });
+setRadius(RADIUS_OPTIONS.includes(store.get("radius",15)) ? store.get("radius",15) : 15);
 selectPlace(Math.min(1,Math.max(0,store.get("place",0))));
 </script>
 </body>
