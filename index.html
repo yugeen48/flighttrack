@@ -225,6 +225,9 @@
   .info.emerg .route .flap{background:#7A1D12}
   .info.warn{background:#F8F1DE;border-top-color:#BE8C1C}
   .sq{font-weight:600}
+  .sq.quiet{border:0;background:none;font:inherit;color:inherit;font-weight:400;
+    padding:0;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;
+    text-underline-offset:3px}
   .sq.rot{color:#B3261E} .sq.gelb{color:#9A6B0C} .sq.gruen{color:#2C7A4B}
   .ok{color:#2C7A4B;letter-spacing:.16em;text-transform:uppercase}
   .reg{
@@ -347,13 +350,17 @@
   .tech .thead{display:flex;align-items:center;gap:14px;padding:18px 26px;
     font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#B9CBF2}
   .tech .thead .t{flex:1}
-  .tech .draw{flex:1 1 auto;min-height:0;display:grid;place-items:center;padding:0 26px}
-  .tech .draw svg{width:auto;height:min(100%,460px);max-width:96%;overflow:visible}
+  .tech .draw{flex:1 1 auto;min-height:0;padding:8px 26px 0;overflow:hidden}
+  .tech .views{display:flex;align-items:center;justify-content:center;
+    gap:26px;height:100%;width:100%}
+  .tech .views .v{flex:1 1 0;min-width:0;height:100%;
+    display:flex;align-items:center;justify-content:center}
+  .tech .views svg{max-width:100%;max-height:100%;width:auto;height:auto}
   .tech .draw .riss *{fill:none;stroke:#DCE6FF;stroke-width:2.4;stroke-linejoin:round}
   .tech .draw .dim path{fill:none;stroke:#7E93C8;stroke-width:1.2}
   .tech .draw .dim text{fill:#9FB0CC;font-size:11px;letter-spacing:.12em;
     font-family:var(--mono)}
-  .tech .dims{padding:0 26px 6px;text-align:center}
+  .tech .dims{padding:6px 26px;text-align:center;flex:0 0 auto}
   .tech .dims .bar{display:block;width:min(58%,560px);margin:0 auto 10px}
   .tech .dims .l1{font-size:15px;letter-spacing:.14em}
   .tech .dims .l2{font-size:13px;letter-spacing:.14em;color:#A9BEEC;margin-top:4px}
@@ -361,7 +368,7 @@
   .tech .spec div{padding:6px 12px;border-bottom:1px solid #6E88C6;white-space:nowrap}
   .tech .spec div:last-child{border-bottom:0;color:#A9BEEC}
   .tech .rarelist{padding:0 26px;font-size:11px;letter-spacing:.08em;color:#A9BEEC;
-    max-height:22%;overflow:auto}
+    flex:0 0 auto;max-height:20%;overflow:auto}
   .tech .rarelist h4{margin:0 0 6px;font-size:10px;letter-spacing:.22em;
     text-transform:uppercase;color:#7E93C8;font-weight:400}
   .tech .rarelist div{padding:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -500,7 +507,7 @@
 
 <script>
 "use strict";
-const VERSION = "v39";
+const VERSION = "v40";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1501,14 +1508,30 @@ function beep(kind){
   const c=audio(); if(!c) return;
   const t=c.currentTime;
   if(kind==="rare" || kind==="test"){
-    /* kurzes Funkrauschen */
-    const len=kind==="test"?0.25:0.6, buf=c.createBuffer(1, c.sampleRate*len, c.sampleRate);
+    /* Kurzer Funkempfang: gefiltertes Rauschen, in Silben moduliert,
+       mit weichem Ein- und Ausblenden statt hartem Einsatz. */
+    const len = kind==="test" ? 0.5 : 1.1;
+    const buf=c.createBuffer(1, Math.floor(c.sampleRate*len), c.sampleRate);
     const dat=buf.getChannelData(0);
-    for(let i=0;i<dat.length;i++) dat[i]=(Math.random()*2-1)*Math.pow(1-i/dat.length,1.5);
+    const syl=[]; let pos=0.05;
+    while(pos<len-0.1){ const d=0.06+Math.random()*0.13; syl.push([pos,d]); pos+=d+0.03+Math.random()*0.09; }
+    for(let i=0;i<dat.length;i++){
+      const t=i/c.sampleRate;
+      let env=0.10;                                   /* Grundrauschen */
+      for(const [s,d] of syl){
+        if(t>=s && t<=s+d){
+          const u=(t-s)/d;
+          env=Math.max(env, 0.75*Math.sin(Math.PI*u));  /* weiche Silbe */
+        }
+      }
+      const fade=Math.min(1, t/0.06, (len-t)/0.12);
+      dat[i]=(Math.random()*2-1)*env*fade;
+    }
     const s=c.createBufferSource(); s.buffer=buf;
-    const bp=c.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=1400; bp.Q.value=1.2;
-    const g=c.createGain(); g.gain.value=0.16;
-    s.connect(bp).connect(g).connect(c.destination); s.start(t);
+    const hp=c.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=420;
+    const lp=c.createBiquadFilter(); lp.type="lowpass";  lp.frequency.value=2600;
+    const g=c.createGain(); g.gain.value=0.11;
+    s.connect(hp).connect(lp).connect(g).connect(c.destination); s.start(t);
   } else if(kind==="alarm"){
     /* kurze zweitönige Sirene */
     [[740,0],[560,0.28],[740,0.56]].forEach(([f,dt])=>{
@@ -1643,8 +1666,11 @@ async function showPlane(ac, second){
     if(activeRwy) bits.push("Piste "+activeRwy+" aktiv");
     let html=bits.join(" · ");
     if(sq){
-      const txt="Squawk "+sq+(sqInfo?" · "+sqInfo[1]:"");
-      html += " · " + (tier ? `<span class="sq ${tier}">${txt}</span>` : txt);
+      /* Auffällige Codes stehen sofort im Klartext, normale erst auf Tipp. */
+      const meaning = sqInfo ? sqInfo[1] : "Kein Standardcode";
+      html += tier==="rot"||tier==="gelb"
+        ? ` · <span class="sq ${tier}">Squawk ${sq} · ${meaning}</span>`
+        : ` · <button class="sq quiet" data-mean="${meaning}">Squawk ${sq}</button>`;
     }
     $("detail").innerHTML=html;
 
@@ -1873,7 +1899,9 @@ function paintTech(){
     $("rareList").innerHTML="";
     return;
   }
-  $("techDraw").innerHTML = topView(last.icao, last.kind);
+  $("techDraw").innerHTML =
+    '<div class="views"><div class="v">'+craftSVG(last.kind,last.a,false)+
+    '</div><div class="v">'+topView(last.icao,last.kind)+'</div></div>';
   const s=SPECS[last.icao];
   if(s){
     $("techL1").textContent=numDe(s[2])+" t maximale Abflugmasse";
@@ -1916,8 +1944,17 @@ $("btn-tech2").addEventListener("click",()=>toggleTech(false));
 PLACES.forEach((_,i)=>$("btn-"+i).addEventListener("click",()=>selectPlace(i)));
 $("btn-geo").addEventListener("click",useGeo);
 
+/* Tipp auf einen unauffälligen Squawk zeigt seine Bedeutung */
+$("detail").addEventListener("click",(e)=>{
+  const b=e.target.closest(".sq.quiet");
+  if(b){ e.stopPropagation();
+    b.outerHTML='<span class="sq gruen">'+b.textContent+" · "+b.dataset.mean+"</span>";
+    return; }
+}, true);
+
 /* Tipp auf die Detailzeile zeigt den Pistenplan */
-$("detail").addEventListener("click",()=>{
+$("detail").addEventListener("click",(e)=>{
+  if(e.target.closest(".sq.quiet")) return;
   const p=$("rwyPlan");
   if(!activeRwy) return;
   const show=p.hidden;
