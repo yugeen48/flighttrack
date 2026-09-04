@@ -524,7 +524,7 @@
 
 <script>
 "use strict";
-const VERSION = "v43";
+const VERSION = "v44";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1464,11 +1464,29 @@ const SQUAWK = {
   "7400":["gelb","Drohne ohne Verbindung"], "7004":["gelb","Kunstflug"],
   "7001":["gelb","Militärischer Tiefflug"], "7002":["gelb","Sperrgebiet"],
   "7003":["gelb","Vorführung"], "0033":["gelb","Fallschirmabsprung"],
-  "7615":["gelb","Rettungsflug"],
+  "0025":["gelb","Fallschirmabsprung"], "7615":["gelb","Rettungsflug"],
+  "1572":["gelb","Innenministerium · Polizeihubschrauber"],
+  "1657":["gelb","ÖAMTC · Christophorus"],
   "7000":["gruen","Sichtflug"], "7010":["gruen","Platzrunde"],
   "2000":["gruen","Einflug ohne Zuweisung"], "1000":["gruen","Unter Flugsicherung"],
-  "1200":["gruen","Sichtflug"], "7020":["gruen","Nahbereich"]
+  "1200":["gruen","Sichtflug (Nordamerika)"], "7020":["gruen","Nahbereich"],
+  "7010":["gruen","Platzrunde"], "0021":["gruen","Sichtflug unter 5000 ft"],
+  "7005":["gelb","Hochleistungs-Kunstflug"], "7006":["gelb","Vermessungsflug"],
+  "7007":["gelb","Umweltmessflug"]
 };
+/* Bereiche, die keine einzelnen Codes sind */
+function squawkInfo(code){
+  if(SQUAWK[code]) return SQUAWK[code];
+  const n=parseInt(code,10);
+  if(!isFinite(n)) return null;
+  if(n>=5001 && n<=5077) return ["gelb","Österreichisches Bundesheer"];
+  if(n>=6000 && n<=6777) return ["gelb","Militärischer Flug"];
+  if(n>=1530 && n<=1539) return ["gruen","Sichtflug im Anflug auf Wien"];
+  if(n>=1550 && n<=1559) return ["gruen","Sichtflug im Anflug"];
+  if(n>=1 && n<=17)      return ["gruen","Platzverkehr Wien, Salzburg oder Klagenfurt"];
+  if(n>=60 && n<=77)     return ["gruen","Platzverkehr Innsbruck, Linz oder Graz"];
+  return null;
+}
 
 /* ============ Aktive Piste in Schwechat ============
    Aus den Kursen der tief anfliegenden Maschinen lässt sich ablesen,
@@ -1668,7 +1686,7 @@ async function showPlane(ac, second){
     if(typeof ac.gs==="number") bits.push(Math.round(ac.gs*1.852)+" km/h");
     bits.push(dec1(km)+" km im "+dirOf(brg));
     const sq=(ac.squawk||"").trim();
-    const sqInfo = SQUAWK[sq] || null;
+    const sqInfo = squawkInfo(sq);
     const tier = sqInfo ? sqInfo[0] : null;
     $("info").classList.toggle("emerg", tier==="rot");
     $("info").classList.toggle("warn", tier==="gelb");
