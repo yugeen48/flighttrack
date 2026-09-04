@@ -524,7 +524,7 @@
 
 <script>
 "use strict";
-const VERSION = "v42";
+const VERSION = "v43";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1482,8 +1482,9 @@ function detectRunway(list){
   const vie=AIRPORTS[0];
   for(const ac of list){
     if(typeof ac.lat!=="number"||typeof ac.alt_baro!=="number") continue;
-    if(ac.alt_baro>5000 || typeof ac.track!=="number") continue;
-    if(haversine(ac.lat,ac.lon,vie.lat,vie.lon)>28) continue;
+    if(ac.alt_baro>9000 || typeof ac.track!=="number") continue;
+    if(typeof ac.baro_rate==="number" && ac.baro_rate>-150) continue;   /* nur Sinkflug */
+    if(haversine(ac.lat,ac.lon,vie.lat,vie.lon)>38) continue;
     let best=null, bd=999;
     for(const r of RUNWAYS){
       const d=Math.abs(((ac.track-r.hdg+540)%360)-180);   /* Winkelabstand */
@@ -1674,14 +1675,17 @@ async function showPlane(ac, second){
     if(tier==="rot" && changed) beep("alarm");
     let ph=phase(ac.baro_rate);
     const nearAp=nearestAirport(ac.lat,ac.lon);
-    if(typeof ac.alt_baro==="number" && ac.alt_baro<6500 && nearAp.km<35){
+    if(typeof ac.alt_baro==="number" && ac.alt_baro<13000 && nearAp.km<40){
       if(ac.baro_rate<-250) ph="im Anflug auf "+nearAp.ap.name;
       else if(ac.baro_rate>250) ph="nach dem Start in "+nearAp.ap.name;
     }
     if(ph) bits.push(ph);
     if(g.guess) bits.push(g.guess);
-    /* Die aktive Piste interessiert nur, wenn die Maschine gerade Wien anfliegt */
-    const zeigtPiste = activeRwy && ph==="im Anflug auf Wien";
+    /* Die aktive Piste interessiert nur beim Anflug auf Wien: entweder ist
+       Wien das Ziel, oder die Maschine sinkt in der Nähe des Flughafens. */
+    const zielWien = route && /^Wien/.test(route.to||"");
+    const zeigtPiste = activeRwy && ac.baro_rate<-150 &&
+      (ph==="im Anflug auf Wien" || (zielWien && nearAp.ap && nearAp.ap.iata==="VIE" && nearAp.km<60));
     if(zeigtPiste) bits.push("Piste "+activeRwy+" aktiv");
     rwyShown = !!zeigtPiste;
     let html=bits.join(" · ");
