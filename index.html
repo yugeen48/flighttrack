@@ -235,11 +235,12 @@
     position:absolute;right:26px;bottom:14px;font-family:var(--mono);
     font-size:11px;letter-spacing:.1em;color:#9A958A;
   }
-  .rwyplan{position:absolute;z-index:7;right:26px;bottom:26px;width:190px;
+  .rwyplan{position:absolute;z-index:7;right:26px;bottom:26px;width:230px;
     filter:drop-shadow(0 6px 18px rgba(0,0,0,.35))}
   .rwyplan svg{width:100%;height:auto;display:block}
-  .rwyplan .on{stroke:#57E08A}
-  @media (max-width:560px){ .rwyplan{width:140px;right:14px;bottom:14px} }
+  .rwyplan .rw{stroke:#8FA6DC}
+  .rwyplan .rw.on{stroke:#57E08A;stroke-width:11}
+  @media (max-width:560px){ .rwyplan{width:165px;right:14px;bottom:14px} }
   .detail{cursor:pointer}
   .second{
     position:absolute;z-index:4;left:28px;top:76px;max-width:120px;
@@ -445,17 +446,32 @@
 
     <div class="craft2 hide" id="craft2"></div>
     <div class="rwyplan" id="rwyPlan" hidden>
-      <svg viewBox="0 0 200 200" aria-hidden="true">
-        <rect width="200" height="200" rx="10" fill="#101A2E" opacity=".92"/>
-        <g stroke-linecap="round">
-          <path id="rw1129" d="M34 132 166 76" stroke="#4A5A78" stroke-width="11"/>
-          <path id="rw1634" d="M74 26 126 174" stroke="#4A5A78" stroke-width="11"/>
+      <svg viewBox="0 0 240 240" aria-hidden="true">
+        <rect width="240" height="240" rx="12" fill="#0E1729" opacity=".95"/>
+        <g opacity=".5">
+          <path d="M18 200q40-26 84-18t70-40 48-16" fill="none" stroke="#1E3A52" stroke-width="9"/>
+          <rect x="20" y="20" width="200" height="200" rx="10" fill="none" stroke="#1B2A44"/>
         </g>
-        <text x="24" y="146" fill="#9FB0CC" font-size="11" font-family="monospace">11</text>
-        <text x="166" y="70" fill="#9FB0CC" font-size="11" font-family="monospace">29</text>
-        <text x="66" y="20" fill="#9FB0CC" font-size="11" font-family="monospace">34</text>
-        <text x="120" y="190" fill="#9FB0CC" font-size="11" font-family="monospace">16</text>
-        <text x="100" y="100" fill="#7E93C8" font-size="9" font-family="monospace" text-anchor="middle">WIEN LOWW</text>
+        <path d="M136 74h56a6 6 0 0 1 6 6v22a6 6 0 0 1-6 6h-56a6 6 0 0 1-6-6V80a6 6 0 0 1 6-6Z"
+              fill="#22304C" stroke="#33456B" stroke-width="1.5"/>
+        <text x="164" y="92" fill="#7E93C8" font-size="8" font-family="monospace" text-anchor="middle">TERMINAL</text>
+        <g stroke-linecap="round">
+          <path id="rw1129" class="rw" d="M33.5 89.3 L206.5 162.7" stroke-width="9"/>
+          <path d="M33.5 89.3 L206.5 162.7" stroke="#0E1729" stroke-width="1.6" stroke-dasharray="7 8"/>
+          <path id="rw1634" class="rw" d="M83.3 39.5 L156.7 212.5" stroke-width="9"/>
+          <path d="M83.3 39.5 L156.7 212.5" stroke="#0E1729" stroke-width="1.6" stroke-dasharray="7 8"/>
+        </g>
+        <g fill="#CFDCFF" font-size="10" font-family="monospace">
+          <text x="18" y="83">11</text>
+          <text x="210" y="175">29</text>
+          <text x="78" y="32">16</text>
+          <text x="152" y="228">34</text>
+        </g>
+        <g transform="translate(210,26)">
+          <path d="M0 12V-8M-4-4 0-9 4-4" stroke="#9FB0CC" stroke-width="1.6" fill="none"/>
+          <text x="-3" y="24" fill="#9FB0CC" font-size="9" font-family="monospace">N</text>
+        </g>
+        <text x="20" y="232" fill="#7E93C8" font-size="8.5" font-family="monospace">WIEN-SCHWECHAT LOWW</text>
       </svg>
     </div>
     <div class="second" id="second"></div>
@@ -508,7 +524,7 @@
 
 <script>
 "use strict";
-const VERSION = "v41";
+const VERSION = "v42";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1461,7 +1477,7 @@ const RUNWAYS = [
   { name:"29", hdg:293 }, { name:"11", hdg:113 },
   { name:"16", hdg:157 }, { name:"34", hdg:337 }
 ];
-let activeRwy = store.get("rwy", null);
+let activeRwy = store.get("rwy", null), rwyShown=false;
 function detectRunway(list){
   const vie=AIRPORTS[0];
   for(const ac of list){
@@ -1664,7 +1680,10 @@ async function showPlane(ac, second){
     }
     if(ph) bits.push(ph);
     if(g.guess) bits.push(g.guess);
-    if(activeRwy) bits.push("Piste "+activeRwy+" aktiv");
+    /* Die aktive Piste interessiert nur, wenn die Maschine gerade Wien anfliegt */
+    const zeigtPiste = activeRwy && ph==="im Anflug auf Wien";
+    if(zeigtPiste) bits.push("Piste "+activeRwy+" aktiv");
+    rwyShown = !!zeigtPiste;
     let html=bits.join(" · ");
     if(sq){
       /* Auffällige Codes stehen sofort im Klartext, normale erst auf Tipp. */
@@ -1947,7 +1966,7 @@ $("btn-geo").addEventListener("click",useGeo);
 
 /* Tipp auf einen unauffälligen Squawk zeigt seine Bedeutung. Nochmal
    tippen blendet sie wieder aus, sonst verschwindet sie nach fünf Sekunden. */
-let sqTimer=null;
+let sqTimer=null, rwyTimer=null;
 $("detail").addEventListener("click",(e)=>{
   const b=e.target.closest(".sq.quiet");
   if(!b) return;
@@ -1966,13 +1985,16 @@ $("detail").addEventListener("click",(e)=>{
 $("detail").addEventListener("click",(e)=>{
   if(e.target.closest(".sq.quiet")) return;
   const p=$("rwyPlan");
-  if(!activeRwy) return;
+  if(!activeRwy || !rwyShown) return;
   const show=p.hidden;
   p.hidden=!show;
   if(show){
     $("rw1129").classList.toggle("on", activeRwy==="11"||activeRwy==="29");
     $("rw1634").classList.toggle("on", activeRwy==="16"||activeRwy==="34");
-    setTimeout(()=>{ p.hidden=true; }, 6000);
+    clearTimeout(rwyTimer);
+    rwyTimer=setTimeout(()=>{ p.hidden=true; }, 5000);
+  }else{
+    clearTimeout(rwyTimer);
   }
 });
 
