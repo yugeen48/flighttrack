@@ -84,6 +84,9 @@
   .night .radius{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.22)}
   .night .radius button[aria-pressed="true"]{background:rgba(255,255,255,.22)}
 
+  .funk{flex:0 0 auto;border:0;background:none;padding:4px;cursor:pointer;color:inherit;opacity:.55}
+  .funk svg{width:17px;height:17px;display:block;fill:currentColor}
+  .funk[aria-pressed="true"]{opacity:1;color:var(--needle)}
   .mute{flex:0 0 auto;border:0;background:none;padding:4px;cursor:pointer;color:inherit;opacity:.6}
   .mute svg{width:17px;height:17px;display:block;fill:currentColor}
   .mute .off{display:none}
@@ -276,19 +279,19 @@
 
   /* ---------------- Wetterlagen ---------------- */
   .precip{position:absolute;inset:0;z-index:1;pointer-events:none;display:none}
-  .wx-rain .precip, .wx-storm .precip{
-    display:block;opacity:.45;
-    background-image:repeating-linear-gradient(102deg,
-      rgba(255,255,255,.75) 0 2px, transparent 2px 15px);
-    animation:rain .5s linear infinite;
+  .wx-rain .precip, .wx-storm .precip, .wx-drizzle .precip{display:block}
+  .drop{
+    position:absolute;top:-6%;width:1.5px;border-radius:99px;
+    background:linear-gradient(to bottom, transparent, rgba(255,255,255,.75));
+    animation:dropFall linear infinite;
   }
-  .wx-drizzle .precip{
-    display:block;opacity:.28;
-    background-image:repeating-linear-gradient(100deg,
-      rgba(255,255,255,.7) 0 1.5px, transparent 1.5px 20px);
-    animation:rain .9s linear infinite;
+  .night .drop{background:linear-gradient(to bottom, transparent, rgba(210,222,255,.7))}
+  @keyframes dropFall{
+    0%{transform:translateY(0);opacity:0}
+    8%{opacity:1} 92%{opacity:1}
+    100%{transform:translateY(112vh);opacity:0}
   }
-  @keyframes rain{to{background-position:-58px 150px}}
+  @media (prefers-reduced-motion:reduce){ .drop{animation:none;display:none} }
   .wx-snow .precip{
     display:block;opacity:.85;
     background-image:
@@ -438,6 +441,16 @@
         <button data-km="5">5</button><button data-km="15">15</button><button data-km="30">30</button>
       </span>
       <span class="here" id="here">Der Himmel über Home</span>
+      <button class="funk" id="funk" aria-pressed="false" aria-label="Funk">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M9 2.5h2.6l.3 2.4h-3.2z"/>
+          <rect x="7" y="4.6" width="10" height="16.9" rx="2.3"/>
+          <rect x="9.2" y="7.4" width="5.6" height="4.6" rx=".6" fill="var(--panel)"/>
+          <circle cx="10.3" cy="14.6" r="1" fill="var(--panel)"/>
+          <circle cx="13.7" cy="14.6" r="1" fill="var(--panel)"/>
+          <rect x="9.4" y="17" width="5.2" height="1.3" rx=".6" fill="var(--panel)"/>
+        </svg>
+      </button>
       <button class="mute" id="mute" aria-label="Ton">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h4L14 5v14L8 14.5H4z"/><path class="wave" d="M17 8.6a5 5 0 0 1 0 6.8M19.6 6a8.6 8.6 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path class="off" d="M17 9.5 22 14.5M22 9.5 17 14.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
       </button>
@@ -454,6 +467,9 @@
         </g>
         <path d="M-6 60q70-20 128 2t134-10" fill="none" stroke="#A8C6DC" stroke-width="16"/>
         <path d="M-6 60q70-20 128 2t134-10" fill="none" stroke="#8FB4D0" stroke-width="1"/>
+        <path d="M-6 168q80-10 140-30t122-30" fill="none" stroke="#E8A34A" stroke-width="4"/>
+        <path d="M-6 168q80-10 140-30t122-30" fill="none" stroke="#C77E1F" stroke-width="1" stroke-dasharray="1 5"/>
+        <text x="200" y="106" font-size="7" font-family="monospace" fill="#8A5A16" font-weight="bold">A4</text>
         <g stroke="#B4B7A9" stroke-width="2.5" fill="none" opacity=".9">
           <path d="M96 128 150 108M150 108 168 150M118 96 140 120"/>
         </g>
@@ -528,7 +544,7 @@
 
 <script>
 "use strict";
-const VERSION = "v46";
+const VERSION = "v50";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1198,15 +1214,18 @@ function duskFactor(w){
 function applyWeather(w){
   const dusk=duskFactor(w);
   const f=document.querySelector(".frame");
-  f.className="frame "+wxClass(w?w.weather_code:null)
+  const cls="frame "+wxClass(w?w.weather_code:null)
     + (w && w.is_day===0 ? " night" : "") + (dusk>0.1 ? " dusk" : "");
+  f.className=cls;
   f.style.setProperty("--dusk", dusk.toFixed(2));
+  const want = /wx-(storm|rain|drizzle)/.test(cls) ? cls.match(/wx-\S+/)[0] : null;
+  if(want!==dropsFor) paintDrops(cls);
 }
 let weather={};
 async function getWeather(p){
   if(weather.key===p.key&&Date.now()-weather.t<600000) return weather.d;
   try{
-    const u=`https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lon}&current=temperature_2m,weather_code,is_day&daily=sunrise,sunset&timezone=auto`;
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lon}&current=temperature_2m,weather_code,is_day,wind_speed_10m,wind_direction_10m,pressure_msl&daily=sunrise,sunset&timezone=auto`;
     let d; try{ d=await fetchJSON(u); }
     catch(e){ d=await fetchJSON("https://api.allorigins.win/raw?url="+encodeURIComponent(u)); }
     const cur=Object.assign({}, d.current);
@@ -1215,6 +1234,33 @@ async function getWeather(p){
   }catch(e){ return weather.key===p.key?weather.d:null; }
 }
 
+
+
+/* ============ Regen als einzelne fallende Tropfen ============
+   Wenige, ruhig fallende Striche statt eines flimmernden Musters.
+   Nieselregen: wenig und langsam. Regen: etwas mehr und schneller.
+   Gewitter: am meisten, aber immer noch zurückhaltend. */
+let dropsFor=null;
+function paintDrops(cls){
+  const host=$("sky");
+  document.querySelectorAll(".drop").forEach(d=>d.remove());
+  const cfg = /wx-storm/.test(cls) ? {n:16, min:2.6, max:4.2, len:[22,34]}
+            : /wx-rain/.test(cls)  ? {n:11, min:3.4, max:5.2, len:[16,26]}
+            : /wx-drizzle/.test(cls)?{n:7,  min:5.5, max:8.0, len:[9,14]}
+            : null;
+  dropsFor = cfg ? cls.match(/wx-\S+/)[0] : null;
+  if(!cfg) return;
+  for(let i=0;i<cfg.n;i++){
+    const d=document.createElement("i");
+    d.className="drop";
+    d.style.left=(Math.random()*100).toFixed(1)+"%";
+    d.style.height=(cfg.len[0]+Math.random()*(cfg.len[1]-cfg.len[0])).toFixed(0)+"px";
+    const dur=(cfg.min+Math.random()*(cfg.max-cfg.min)).toFixed(2);
+    d.style.animationDuration=dur+"s";
+    d.style.animationDelay="-"+(Math.random()*dur).toFixed(2)+"s";
+    host.appendChild(d);
+  }
+}
 
 /* ============ Fallblatt-Anzeige ============ */
 const FLAP_CHARS="ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ0123456789→·-";
@@ -1485,6 +1531,8 @@ const SQUAWK = {
   "7001":["gelb","Militärischer Tiefflug"], "7002":["gelb","Sperrgebiet"],
   "7003":["gelb","Vorführung"], "0033":["gelb","Fallschirmabsprung"],
   "0025":["gelb","Fallschirmabsprung"], "7615":["gelb","Rettungsflug"],
+  "4000":["gelb","Militärisches Übungsgebiet"], "7005":["gelb","Hochenergie-Manöver"],
+  "7006":["gelb","Autonomer Betrieb (Drohne)"], "7007":["gelb","Beobachtungsflug (Open Skies)"],
   "1572":["gelb","Innenministerium · Polizeihubschrauber"],
   "1657":["gelb","ÖAMTC · Christophorus"],
   "7000":["gruen","Sichtflug"], "7010":["gruen","Platzrunde"],
@@ -1532,6 +1580,80 @@ function detectRunway(list){
   }
 }
 
+
+/* ============ Funk: ATIS und simulierter Sprechfunk ============
+   Web Speech API kann die Systemstimme nicht durch einen Filter schicken -
+   wir kommen an das Audiosignal nicht heran. Die Annäherung an "Funk"
+   kommt daher über Stimmwahl (tief, gleichmäßig) und Rauschen davor/danach. */
+const DIGIT_WORD = ["zero","one","two","three","four","five","six","seven","eight","nine"];
+const NATO = {A:"Alpha",B:"Bravo",C:"Charlie",D:"Delta",E:"Echo",F:"Foxtrot",G:"Golf",H:"Hotel",
+  I:"India",J:"Juliett",K:"Kilo",L:"Lima",M:"Mike",N:"November",O:"Oscar",P:"Papa",Q:"Quebec",
+  R:"Romeo",S:"Sierra",T:"Tango",U:"Uniform",V:"Victor",W:"Whiskey",X:"X-ray",Y:"Yankee",Z:"Zulu"};
+const digits = s => [...s].map(c=>DIGIT_WORD[+c]||c).join(" ");
+
+/* "AUA40H" + "Austrian" -> "Austrian four zero hotel". Ohne bekannte Airline
+   wird das Rufzeichen buchstabiert: "Golf Delta Bravo Charlie Juliett". */
+function spokenCallsign(call, airlineName){
+  const cs=(call||"").trim().toUpperCase();
+  if(!cs) return "traffic";
+  if(airlineName){
+    const rest=cs.slice(3).split("").map(ch=>/[0-9]/.test(ch)?DIGIT_WORD[+ch]:(NATO[ch]||ch)).join(" ");
+    return airlineName+" "+rest;
+  }
+  return cs.split("").map(ch=>/[0-9]/.test(ch)?DIGIT_WORD[+ch]:(NATO[ch]||ch)).join(" ");
+}
+function windDir3(deg){ return String(Math.round((deg||0)/10)*10 % 360).padStart(3,"0").replace(/^0(?=\\d{2}$)/,"0"); }
+function qnhWords(hpa){ return digits(String(Math.round(hpa||1013)).padStart(4,"0")); }
+
+function speak(text, onend){
+  if(!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang="en-GB"; u.rate=1.02; u.pitch=0.72; u.volume=1;
+  const vs=window.speechSynthesis.getVoices();
+  const v=vs.find(v=>/en-GB|en_GB/.test(v.lang) && /male/i.test(v.name))
+        || vs.find(v=>/en-GB|en_GB/.test(v.lang)) || vs.find(v=>/^en/.test(v.lang));
+  if(v) u.voice=v;
+  if(onend) u.onend=onend;
+  beep("test");
+  setTimeout(()=>window.speechSynthesis.speak(u), 220);
+}
+
+function readAtis(){
+  if(!soundOn) return;
+  const w=weather.d;
+  if(!w){ return; }
+  const rwy = activeRwy ? "runway "+digits(activeRwy)+" in use" : "runway information not available";
+  const wind = "wind "+windDir3(w.wind_direction_10m)+" degrees at "+Math.round((w.wind_speed_10m||0))+" knots";
+  const cond = condName(w.weather_code)||"no significant weather";
+  const qnh = "Q N H "+qnhWords(w.pressure_msl);
+  const txt = `Vienna Information. ${rwy}. ${wind}. Temperature ${Math.round(w.temperature_2m)}. ${cond}. ${qnh}.`;
+  speak(txt);
+}
+
+let funkOn = store.get("funk", false);
+function paintFunk(){ $("funk").setAttribute("aria-pressed", String(funkOn)); }
+$("funk").addEventListener("click",()=>{
+  funkOn=!funkOn; store.set("funk",funkOn); paintFunk();
+  if(funkOn){ soundOn=true; store.set("sound",true); paintMute(); readAtis(); }
+  else if("speechSynthesis" in window) window.speechSynthesis.cancel();
+});
+paintFunk();
+
+/* Einmal pro Maschine: ein simulierter Sprechfunkspruch, sobald sie als
+   im Anflug auf Wien mit bekannter aktiver Piste erkannt wird. */
+let atcCalled=new Set();
+function maybeAtcCall(ac, airlineName, call, zeigtPiste){
+  if(!funkOn || !zeigtPiste || !activeRwy) return;
+  const key=ac.hex; if(atcCalled.has(key)) return;
+  atcCalled.add(key); if(atcCalled.size>200) atcCalled.clear();
+  const w=weather.d||{};
+  const who=spokenCallsign(call, airlineName);
+  const txt=`${who}, Vienna Radar, cleared to land runway ${digits(activeRwy)}. `+
+            `Wind ${windDir3(w.wind_direction_10m)} degrees ${Math.round(w.wind_speed_10m||0)} knots.`;
+  speak(txt);
+}
+
 /* ============ Umkreis, Status und Ton ============ */
 function setRadius(km){
   RADIUS_KM=km; store.set("radius",km);
@@ -1564,30 +1686,40 @@ function beep(kind){
   const c=audio(); if(!c) return;
   const t=c.currentTime;
   if(kind==="rare" || kind==="test"){
-    /* Kurzer Funkempfang: gefiltertes Rauschen, in Silben moduliert,
-       mit weichem Ein- und Ausblenden statt hartem Einsatz. */
-    const len = kind==="test" ? 0.5 : 1.1;
+    /* Funkgeräusch: kurzer Rauschstoß mit "Squelch"-Klick an Anfang und Ende
+       (das kurze Knacken, wenn ein Funkgerät öffnet und schließt), dazwischen
+       gefiltertes Rauschen mit leisem Trägerton statt hartem Ein-/Ausblenden. */
+    const len = kind==="test" ? 0.55 : 1.15;
     const buf=c.createBuffer(1, Math.floor(c.sampleRate*len), c.sampleRate);
     const dat=buf.getChannelData(0);
-    const syl=[]; let pos=0.05;
-    while(pos<len-0.1){ const d=0.06+Math.random()*0.13; syl.push([pos,d]); pos+=d+0.03+Math.random()*0.09; }
+    const syl=[]; let pos=0.09;
+    while(pos<len-0.14){ const d=0.07+Math.random()*0.14; syl.push([pos,d]); pos+=d+0.03+Math.random()*0.08; }
     for(let i=0;i<dat.length;i++){
       const t=i/c.sampleRate;
-      let env=0.10;                                   /* Grundrauschen */
+      let env=0.16;
       for(const [s,d] of syl){
-        if(t>=s && t<=s+d){
-          const u=(t-s)/d;
-          env=Math.max(env, 0.75*Math.sin(Math.PI*u));  /* weiche Silbe */
-        }
+        if(t>=s && t<=s+d){ const u=(t-s)/d; env=Math.max(env, 0.6*Math.sin(Math.PI*u)); }
       }
-      const fade=Math.min(1, t/0.06, (len-t)/0.12);
-      dat[i]=(Math.random()*2-1)*env*fade;
+      const fade=Math.min(1, t/0.05, (len-t)/0.09);
+      const carrier=Math.sin(2*Math.PI*440*t)*0.05;         /* leiser Trägerton */
+      dat[i]=((Math.random()*2-1)*env + carrier)*fade;
     }
     const s=c.createBufferSource(); s.buffer=buf;
-    const hp=c.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=420;
-    const lp=c.createBiquadFilter(); lp.type="lowpass";  lp.frequency.value=2600;
-    const g=c.createGain(); g.gain.value=0.11;
+    const hp=c.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=500;
+    const lp=c.createBiquadFilter(); lp.type="lowpass";  lp.frequency.value=2400;
+    const g=c.createGain(); g.gain.value=0.10;
     s.connect(hp).connect(lp).connect(g).connect(c.destination); s.start(t);
+
+    /* Squelch-Klicks: ein sehr kurzer, härterer Knack am Anfang und am Ende */
+    [0, len-0.02].forEach(off=>{
+      const cbuf=c.createBuffer(1, Math.floor(c.sampleRate*0.012), c.sampleRate);
+      const cd=cbuf.getChannelData(0);
+      for(let i=0;i<cd.length;i++) cd[i]=(Math.random()*2-1)*(1-i/cd.length);
+      const cs=c.createBufferSource(); cs.buffer=cbuf;
+      const cg=c.createGain(); cg.gain.value=0.22;
+      cs.connect(cg).connect(c.destination); cs.start(t+off);
+    });
+  } else if(kind==="alarm"){
   } else if(kind==="alarm"){
     /* kurze zweitönige Sirene */
     [[740,0],[560,0.28],[740,0.56]].forEach(([f,dt])=>{
@@ -1726,6 +1858,7 @@ async function showPlane(ac, second){
       (ph==="im Anflug auf Wien" || (zielWien && nearAp.ap && nearAp.ap.iata==="VIE" && nearAp.km<60));
     if(zeigtPiste) bits.push("Piste "+activeRwy+" aktiv");
     rwyShown = !!zeigtPiste;
+    if(changed) maybeAtcCall(ac, route&&route.airline||a.n, call, zeigtPiste);
     let html=bits.join(" · ");
     if(sq){
       /* Auffällige Codes stehen sofort im Klartext, normale erst auf Tipp. */
