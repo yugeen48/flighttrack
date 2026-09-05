@@ -544,7 +544,7 @@
 
 <script>
 "use strict";
-const VERSION = "v51";
+const VERSION = "v52";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1597,7 +1597,7 @@ function detectRunway(list){
    Web Speech API kann die Systemstimme nicht durch einen Filter schicken -
    wir kommen an das Audiosignal nicht heran. Die Annäherung an "Funk"
    kommt daher über Stimmwahl (tief, gleichmäßig) und Rauschen davor/danach. */
-const DIGIT_WORD = ["null","eins","zwei","drei","vier","fünf","sechs","sieben","acht","neun"];
+const DIGIT_WORD = ["zero","one","two","three","four","five","six","seven","eight","nine"];
 const NATO = {A:"Alpha",B:"Bravo",C:"Charlie",D:"Delta",E:"Echo",F:"Foxtrot",G:"Golf",H:"Hotel",
   I:"India",J:"Juliett",K:"Kilo",L:"Lima",M:"Mike",N:"November",O:"Oscar",P:"Papa",Q:"Quebec",
   R:"Romeo",S:"Sierra",T:"Tango",U:"Uniform",V:"Victor",W:"Whiskey",X:"X-ray",Y:"Yankee",Z:"Zulu"};
@@ -1607,7 +1607,7 @@ const digits = s => [...s].map(c=>DIGIT_WORD[+c]||c).join(" ");
    wird das Rufzeichen buchstabiert: "Golf Delta Bravo Charlie Juliett". */
 function spokenCallsign(call, airlineName){
   const cs=(call||"").trim().toUpperCase();
-  if(!cs) return "unbekannter Verkehr";
+  if(!cs) return "traffic";
   if(airlineName){
     const rest=cs.slice(3).split("").map(ch=>/[0-9]/.test(ch)?DIGIT_WORD[+ch]:(NATO[ch]||ch)).join(" ");
     return airlineName+" "+rest;
@@ -1621,12 +1621,10 @@ function speak(text, onend){
   if(!("speechSynthesis" in window)) return;
   window.speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(text);
-  u.lang="de-AT"; u.rate=1.0; u.pitch=0.78; u.volume=1;
+  u.lang="en-GB"; u.rate=1.02; u.pitch=0.72; u.volume=1;
   const vs=window.speechSynthesis.getVoices();
-  const v=vs.find(v=>/de-AT|de_AT/.test(v.lang) && /male/i.test(v.name))
-        || vs.find(v=>/de-AT|de_AT/.test(v.lang))
-        || vs.find(v=>/de-DE|de_DE/.test(v.lang) && /male/i.test(v.name))
-        || vs.find(v=>/^de/.test(v.lang));
+  const v=vs.find(v=>/en-GB|en_GB/.test(v.lang) && /male/i.test(v.name))
+        || vs.find(v=>/en-GB|en_GB/.test(v.lang)) || vs.find(v=>/^en/.test(v.lang));
   if(v) u.voice=v;
   if(onend) u.onend=onend;
   beep("test");
@@ -1638,11 +1636,11 @@ function readAtis(){
   const w=weather.d;
   if(!w){ return; }
   const fresh = rwyAge() < RWY_MAX_AGE;
-  const rwy = (activeRwy && fresh) ? "Piste "+digits(activeRwy)+" in Betrieb" : "keine aktuelle Pisteninformation";
-  const wind = "Wind "+windDir3(w.wind_direction_10m).split("").map(c=>DIGIT_WORD[+c]).join(" ")+" Grad, "+Math.round((w.wind_speed_10m||0))+" Knoten";
-  const cond = condName(w.weather_code)||"keine besonderen Wettererscheinungen";
+  const rwy = (activeRwy && fresh) ? "runway "+digits(activeRwy)+" in use" : "runway information not available";
+  const wind = "wind "+windDir3(w.wind_direction_10m)+" degrees at "+Math.round((w.wind_speed_10m||0))+" knots";
+  const cond = condName(w.weather_code)||"no significant weather";
   const qnh = "Q N H "+qnhWords(w.pressure_msl);
-  const txt = `Wien Information. ${rwy}. ${wind}. Temperatur ${digits(String(Math.round(w.temperature_2m)))} Grad. ${cond}. ${qnh}.`;
+  const txt = `Vienna Information. ${rwy}. ${wind}. Temperature ${Math.round(w.temperature_2m)}. ${cond}. ${qnh}.`;
   speak(txt);
 }
 
@@ -1664,9 +1662,8 @@ function maybeAtcCall(ac, airlineName, call, zeigtPiste){
   atcCalled.add(key); if(atcCalled.size>200) atcCalled.clear();
   const w=weather.d||{};
   const who=spokenCallsign(call, airlineName);
-  const windD=windDir3(w.wind_direction_10m).split("").map(c=>DIGIT_WORD[+c]).join(" ");
-  const txt=`${who}, Wien Radar, Piste ${digits(activeRwy)} frei zur Landung. `+
-            `Wind ${windD} Grad, ${Math.round(w.wind_speed_10m||0)} Knoten.`;
+  const txt=`${who}, Vienna Radar, cleared to land runway ${digits(activeRwy)}. `+
+            `Wind ${windDir3(w.wind_direction_10m)} degrees ${Math.round(w.wind_speed_10m||0)} knots.`;
   speak(txt);
 }
 
@@ -1735,7 +1732,6 @@ function beep(kind){
       const cg=c.createGain(); cg.gain.value=0.22;
       cs.connect(cg).connect(c.destination); cs.start(t+off);
     });
-  } else if(kind==="alarm"){
   } else if(kind==="alarm"){
     /* kurze zweitönige Sirene */
     [[740,0],[560,0.28],[740,0.56]].forEach(([f,dt])=>{
