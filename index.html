@@ -566,7 +566,7 @@
 
 <script>
 "use strict";
-const VERSION = "v54";
+const VERSION = "v55";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1779,11 +1779,31 @@ paintMute();
 
 /* Töne werden im Browser erzeugt, keine Dateien. iOS lässt Ton erst nach
    einer Berührung zu - deshalb wird der Kontext beim ersten Tippen geweckt. */
-let actx=null;
-function audio(){ if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } 
-  if(actx && actx.state==="suspended") actx.resume(); return actx; }
-addEventListener("touchstart", audio, {once:true});
-addEventListener("click", audio, {once:true});
+let actx=null, audioUnlocked=false;
+function audio(){
+  if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } }
+  if(actx.state==="suspended") actx.resume();
+  return actx;
+}
+/* iOS gibt Ton erst nach einer Berührung frei, und der Kontext schläft nach
+   einer Weile im Hintergrund wieder ein. Deshalb bei jeder Berührung neu
+   wecken - nicht nur beim ersten Mal - und einmal einen stummen Puffer
+   abspielen, was Safari zum vollständigen Freischalten braucht. */
+function unlockAudio(){
+  const c=audio(); if(!c) return;
+  if(!audioUnlocked){
+    try{
+      const b=c.createBuffer(1,1,c.sampleRate);
+      const s=c.createBufferSource(); s.buffer=b;
+      s.connect(c.destination); s.start(0);
+      audioUnlocked=true;
+    }catch(e){}
+  }
+}
+addEventListener("touchstart", unlockAudio, {passive:true});
+addEventListener("touchend", unlockAudio, {passive:true});
+addEventListener("click", unlockAudio);
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) audio(); });
 
 function beep(kind){
   if(!soundOn) return;
