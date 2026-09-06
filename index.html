@@ -38,14 +38,10 @@
 
   /* ---------------- Himmel ---------------- */
   .sky{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}
-  .bands{position:absolute;inset:0;display:flex;flex-direction:column}
-  .bands i{flex:1}
-  .bands i:nth-child(1){background:#AEBCCB}
-  .bands i:nth-child(2){background:#B9C6D3}
-  .bands i:nth-child(3){background:#C7D0D9}
-  .bands i:nth-child(4){background:#D6DBDD}
-  .bands i:nth-child(5){background:#E3E2D9}
-  .bands i:nth-child(6){background:#EAE7DC}
+  .bands{position:absolute;inset:0;
+    background:linear-gradient(to bottom,#AEBCCB 0%,#B9C6D3 20%,#C7D0D9 40%,
+      #D6DBDD 60%,#E3E2D9 80%,#EAE7DC 100%)}
+  .bands i{display:none}
   .glow{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 40%,rgba(255,255,255,.30),transparent 62%);pointer-events:none}
 
   .cloud{position:absolute;fill:#F6F4EC}
@@ -136,12 +132,8 @@
   .empty .cond{margin-top:6px;font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#5B6068}
 
   /* ---------------- Nacht ---------------- */
-  .frame.night .bands i:nth-child(1){background:#131A2B}
-  .frame.night .bands i:nth-child(2){background:#182136}
-  .frame.night .bands i:nth-child(3){background:#1E2840}
-  .frame.night .bands i:nth-child(4){background:#25304A}
-  .frame.night .bands i:nth-child(5){background:#2C3852}
-  .frame.night .bands i:nth-child(6){background:#333F59}
+  .frame.night .bands{background:linear-gradient(to bottom,#131A2B 0%,#182136 20%,
+    #1E2840 40%,#25304A 60%,#2C3852 80%,#333F59 100%)}
   .frame.night .glow{background:radial-gradient(120% 90% at 78% 18%,rgba(200,215,255,.16),transparent 60%)}
   .frame.night .cloud{fill:#3A465F !important;opacity:.75}
   .moon{display:none;position:absolute;inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px)}
@@ -323,33 +315,27 @@
   .wx-clear .cloud.c2,.wx-clear .cloud.c3{opacity:0}
   .wx-overcast .cloud,.wx-rain .cloud,.wx-storm .cloud,.wx-snow .cloud{fill:#E4E3DB}
   .wx-fog .cloud{opacity:.25}
-  .wx-clear .bands i:nth-child(1){background:#9BB4CE}
-  .wx-clear .bands i:nth-child(2){background:#A9C0D6}
-  .wx-clear .bands i:nth-child(3){background:#BCCEDE}
-  .wx-overcast .bands i,.wx-drizzle .bands i{filter:saturate(.45) brightness(.97)}
-  .wx-rain .bands i{filter:saturate(.35) brightness(.9)}
-  .wx-storm .bands i{filter:saturate(.25) brightness(.72)}
-  .wx-fog .bands i{filter:saturate(.1) brightness(1.02)}
-  .wx-snow .bands i{filter:saturate(.25) brightness(1.04)}
-  .night.wx-overcast .bands i,.night.wx-drizzle .bands i{filter:saturate(.5) brightness(.85)}
-  .night.wx-rain .bands i{filter:saturate(.4) brightness(.75)}
-  .night.wx-storm .bands i{filter:saturate(.3) brightness(.6)}
-  .night.wx-fog .bands i{filter:saturate(.2) brightness(1.15)}
-  .night.wx-snow .bands i{filter:saturate(.3) brightness(1.2)}
+  .wx-clear .bands{background:linear-gradient(to bottom,#9BB4CE 0%,#A9C0D6 20%,
+    #BCCEDE 40%,#D6DBDD 60%,#E3E2D9 80%,#EAE7DC 100%)}
+  .wx-overcast .bands,.wx-drizzle .bands{filter:saturate(.45) brightness(.97)}
+  .wx-rain .bands{filter:saturate(.35) brightness(.9)}
+  .wx-storm .bands{filter:saturate(.25) brightness(.72)}
+  .wx-fog .bands{filter:saturate(.1) brightness(1.02)}
+  .wx-snow .bands{filter:saturate(.25) brightness(1.04)}
+  .night.wx-overcast .bands,.night.wx-drizzle .bands{filter:saturate(.5) brightness(.85)}
+  .night.wx-rain .bands{filter:saturate(.4) brightness(.75)}
+  .night.wx-storm .bands{filter:saturate(.3) brightness(.6)}
+  .night.wx-fog .bands{filter:saturate(.2) brightness(1.15)}
+  .night.wx-snow .bands{filter:saturate(.3) brightness(1.2)}
   .night .precip{opacity:.55}
 
   /* ---------------- Dämmerung ---------------- */
-  .dusk .bands i{position:relative}
-  .dusk .bands i::after{
+  .dusk .bands{position:relative}
+  .dusk .bands::after{
     content:"";position:absolute;inset:0;opacity:var(--dusk,0);
-    background:linear-gradient(to bottom, #E88C4A, #E2A45F);
+    background:linear-gradient(to bottom,#9A5B8C 0%,#C4707A 18%,#E08A5C 38%,
+      #EDA765 58%,#F0C089 78%,#E8DCC4 100%);
   }
-  .dusk .bands i:nth-child(1)::after{background:linear-gradient(#9A5B8C,#C4707A)}
-  .dusk .bands i:nth-child(2)::after{background:linear-gradient(#C4707A,#E08A5C)}
-  .dusk .bands i:nth-child(3)::after{background:linear-gradient(#E08A5C,#EDA765)}
-  .dusk .bands i:nth-child(4)::after{background:linear-gradient(#EDA765,#F0C089)}
-  .dusk .bands i:nth-child(5)::after{background:linear-gradient(#F0C089,#EBD3AC)}
-  .dusk .bands i:nth-child(6)::after{background:linear-gradient(#EBD3AC,#E8DCC4)}
   .dusk .sun{opacity:1 !important;transform:none !important}
 
   /* ---------------- Technische Zeichnung ---------------- */
@@ -566,7 +552,7 @@
 
 <script>
 "use strict";
-const VERSION = "v56";
+const VERSION = "v57";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1778,7 +1764,11 @@ function status(state){
 
 let soundOn = store.get("sound", true);
 function paintMute(){ $("mute").setAttribute("aria-pressed", String(soundOn)); }
-$("mute").addEventListener("click",()=>{ soundOn=!soundOn; store.set("sound",soundOn); paintMute(); if(soundOn) beep("test"); });
+$("mute").addEventListener("click",()=>{
+  unlockAudio();                       /* iOS: im selben Fingertipp freischalten */
+  soundOn=!soundOn; store.set("sound",soundOn); paintMute();
+  if(soundOn) setTimeout(()=>beep("test"), 40);
+});
 paintMute();
 
 /* Töne werden im Browser erzeugt, keine Dateien. iOS lässt Ton erst nach
