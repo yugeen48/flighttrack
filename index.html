@@ -552,7 +552,7 @@
 
 <script>
 "use strict";
-const VERSION = "v57";
+const VERSION = "v58";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -676,6 +676,18 @@ Object.assign(AIRLINES, {
   NSZ:{n:"Norse Atlantic",c:"#D81939",e:"bars"}
 });
 const DEFAULT_AIRLINE = { c:"#54637A", e:"bars" };
+/* Grundmuster der Bemalung. band = Fensterband (Standard), belly = farbiger
+   Bauch, tail = nur Heck farbig, stripe = Schrägstreifen am Heck,
+   full = durchgehend farbiger Rumpf. */
+const LIVERY = {
+  EJU:"full", EZY:"full", EZS:"full",
+  WZZ:"belly", WMT:"belly", WUK:"belly", WAZ:"belly",
+  RYR:"belly", MAY:"belly", RUK:"belly", RYS:"belly",
+  EWG:"belly", VLG:"belly", AUA:"belly", NAX:"belly",
+  SWR:"tail", EDW:"tail", CTN:"tail", BEL:"tail", FIN:"tail",
+  UAE:"stripe", CFG:"stripe", QTR:"stripe", ETD:"stripe",
+  THY:"band", DLH:"band", CLH:"band", BAW:"band", AFR:"band", KLM:"band"
+};
 
 /* ============ Helfer ============ */
 const $ = id => document.getElementById(id);
@@ -868,22 +880,52 @@ function drawJet(a,o){
   o = o || {};
   const nose = o.nose==="boeing" ? "boeing" : "airbus";
   const band = Math.max(96, Math.min(208, o.band||146));
+  const liv  = o.liv || "band";
+  const F    = FUSE_NOSE[nose];
+
+  /* Triebwerk: kurz und dick bei modernen, lang und schmal bei alten Mustern */
+  const E = o.eng==="fat"  ? {x:232, y:146, w:74, h:44}
+          : o.eng==="slim" ? {x:222, y:154, w:96, h:29}
+          :                  {x:226, y:150, w:84, h:37};
+  const E2 = o.eng==="fat" ? {x:194,y:172,w:60,h:36}
+           : o.eng==="slim"? {x:186,y:178,w:74,h:25}
+           :                 {x:190,y:176,w:66,h:30};
+
+  /* Bemalung, am Rumpf zugeschnitten */
+  const paint =
+    liv==="full"  ? `<rect x="55" y="70" width="400" height="80" fill="${a.c}"/>`
+  : liv==="belly" ? `<rect x="55" y="112" width="400" height="40" fill="${a.c}"/>`
+  : liv==="stripe"? `<path d="M96 70 152 152 186 152 130 70Z" fill="${a.c}"/>
+                     <path d="M136 70 192 152 214 152 158 70Z" fill="${a.c}" opacity=".75"/>`
+  : liv==="tail"  ? `<path d="M170 111H${196+band}" stroke="${a.c}" stroke-width="4"/>`
+  :                 `<rect x="204" y="105" width="${band}" height="14" rx="7" fill="${a.c}"/>`;
+  const winY = liv==="band" ? 112 : liv==="tail" ? 104 : 111;
+
   return `
-  <path d="M298 94 188 40 168 43 280 108Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  ${o.winglet?`<path d="M186 42C184 35 183 30 183 25L175 27C176 33 178 39 181 46Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="2.6" stroke-linejoin="round"/>`:""}
+  <path d="${o.winglet
+      ? "M298 94L196 47C191 39 187 31 186 23L175 25C177 33 180 41 184 49L280 108Z"
+      : "M298 94 188 40 168 43 280 108Z"}" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
   ${o.engines>=4?farNacelle(184,46,54,24,a.c):""}
   ${farNacelle(214,64,68,30,a.c)}
   <path d="M134 84 60 60C54 58 50 65 56 68L120 102C128 106 136 102 136 94Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
+  ${o.finKink?`<path d="M150 90 128 46 140 44 160 90Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>`:""}
   ${tail(a, FIN_JET, false)}
-  <path d="${FUSE_NOSE[nose]}" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <path d="M168 113H${196+band}" stroke="${LINE}" stroke-width="1.6" opacity=".28"/>
-  <rect x="204" y="105" width="${band}" height="14" rx="7" fill="${a.c}"/>
-  ${windows(204,band,112,o.cargo)}
+  <defs><clipPath id="fuseclip"><path d="${F}"/></clipPath></defs>
+  <path d="${F}" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
+  <g clip-path="url(#fuseclip)">${paint}</g>
+  ${liv==="full"||liv==="stripe" ? "" : `<path d="M168 113H${196+band}" stroke="${LINE}" stroke-width="1.6" opacity=".22"/>`}
+  ${windows(204,band,winY,o.cargo)}
+  <g stroke="${LINE}" stroke-width="2" fill="none" opacity=".5">
+    <rect x="360" y="100" width="11" height="24" rx="4"/>
+    <rect x="188" y="100" width="11" height="24" rx="4"/>
+    <rect x="272" y="103" width="9" height="17" rx="3.5"/>
+  </g>
+  <path d="M236 140 312 118" stroke="${LINE}" stroke-width="2" opacity=".3"/>
   <path d="${COCKPIT[nose]}" fill="${LINE}"/>
   <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
   ${o.winglet?`<path d="M197 197C192 187 189 179 188 172L179 175C181 184 184 193 188 203Z" fill="${BODY}" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>`:""}
-  ${o.engines>=4?nacelle(190,176,66,30,a.c):""}
-  ${nacelle(226,150,84,37,a.c)}
+  ${o.engines>=4?nacelle(E2.x,E2.y,E2.w,E2.h,a.c):""}
+  ${nacelle(E.x,E.y,E.w,E.h,a.c)}
   ${lights({near:[176,206],far:[172,42],tail:[60,80],beacon:[300,140]})}`;
 }
 
@@ -1024,6 +1066,13 @@ function features(icao){
   const len = s ? s[0] : 38;
   return {
     nose: /^B[0-9]/.test(t) ? "boeing" : "airbus",
+    /* Triebwerksform: moderne Muster haben kurze, dicke Gehäuse, ältere
+       lange und schmale. Das ist der auffälligste Unterschied zwischen
+       zwei sonst fast gleichen Mustern. */
+    eng: /^(A19N|A20N|A21N|B38M|B39M|B3XM|BCS[13]|E29[05]|A35|A339|A33N|B78|B77W)/.test(t) ? "fat"
+       : /^(B73[3-9]|B72|B75|B76|MD8|MD9|DC9|F70|F100|CRJ|E13|E14|A30|A310)/.test(t) ? "slim"
+       : "std",
+    finKink: /^B[0-9]/.test(t),
     winglet: WINGLET.test(t),
     engines: FOUR_ENG.test(t) ? 4 : 2,
     band: Math.round(96 + (len-30)*3.2),
@@ -1066,6 +1115,7 @@ function kindOf(ac, info, rare){
    Innenministerium (Polizei, Rufname Libelle). */
 const OEAMTC = { n:"ÖAMTC Christophorus", c:"#F2C300", e:"bars", ink:true, stripe:"#C1121F" };
 const POLIZEI= { n:"Polizei Österreich",  c:"#123A8C", e:"bars", stripe:"#C1121F" };
+function liveryOf(callsign){ return LIVERY[(callsign||"").slice(0,3).toUpperCase()] || "band"; }
 function airlineOf(callsign, reg, kind){
   const cs=(callsign||"").toUpperCase(), r=(reg||"").toUpperCase().replace("-","");
   if(kind==="heli"){
@@ -1886,7 +1936,7 @@ async function showPlane(ac, second){
   lastKmh = typeof ac.gs==="number" ? Math.round(ac.gs*1.852) : 400;
 
   const icao=(info&&info.icao)||ac.t||"";
-  const f=features(icao); f.cargo=isCargo(call,icao);
+  const f=features(icao); f.cargo=isCargo(call,icao); f.liv=liveryOf(call);
   const paint=()=>{
     /* Läuft noch eine Böe aus der alten Blickrichtung, sofort abbrechen -
        sonst zieht der Wind kurz in die falsche Richtung. */
@@ -1894,7 +1944,7 @@ async function showPlane(ac, second){
       windFlip=flipped; windKmh=lastKmh; stopWind();
       requestAnimationFrame(()=>setWind(lastKmh));
     }
-    const sig=[kind,a.c,a.e,flipped,f.engines,f.winglet,f.nose,f.cargo,isNight()].join("|");
+    const sig=[kind,a.c,a.e,flipped,f.engines,f.winglet,f.nose,f.cargo,f.eng,f.liv,f.finKink,isNight()].join("|");
     if(sig!==craftSig){ craftSig=sig; $("craft").innerHTML=craftSVG(kind,a,flipped,f); }
     $("craft").style.width=craftWidth(f.len)+"%";
     /* Je höher die Maschine fliegt, desto weiter oben steht sie im Bild.
@@ -1918,7 +1968,7 @@ async function showPlane(ac, second){
       const r2={kind: isHeli2 ? "heli" : null};
       const k2=kindOf(s,null,r2);
       const a2=airlineOf(call2,s.r||"",k2);
-      const f2=features(s.t||""); f2.cargo=isCargo(call2, s.t||"");
+      const f2=features(s.t||""); f2.cargo=isCargo(call2, s.t||""); f2.liv=liveryOf(call2);
       c2.innerHTML=craftSVG(k2,a2,((s.track||90)%360)>180,f2);
       c2.classList.remove("hide");
       /* Auch die Maschine im Hintergrund darf sich melden, aber deutlich leiser */
