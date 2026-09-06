@@ -87,6 +87,9 @@
   .funk{flex:0 0 auto;border:0;background:none;padding:4px;cursor:pointer;color:inherit;opacity:.55}
   .funk svg{width:17px;height:17px;display:block;fill:currentColor}
   .funk[aria-pressed="true"]{opacity:1;color:var(--needle)}
+  .funk.speaking{animation:funkPulse 900ms ease-in-out infinite}
+  @keyframes funkPulse{0%,100%{opacity:1}50%{opacity:.35}}
+  @media (prefers-reduced-motion:reduce){ .funk.speaking{animation:none} }
   .mute{flex:0 0 auto;border:0;background:none;padding:4px;cursor:pointer;color:inherit;opacity:.6}
   .mute svg{width:17px;height:17px;display:block;fill:currentColor}
   .mute .off{display:none}
@@ -238,6 +241,12 @@
     position:absolute;right:26px;bottom:14px;font-family:var(--mono);
     font-size:11px;letter-spacing:.1em;color:#9A958A;
   }
+  .toast{position:absolute;z-index:8;left:50%;top:78px;transform:translateX(-50%);
+    background:rgba(26,26,24,.86);color:#F4F1E6;font-family:var(--mono);
+    font-size:12px;letter-spacing:.12em;padding:9px 16px;border-radius:999px;
+    opacity:0;transition:opacity 600ms ease}
+  .toast.on{opacity:1}
+  .night .toast{background:rgba(240,243,250,.9);color:#16202F}
   .rwyplan{position:absolute;z-index:7;right:26px;bottom:26px;width:245px;
     filter:drop-shadow(0 6px 18px rgba(0,0,0,.35))}
   .rwyplan svg{width:100%;height:auto;display:block}
@@ -460,40 +469,55 @@
     <div class="craft2 hide" id="craft2"></div>
     <div class="rwyplan" id="rwyPlan" hidden>
       <svg viewBox="0 0 250 250" aria-hidden="true">
-        <rect width="250" height="250" rx="12" fill="#E6E7D6"/>
-        <g opacity=".5" fill="#CBD8B4">
-          <path d="M0 190q60-12 120 3t130-5v62H0Z"/>
+        <rect width="250" height="250" rx="12" fill="#E4E6D4"/>
+        <path d="M0 66h250v184H0Z" fill="#DCE0C9"/>
+        <path d="M0 196q60-10 118 2t132-6v58H0Z" fill="#CBD8B4" opacity=".75"/>
+        <path d="M-6 18q60-13 128-1t134-5" fill="none" stroke="#A8C6DC" stroke-width="14"/>
+        <path d="M-6 18q60-13 128-1t134-5" fill="none" stroke="#8FB4D0" stroke-width="1"/>
+        <text x="8" y="11" font-size="6.5" font-family="monospace" fill="#5C7A93">DONAU</text>
+        <path d="M-6 50q70-8 138 3t124-3" fill="none" stroke="#EFB661" stroke-width="5"/>
+        <path d="M-6 50q70-8 138 3t124-3" fill="none" stroke="#C77E1F" stroke-width="1.1"/>
+        <text x="222" y="44" font-size="7.5" font-family="monospace" fill="#8A5A16" font-weight="bold">A4</text>
+        <g stroke="#BFC2B2" stroke-width="3" fill="none" stroke-linecap="round">
+          <path d="M97 135 150 115M150 115 172 162M118 106 141 127M155 142 174 134"/>
         </g>
-        <path d="M-6 16q60-12 128 0t134-4" fill="none" stroke="#A8C6DC" stroke-width="13"/>
-        <path d="M-6 16q60-12 128 0t134-4" fill="none" stroke="#8FB4D0" stroke-width="1"/>
-        <text x="8" y="10" font-size="6.5" font-family="monospace" fill="#5C7A93">DONAU</text>
-        <path d="M-6 46q70-8 138 2t124-2" fill="none" stroke="#E8A34A" stroke-width="4"/>
-        <path d="M-6 46q70-8 138 2t124-2" fill="none" stroke="#C77E1F" stroke-width="1" stroke-dasharray="1 5"/>
-        <text x="196" y="40" font-size="7" font-family="monospace" fill="#8A5A16" font-weight="bold">A4</text>
-        <g stroke="#B4B7A9" stroke-width="2.5" fill="none" opacity=".9">
-          <path d="M104 150 152 132M152 132 168 168M124 122 140 140"/>
+        <rect x="130" y="100" width="52" height="26" rx="3" fill="#C9C6BC" stroke="#9A978C"/>
+        <g fill="#9A978C">
+          <rect x="134" y="126" width="7" height="5" rx="1"/><rect x="145" y="126" width="7" height="5" rx="1"/>
+          <rect x="156" y="126" width="7" height="5" rx="1"/><rect x="167" y="126" width="7" height="5" rx="1"/>
         </g>
-        <rect x="132" y="118" width="50" height="28" rx="3" fill="#C9C6BC" stroke="#9A978C"/>
-        <text x="157" y="135" font-size="7" font-family="monospace" fill="#5C5A52" text-anchor="middle">TERMINAL</text>
-        <g transform="rotate(23 125 156)">
-          <rect id="rw1129" class="rw" x="37" y="150" width="176" height="12" rx="2"/>
-          <path d="M51 156h148" stroke="#E9EAEE" stroke-width="1.2" stroke-dasharray="8 9"/>
+        <text x="156" y="116" font-size="7" font-family="monospace" fill="#5C5A52" text-anchor="middle">TERMINAL</text>
+        <g transform="rotate(23 125 144)">
+          <rect id="rw1129" class="rw" x="45" y="137" width="160" height="14" rx="1.5"/>
+          <path d="M61 144h128" stroke="#F2F4F8" stroke-width="1.3" stroke-dasharray="9 10"/>
+          <g stroke="#F2F4F8" stroke-width="1.1">
+            <path d="M50 139.5h7M50 144h7M50 148.5h7"/>
+            <path d="M193 139.5h7M193 144h7M193 148.5h7"/>
+          </g>
         </g>
-        <g transform="rotate(67 125 156)">
-          <rect id="rw1634" class="rw" x="37" y="150" width="176" height="12" rx="2"/>
-          <path d="M51 156h148" stroke="#E9EAEE" stroke-width="1.2" stroke-dasharray="8 9"/>
+        <g transform="rotate(67 125 144)">
+          <rect id="rw1634" class="rw" x="45" y="137" width="160" height="14" rx="1.5"/>
+          <path d="M61 144h128" stroke="#F2F4F8" stroke-width="1.3" stroke-dasharray="9 10"/>
+          <g stroke="#F2F4F8" stroke-width="1.1">
+            <path d="M50 139.5h7M50 144h7M50 148.5h7"/>
+            <path d="M193 139.5h7M193 144h7M193 148.5h7"/>
+          </g>
         </g>
-        <g font-size="10" font-family="monospace" fill="#2E3038" font-weight="bold">
-          <text x="26" y="126">11</text><text x="212" y="194">29</text>
-          <text x="84" y="69">16</text><text x="153" y="251">34</text>
+        <g font-size="9.5" font-family="monospace" fill="#22252C" font-weight="bold">
+          <text x="31" y="116">11</text>
+          <text x="206" y="178">29</text>
+          <text x="89" y="62">16</text>
+          <text x="165" y="222">34</text>
         </g>
-        <g transform="translate(224,66)">
-          <path d="M0 12V-8M-4-4 0-9 4-4" stroke="#3A3D45" stroke-width="1.6" fill="none"/>
-          <text x="-3" y="24" font-size="9" font-family="monospace" fill="#3A3D45">N</text>
+        <g transform="translate(226,72)">
+          <path d="M0 11V-9M-4-5 0-10 4-5" stroke="#3A3D45" stroke-width="1.7" fill="none"/>
+          <text x="-3" y="23" font-size="9" font-family="monospace" fill="#3A3D45">N</text>
         </g>
-        <text x="12" y="242" font-size="8" font-family="monospace" fill="#5C5A52">WIEN-SCHWECHAT LOWW</text>
+        <text x="12" y="243" font-size="7.5" font-family="monospace" fill="#5C5A52">WIEN-SCHWECHAT LOWW</text>
+        <text id="rwyNote" x="238" y="243" font-size="7.5" font-family="monospace" fill="#2E7A4C" text-anchor="end"></text>
       </svg>
     </div>
+    <div class="toast" id="toast" hidden></div>
     <div class="second" id="second"></div>
     <div class="wind" id="wind" aria-hidden="true"></div>
     <div class="craft hide" id="craft"></div>
@@ -544,7 +568,7 @@
 
 <script>
 "use strict";
-const VERSION = "v52";
+const VERSION = "v53";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1626,21 +1650,43 @@ function speak(text, onend){
   const v=vs.find(v=>/en-GB|en_GB/.test(v.lang) && /male/i.test(v.name))
         || vs.find(v=>/en-GB|en_GB/.test(v.lang)) || vs.find(v=>/^en/.test(v.lang));
   if(v) u.voice=v;
-  if(onend) u.onend=onend;
+  u.onstart=()=>$("funk").classList.add("speaking");
+  u.onend=()=>{ $("funk").classList.remove("speaking"); if(onend) onend(); };
+  u.onerror=()=>{ $("funk").classList.remove("speaking"); };
   beep("test");
   setTimeout(()=>window.speechSynthesis.speak(u), 220);
 }
 
-function readAtis(){
+async function readAtis(){
   if(!soundOn) return;
   const w=weather.d;
-  if(!w){ return; }
+  const metar=await getMetar();
+  if(!w && !metar) return;
+
   const fresh = rwyAge() < RWY_MAX_AGE;
   const rwy = (activeRwy && fresh) ? "runway "+digits(activeRwy)+" in use" : "runway information not available";
-  const wind = "wind "+windDir3(w.wind_direction_10m)+" degrees at "+Math.round((w.wind_speed_10m||0))+" knots";
-  const cond = condName(w.weather_code)||"no significant weather";
-  const qnh = "Q N H "+qnhWords(w.pressure_msl);
-  const txt = `Vienna Information. ${rwy}. ${wind}. Temperature ${Math.round(w.temperature_2m)}. ${cond}. ${qnh}.`;
+
+  const windDeg = metar && metar.windDir!=null ? metar.windDir : (w?w.wind_direction_10m:null);
+  const windKt  = metar ? metar.windSpd : (w?Math.round(w.wind_speed_10m||0):null);
+  const wind = windKt==null ? "wind information not available"
+    : (metar && metar.windDir==null ? "wind variable at "+windKt+" knots"
+       : "wind "+windDir3(windDeg)+" degrees at "+windKt+" knots"
+         +(metar&&metar.windGust?", gusting "+metar.windGust+" knots":""));
+
+  let visCloud;
+  if(metar && metar.cavok) visCloud="C A V O K";
+  else if(metar && metar.visM!=null){
+    const vis = metar.visM>=9999 ? "visibility ten kilometers or more" : "visibility "+metar.visM+" meters";
+    const low = metar.clouds && metar.clouds[0];
+    visCloud = vis + (low ? ", "+CLOUD_WORD[low.cover]+" at "+altWords(low.ft) : ", no significant cloud");
+  } else visCloud = condName(w?w.weather_code:null)||"no significant weather";
+
+  const temp = metar && metar.tempC!=null ? metar.tempC : (w?Math.round(w.temperature_2m):null);
+  const qnhVal = metar && metar.qnh ? metar.qnh : (w?w.pressure_msl:null);
+
+  const txt = `Vienna Information. ${rwy}. ${wind}. ${visCloud}.`+
+    (temp!=null?` Temperature ${temp}.`:"")+
+    (qnhVal!=null?` Q N H ${qnhWords(qnhVal)}.`:"");
   speak(txt);
 }
 
@@ -1656,15 +1702,62 @@ paintFunk();
 /* Einmal pro Maschine: ein simulierter Sprechfunkspruch, sobald sie als
    im Anflug auf Wien mit bekannter aktiver Piste erkannt wird. */
 let atcCalled=new Set();
-function maybeAtcCall(ac, airlineName, call, zeigtPiste){
+async function maybeAtcCall(ac, airlineName, call, zeigtPiste){
   if(!funkOn || !zeigtPiste || !activeRwy) return;
   const key=ac.hex; if(atcCalled.has(key)) return;
   atcCalled.add(key); if(atcCalled.size>200) atcCalled.clear();
-  const w=weather.d||{};
+  const w=weather.d||{}; const metar=await getMetar();
+  const windDeg = metar && metar.windDir!=null ? metar.windDir : w.wind_direction_10m;
+  const windKt  = metar ? metar.windSpd : Math.round(w.wind_speed_10m||0);
   const who=spokenCallsign(call, airlineName);
   const txt=`${who}, Vienna Radar, cleared to land runway ${digits(activeRwy)}. `+
-            `Wind ${windDir3(w.wind_direction_10m)} degrees ${Math.round(w.wind_speed_10m||0)} knots.`;
+            `Wind ${windDir3(windDeg)} degrees ${windKt} knots.`;
   speak(txt);
+}
+
+
+/* ============ METAR für Wien-Schwechat ============
+   Öffentliche, freie Schnittstelle der US-Wetterbehörde, liefert auch
+   europäische Flughäfen im Rohtext. Liefert sie nichts Brauchbares,
+   fällt die Ansage automatisch auf die Open-Meteo-Werte zurück - dann
+   klingt sie etwas gröber, bleibt aber inhaltlich richtig. */
+function fetchText(url, ms=6000){
+  const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),ms);
+  return fetch(url,{signal:ctl.signal}).then(r=>{ if(!r.ok) throw new Error(r.status); return r.text(); })
+    .finally(()=>clearTimeout(t));
+}
+function tempVal(s){ return s.startsWith("M") ? -parseInt(s.slice(1),10) : parseInt(s,10); }
+function parseMetar(raw){
+  if(!raw) return null;
+  const t=raw.trim().replace(/\s+/g," "); if(!t) return null;
+  const out={raw:t}; let m;
+  if((m=t.match(/\b(\d{3}|VRB)(\d{2,3})(?:G(\d{2,3}))?KT\b/))){
+    out.windDir = m[1]==="VRB" ? null : parseInt(m[1],10);
+    out.windSpd = parseInt(m[2],10);
+    out.windGust = m[3]?parseInt(m[3],10):null;
+  }
+  if(/\bCAVOK\b/.test(t)) out.cavok=true;
+  else if((m=t.match(/\s(\d{4})\s/))) out.visM=parseInt(m[1],10);
+  out.clouds=[...t.matchAll(/\b(FEW|SCT|BKN|OVC)(\d{3})\b/g)].map(x=>({cover:x[1],ft:parseInt(x[2],10)*100}));
+  if((m=t.match(/\s(M?\d{2})\/(M?\d{2})\b/))){ out.tempC=tempVal(m[1]); out.dewC=tempVal(m[2]); }
+  if((m=t.match(/\bQ(\d{4})\b/))) out.qnh=parseInt(m[1],10);
+  return (out.windSpd!==undefined || out.tempC!==undefined || out.qnh!==undefined) ? out : null;
+}
+let metarCache={t:0,d:null};
+async function getMetar(){
+  if(metarCache.d && Date.now()-metarCache.t < 10*60*1000) return metarCache.d;
+  try{
+    const raw=await fetchText("https://aviationweather.gov/api/data/metar?ids=LOWW&format=raw");
+    const p=parseMetar(raw.split("\n")[0]);
+    if(p){ metarCache={t:Date.now(),d:p}; return p; }
+  }catch(e){}
+  return metarCache.d;   /* alter Stand ist besser als nichts, wird beim Bauen des Texts nicht neu gealtert geprüft */
+}
+const CLOUD_WORD={FEW:"few clouds",SCT:"scattered clouds",BKN:"broken clouds",OVC:"overcast"};
+function altWords(ft){
+  const h=Math.round(ft/100)*100;
+  if(h%1000===0) return DIGIT_WORD[h/1000]+" thousand"+(h>=2000?" feet":" feet");
+  return digits(String(h))+" feet";
 }
 
 /* ============ Umkreis, Status und Ton ============ */
@@ -1698,11 +1791,11 @@ function beep(kind){
   if(!soundOn) return;
   const c=audio(); if(!c) return;
   const t=c.currentTime;
-  if(kind==="rare" || kind==="test"){
+  if(kind==="rare" || kind==="rare2" || kind==="test"){
     /* Funkgeräusch: kurzer Rauschstoß mit "Squelch"-Klick an Anfang und Ende
        (das kurze Knacken, wenn ein Funkgerät öffnet und schließt), dazwischen
        gefiltertes Rauschen mit leisem Trägerton statt hartem Ein-/Ausblenden. */
-    const len = kind==="test" ? 0.55 : 1.15;
+    const len = kind==="test" ? 0.55 : kind==="rare2" ? 0.75 : 1.15;
     const buf=c.createBuffer(1, Math.floor(c.sampleRate*len), c.sampleRate);
     const dat=buf.getChannelData(0);
     const syl=[]; let pos=0.09;
@@ -1720,11 +1813,12 @@ function beep(kind){
     const s=c.createBufferSource(); s.buffer=buf;
     const hp=c.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=500;
     const lp=c.createBiquadFilter(); lp.type="lowpass";  lp.frequency.value=2400;
-    const g=c.createGain(); g.gain.value=0.10;
+    const g=c.createGain(); g.gain.value = kind==="rare2" ? 0.035 : 0.10;
+    if(kind==="rare2"){ hp.frequency.value=320; lp.frequency.value=1500; }
     s.connect(hp).connect(lp).connect(g).connect(c.destination); s.start(t);
 
     /* Squelch-Klicks: ein sehr kurzer, härterer Knack am Anfang und am Ende */
-    [0, len-0.02].forEach(off=>{
+    (kind==="rare2" ? [] : [0, len-0.02]).forEach(off=>{
       const cbuf=c.createBuffer(1, Math.floor(c.sampleRate*0.012), c.sampleRate);
       const cd=cbuf.getChannelData(0);
       for(let i=0;i<cd.length;i++) cd[i]=(Math.random()*2-1)*(1-i/cd.length);
@@ -1747,7 +1841,7 @@ function beep(kind){
 
 /* ============ Zustand ============ */
 let place=PLACES[Math.min(1,Math.max(0,store.get("place",0)))];
-let shownHex=null, timer=null, lastOk=0, gen=0, lastBig=null, lastFlapAt=0, sightings=0, craftSig=null;
+let shownHex=null, timer=null, lastOk=0, gen=0, lastBig=null, lastFlapAt=0, sightings=0, craftSig=null, secondHex=null;
 const FLAP_IDLE = 45000;   /* auch ohne Wechsel ab und zu durchblättern */
 
 function clock(){
@@ -1815,6 +1909,12 @@ async function showPlane(ac, second){
       const f2=features(s.t||""); f2.cargo=isCargo(call2, s.t||"");
       c2.innerHTML=craftSVG(k2,a2,((s.track||90)%360)>180,f2);
       c2.classList.remove("hide");
+      /* Auch die Maschine im Hintergrund darf sich melden, aber deutlich leiser */
+      if(s.hex!==secondHex){
+        secondHex=s.hex;
+        const r2b=rarity(s,{icao:s.t},place.key);
+        if(r2b.rare) beep("rare2");
+      }
       const b2=[];
       if(typeof s.alt_baro==="number") b2.push(thou(s.alt_baro*0.3048)+" m");
       if(typeof s.gs==="number") b2.push(Math.round(s.gs*1.852)+" km/h");
@@ -1822,7 +1922,7 @@ async function showPlane(ac, second){
         +dirOf(bearing(place.lat,place.lon,s.lat,s.lon)), b2.join(" · ")]
         .filter(Boolean).join(" · ");
       $("second").innerHTML="<b>"+((a2.n?a2.n+" ":"")+(call2||"unbekannt"))+"</b>"+line2;
-    } else { c2.classList.add("hide"); $("second").innerHTML=""; }
+    } else { c2.classList.add("hide"); $("second").innerHTML=""; secondHex=null; }
     requestAnimationFrame(placeSecond);
     $("empty").classList.remove("show");
 
@@ -1868,7 +1968,10 @@ async function showPlane(ac, second){
     const zielWien = route && /^Wien/.test(route.to||"");
     const zeigtPiste = activeRwy && rwyAge()<RWY_MAX_AGE && ac.baro_rate<-150 &&
       (ph==="im Anflug auf Wien" || (zielWien && nearAp.ap && nearAp.ap.iata==="VIE" && nearAp.km<60));
-    if(zeigtPiste) bits.push("Piste "+activeRwy+" aktiv");
+    if(zeigtPiste){
+      const min=Math.round(rwyAge()/60000);
+      bits.push("Piste "+activeRwy+" aktiv"+(min>=1?" · seit "+(min<60?min+" Min.":Math.round(min/60)+" Std."):""));
+    }
     rwyShown = !!zeigtPiste;
     if(changed) maybeAtcCall(ac, route&&route.airline||a.n, call, zeigtPiste);
     let html=bits.join(" · ");
@@ -2178,6 +2281,9 @@ $("detail").addEventListener("click",(e)=>{
   if(show){
     $("rw1129").classList.toggle("on", activeRwy==="11"||activeRwy==="29");
     $("rw1634").classList.toggle("on", activeRwy==="16"||activeRwy==="34");
+    const min=Math.round(rwyAge()/60000);
+    $("rwyNote").textContent="PISTE "+activeRwy+
+      (min>=1 ? " · SEIT "+(min<60?min+" MIN.":Math.round(min/60)+" STD.") : " · GERADE BESTÄTIGT");
     clearTimeout(rwyTimer);
     rwyTimer=setTimeout(()=>{ p.hidden=true; }, 5000);
   }else{
@@ -2194,6 +2300,19 @@ $("craft").addEventListener("click",()=>{
 });
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){clock();loop();} });
 setRadius(RADIUS_OPTIONS.includes(store.get("radius",15)) ? store.get("radius",15) : 15);
+
+/* Kurzer Rückblick beim Öffnen: was hat sich seit gestern angesammelt? */
+(function(){
+  const cut=Date.now()-24*3600*1000;
+  const n=store.get("rarelog-"+PLACES[0].key,[]).concat(store.get("rarelog-"+PLACES[1].key,[]))
+    .filter(e=>e.t>cut).length;
+  if(!n) return;
+  const el=$("toast");
+  el.textContent = n===1 ? "Seit gestern: 1 seltener Gast" : "Seit gestern: "+n+" seltene Gäste";
+  el.hidden=false;
+  setTimeout(()=>el.classList.add("on"), 400);
+  setTimeout(()=>{ el.classList.remove("on"); setTimeout(()=>el.hidden=true, 700); }, 6500);
+})();
 selectPlace(Math.min(1,Math.max(0,store.get("place",0))));
 </script>
 </body>
