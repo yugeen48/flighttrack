@@ -566,7 +566,7 @@
 
 <script>
 "use strict";
-const VERSION = "v55";
+const VERSION = "v56";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1064,8 +1064,14 @@ function kindOf(ac, info, rare){
   if(/^A388/.test(t)) return "super";
   if(/^(B74|BLCF|BSCA)/.test(t)) return "jumbo";
   if(/^(A3ST|A37L|BLGA)/.test(t)) return "beluga";
-  if(/^(PC12|PC6|TBM|C82|C72|C17|C20|C21|SR2|DA4|DA6|M20|P28|BE33|BE35|BE36|BE58|AC|EPIC|EVOT|PA46|P46|TB2)/.test(t)) return "single";
-  if(/^(AT4|AT5|AT7|DH8|SF3|SW4|C4|PC2|BE2|BE9|B19|D22|AN2|L410|A40|SB20|F50|F27|E12)/.test(t)) return "prop";
+  /* Einmotorige und leichte Propellermaschinen. Die Liste deckt ab, was
+     über Wien realistisch auftaucht; darüber hinaus greift die ADS-B-
+     Gewichtsklasse A1 (leicht) als Auffangnetz, damit kleine Maschinen
+     nicht fälschlich als Verkehrsjet gezeichnet werden. */
+  if(/^(AT01|PC12|PC6|PC7|TBM|C1[4-8]|C20|C21|C82|C72|C77|C42|SR2|SR22|DA20|DA40|DA42|DA62|DV20|M20|P28|P32|PA2|PA3|PA4|P46|BE2|BE33|BE35|BE36|BE55|BE58|BE76|RV[4-9]|RV1|AA5|AA1|F150|F172|R200|R100|WT9|VL3|EV97|P200|LNC|GLAS|G115|G109|SF25|KODI|EPIC|EVOT|TB[12]|TB2|MCR|SLG|HUSK|C185|C206|C210|C337|MU2|AC11|AC50|COL4|LGEZ|VELO|ZLIN|Z42|Z43|Z142|AN2|YK18|CAP1|CAP2|EXTR|E300|GA8|SW2)/.test(t)) return "single";
+  if(/^(AT4|AT5|AT7|DH8|SF3|SW4|C4|PC2|B19|D22|L410|A40|SB20|F50|F27|E12|JS3|BE20|BE30|BE9|C441|SW3)/.test(t)) return "prop";
+  /* Auffangnetz: als "leicht" gemeldet und kein bekannter Jet-Typ */
+  if((ac.category||"").toUpperCase()==="A1") return "single";
   if(/^(E13|E14|E17|CRJ|GLF|CL3|CL6|C55|C56|C68|C25|F2T|FA7|FA8|E55|E50|E35|LJ|BE4|GL5|GL7|H25)/.test(t)) return "regional";
   return "jet";
 }
@@ -1560,9 +1566,7 @@ const SQUAWK = {
   "7000":["gruen","Sichtflug"], "7010":["gruen","Platzrunde"],
   "2000":["gruen","Einflug ohne Zuweisung"], "1000":["gruen","Unter Flugsicherung"],
   "1200":["gruen","Sichtflug (Nordamerika)"], "7020":["gruen","Nahbereich"],
-  "7010":["gruen","Platzrunde"], "0021":["gruen","Sichtflug unter 5000 ft"],
-  "7005":["gelb","Hochleistungs-Kunstflug"], "7006":["gelb","Vermessungsflug"],
-  "7007":["gelb","Umweltmessflug"]
+  "0021":["gruen","Sichtflug unter 5000 ft"]
 };
 /* Bereiche, die keine einzelnen Codes sind */
 function squawkInfo(code){
