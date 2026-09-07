@@ -552,7 +552,7 @@
 
 <script>
 "use strict";
-const VERSION = "v72";
+const VERSION = "v73";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -862,24 +862,21 @@ function windows(x0, w, y, cargo){
   for(let x=x0+12; x<x0+w-8; x+=15) s+=`<circle cx="${x}" cy="${y}" r="2.7" fill="${col}"/>`;
   return s;
 }
-/* Positionslichter, nur nachts. Rot sitzt an der linken Tragfläche,
-   grün an der rechten. Zeigt die Nase nach rechts, blicken wir auf die
-   linke Seite - dann ist der vordere Flügel der rote. Fliegt sie nach
-   links, sehen wir die rechte Seite und die Farben tauschen. */
+/* Positionslichter, nur nachts. In der Seitenansicht sieht man nur die
+   nahe Tragfläche - links rot, rechts grün. Welche Seite zu sehen ist,
+   hängt von der Flugrichtung ab. Dazu das weiße Hecklicht und das rote
+   Blitzlicht am Rumpf. */
 function lights(p){
   if(!isNight()) return "";
   const L=p||{};
-  const near=L.near||[176,206], far=L.far||[172,42];
-  const t=L.tail||[60,80], b=L.beacon||[300,140];
-  const nearCol = drawFlipped ? "#57E08A" : "#FF5C5C";
-  const farCol  = drawFlipped ? "#FF5C5C" : "#57E08A";
-  return `<circle cx="${near[0]}" cy="${near[1]}" r="5" fill="${nearCol}"/>
-    <circle cx="${near[0]}" cy="${near[1]}" r="9" fill="${nearCol}" opacity=".28"/>
-    <circle cx="${far[0]}" cy="${far[1]}" r="5" fill="${farCol}"/>
-    <circle cx="${far[0]}" cy="${far[1]}" r="9" fill="${farCol}" opacity=".28"/>
-    <circle cx="${t[0]}" cy="${t[1]}" r="4" fill="#FFF3D8" opacity=".85"/>
-    <circle class="blink" cx="${b[0]}" cy="${b[1]}" r="4.5" fill="#FF4040"/>`;
+  const near=L.near||[152,165], t=L.tail||[42,86], b=L.beacon||[300,146];
+  const col = drawFlipped ? "#57E08A" : "#FF5C5C";
+  return `<circle cx="${near[0]}" cy="${near[1]}" r="6" fill="${col}" opacity=".3"/>
+    <circle cx="${near[0]}" cy="${near[1]}" r="3.2" fill="${col}"/>
+    <circle cx="${t[0]}" cy="${t[1]}" r="2.8" fill="#FFF3D8" opacity=".9"/>
+    <circle class="blink" cx="${b[0]}" cy="${b[1]}" r="3" fill="#FF4040"/>`;
 }
+
 
 /* Fahrwerk: Federbein mit Hydraulikzylinder, Schere und Rad mit Felge.
    Wird nur beim Landeanflug gezeichnet. */
@@ -984,7 +981,7 @@ function drawJet(a,o){
 
   <path d="M212 143C250 158 300 158 338 140L338 144 212 147Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
 
-  <path d="M${E.x+54} ${E.y+2} ${E.x+66} ${E.y-10}" stroke="${LINE}" stroke-width="7" stroke-linecap="round"/>
+  <path d="M${E.x+46} ${E.y+4} ${E.x+56} ${E.y-8}" stroke="${LINE}" stroke-width="6" stroke-linecap="round"/>
   <rect x="${E.x}" y="${E.y}" width="${E.w}" height="${E.h}" rx="${E.h/2}" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
   <path d="M${E.x+E.w-15} ${E.y+1.4}a${E.h/2-1.4} ${E.h/2-1.4} 0 0 1 0 ${E.h-2.8}Z" fill="${BODY}"/>
   <path d="M${E.x+22} ${E.y+1}v${E.h-2}M${E.x+46} ${E.y+2}v${E.h-4}" stroke="${LINE}" stroke-width="1" opacity=".45"/>
@@ -1034,7 +1031,7 @@ function drawRegional(a,o){ o=o||{}; const id="rj"+(++clipSeq);
   </g>
   <path d="M412 108C424 111 436 116 442 121L415 116Z" fill="#22303F"/>
   <path d="M232 141C266 154 312 154 348 138L348 142 232 145Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="1.5" stroke-linejoin="round"/>
-  <path d="M312 146 324 134" stroke="${LINE}" stroke-width="6" stroke-linecap="round"/>
+  <path d="M306 148 314 138" stroke="${LINE}" stroke-width="5" stroke-linecap="round"/>
   <rect x="262" y="144" width="68" height="28" rx="14" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
   <path d="M317 145.4a13 13 0 0 1 0 25.2Z" fill="${BODY}"/>
   <path d="M282 145v26M302 146v24" stroke="${LINE}" stroke-width="1" opacity=".45"/>
