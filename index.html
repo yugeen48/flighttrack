@@ -552,7 +552,7 @@
 
 <script>
 "use strict";
-const VERSION = "v64";
+const VERSION = "v66";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1648,7 +1648,6 @@ function squawkInfo(code){
   const n=parseInt(code,10);
   if(!isFinite(n)) return null;
   if(n>=5001 && n<=5077) return ["gelb","Österreichisches Bundesheer"];
-  if(n>=6000 && n<=6777) return ["gelb","Militärischer Flug"];
   if(n>=1530 && n<=1539) return ["gruen","Sichtflug im Anflug auf Wien"];
   if(n>=1550 && n<=1559) return ["gruen","Sichtflug im Anflug"];
   if(n>=1 && n<=17)      return ["gruen","Platzverkehr Wien, Salzburg oder Klagenfurt"];
@@ -2081,7 +2080,7 @@ async function showPlane(ac, second){
     let html=bits.join(" · ");
     if(sq){
       /* Auffällige Codes stehen sofort im Klartext, normale erst auf Tipp. */
-      const meaning = sqInfo ? sqInfo[1] : "Kein Standardcode";
+      const meaning = sqInfo ? sqInfo[1] : "laufende Nummer der Flugsicherung";
       html += tier==="rot"||tier==="gelb"
         ? ` · <span class="sq ${tier}">Squawk ${sq} · ${meaning}</span>`
         : ` · <button class="sq quiet" data-code="Squawk ${sq}" data-mean="${meaning}">Squawk ${sq}</button>`;
