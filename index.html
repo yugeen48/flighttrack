@@ -552,7 +552,7 @@
 
 <script>
 "use strict";
-const VERSION = "v59";
+const VERSION = "v62";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -822,10 +822,13 @@ function emblem(a, t){
            + `<rect x="83" y="${55+dy}" width="32" height="11" rx="5.5" fill="${w}"/>`;
   }
 }
-const tail = (a, path, t) => `
-  <defs><clipPath id="finclip"><path d="${path}"/></clipPath></defs>
+let clipSeq=0;
+const tail = (a, path, t) => {
+  const id="fin"+(++clipSeq);
+  return `<defs><clipPath id="${id}"><path d="${path}"/></clipPath></defs>
   <path d="${path}" fill="${a.c}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <g clip-path="url(#finclip)">${emblem(a,t)}</g>`;
+  <g clip-path="url(#${id})">${emblem(a,t)}</g>`;
+};
 
 /* --- Verkehrsflugzeug, parametrisch ---
    nose: airbus rund, boeing spitzer · engines 2 oder 4 · winglet · band = Länge
@@ -876,12 +879,42 @@ function lights(p){
     <circle cx="${t[0]}" cy="${t[1]}" r="4" fill="#FFF3D8" opacity=".85"/>
     <circle class="blink" cx="${b[0]}" cy="${b[1]}" r="4.5" fill="#FF4040"/>`;
 }
+
+/* Fahrwerk: Federbein mit Hydraulikzylinder, Schere und Rad mit Felge.
+   Wird nur beim Landeanflug gezeichnet. */
+function leg(x, top, len, rw){
+  const axle=top+len;
+  return `
+    <g stroke="${LINE}" stroke-width="2" stroke-linejoin="round">
+      <path d="M${x-6} ${top}h12v9h-12z" fill="${BODY}"/>
+      <path d="M${x-4.5} ${top+8}h9v${len*0.45}h-9z" fill="#C9CCD2"/>
+      <path d="M${x-2.6} ${top+8+len*0.45}h5.2v${len*0.5}h-5.2z" fill="${BODY}"/>
+      <path d="M${x+3} ${top+12} ${x+9} ${top+len*0.55} ${x+3} ${top+len*0.8}"
+            fill="none" stroke-width="1.6"/>
+    </g>
+    <g>
+      <circle cx="${x}" cy="${axle}" r="${rw}" fill="#23262B" stroke="${LINE}" stroke-width="2"/>
+      <circle cx="${x}" cy="${axle}" r="${rw*0.52}" fill="#D9DCE1" stroke="${LINE}" stroke-width="1.4"/>
+      <circle cx="${x}" cy="${axle}" r="${rw*0.18}" fill="${LINE}"/>
+    </g>`;
+}
+function gear(){
+  return `
+    <g stroke="${LINE}" stroke-width="2" fill="${BODY}" opacity=".95">
+      <path d="M382 132h24v8h-24z"/><path d="M204 136h44v8h-44z"/>
+    </g>
+    ${leg(394,134,22,7.5)}
+    ${leg(214,138,32,8.5)}
+    ${leg(236,139,32,8.5)}`;
+}
+
 function drawJet(a,o){
   o = o || {};
   const nose = o.nose==="boeing" ? "boeing" : "airbus";
   const band = Math.max(96, Math.min(208, o.band||146));
   const liv  = o.liv || "band";
   const F    = FUSE_NOSE[nose];
+  const fuseId = "fuse"+(++clipSeq);
 
   /* Triebwerk: kurz und dick bei modernen, lang und schmal bei alten Mustern */
   const E = o.eng==="fat"  ? {x:232, y:146, w:74, h:44}
@@ -910,34 +943,26 @@ function drawJet(a,o){
   <path d="M134 84 60 60C54 58 50 65 56 68L120 102C128 106 136 102 136 94Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
   ${o.finKink?`<path d="M150 90 128 46 140 44 160 90Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>`:""}
   ${tail(a, FIN_JET, false)}
-  <defs><clipPath id="fuseclip"><path d="${F}"/></clipPath></defs>
+  <defs><clipPath id="${fuseId}"><path d="${F}"/></clipPath></defs>
   <path d="${F}" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <g clip-path="url(#fuseclip)">${paint}</g>
-  ${liv==="full"||liv==="stripe" ? "" : `<path d="M168 113H${196+band}" stroke="${LINE}" stroke-width="1.6" opacity=".22"/>`}
-  ${windows(204,band,winY,o.cargo)}
-  <g stroke="${LINE}" stroke-width="2" fill="none" opacity=".5">
-    <rect x="360" y="${winY-12}" width="11" height="24" rx="4"/>
-    <rect x="188" y="${winY-12}" width="11" height="24" rx="4"/>
-    <rect x="272" y="${winY-8.5}" width="9" height="17" rx="3.5"/>
-  </g>
-  <path d="M236 140 312 118" stroke="${LINE}" stroke-width="2" opacity=".3"/>
-  <g stroke="${LINE}" stroke-width="1.6" fill="none" opacity=".32">
-    <path d="M118 30 138 84"/>
-    <path d="M92 76 128 90"/>
-    <path d="M330 132 348 132M296 133 314 133"/>
-    <path d="M60 79 74 82"/>
+  <g clip-path="url(#${fuseId})">
+    ${paint}
+    ${liv==="full"||liv==="stripe" ? "" : `<path d="M168 113H${196+band}" stroke="${LINE}" stroke-width="1.6" opacity=".18"/>`}
+    ${windows(204,band,winY,o.cargo)}
+    <g stroke="${LINE}" stroke-width="1.8" fill="none" opacity=".42">
+      <rect x="360" y="${winY-12}" width="11" height="24" rx="4"/>
+      <rect x="188" y="${winY-12}" width="11" height="24" rx="4"/>
+      <rect x="272" y="${winY-8.5}" width="9" height="17" rx="3.5"/>
+      <rect x="316" y="126" width="26" height="10" rx="2.5" opacity=".7"/>
+    </g>
+    <path d="M236 140 312 118" stroke="${LINE}" stroke-width="1.8" opacity=".28"/>
   </g>
   <path d="${COCKPIT[nose]}" fill="${LINE}"/>
+  ${o.gear?gear():""}
   <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
   ${o.winglet?`<path d="M197 197C192 187 189 179 188 172L179 175C181 184 184 193 188 203Z" fill="${BODY}" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>`:""}
   ${o.engines>=4?nacelle(E2.x,E2.y,E2.w,E2.h,a.c):""}
   ${nacelle(E.x,E.y,E.w,E.h,a.c)}
-  ${o.gear?`<g stroke="${LINE}" stroke-width="4.5" stroke-linecap="round" fill="none">
-      <path d="M394 134v20"/><path d="M266 137v22"/><path d="M248 137v22"/></g>
-    <g fill="${LINE}"><circle cx="394" cy="160" r="7"/>
-      <circle cx="266" cy="165" r="8"/><circle cx="248" cy="165" r="8"/></g>
-    <g stroke="${LINE}" stroke-width="2" fill="${BODY}" opacity=".9">
-      <path d="M384 134h20v9h-20z"/><path d="M240 137h34v9h-34z"/></g>`:""}
   ${lights({near:[176,206],far:[172,42],tail:[60,80],beacon:[300,140]})}`;
 }
 
