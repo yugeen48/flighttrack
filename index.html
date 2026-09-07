@@ -552,7 +552,7 @@
 
 <script>
 "use strict";
-const VERSION = "v62";
+const VERSION = "v64";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -827,7 +827,8 @@ const tail = (a, path, t) => {
   const id="fin"+(++clipSeq);
   return `<defs><clipPath id="${id}"><path d="${path}"/></clipPath></defs>
   <path d="${path}" fill="${a.c}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <g clip-path="url(#${id})">${emblem(a,t)}</g>`;
+  <g clip-path="url(#${id})">${emblem(a,t)}</g>
+  <path d="${path}" fill="none" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>`;
 };
 
 /* --- Verkehrsflugzeug, parametrisch ---
@@ -904,8 +905,8 @@ function gear(){
       <path d="M382 132h24v8h-24z"/><path d="M204 136h44v8h-44z"/>
     </g>
     ${leg(394,134,22,7.5)}
-    ${leg(214,138,32,8.5)}
-    ${leg(236,139,32,8.5)}`;
+    ${leg(214,138,25,8.5)}
+    ${leg(236,139,25,8.5)}`;
 }
 
 function drawJet(a,o){
@@ -952,7 +953,7 @@ function drawJet(a,o){
     <g stroke="${LINE}" stroke-width="1.8" fill="none" opacity=".42">
       <rect x="360" y="${winY-12}" width="11" height="24" rx="4"/>
       <rect x="188" y="${winY-12}" width="11" height="24" rx="4"/>
-      <rect x="272" y="${winY-8.5}" width="9" height="17" rx="3.5"/>
+      <rect x="271.5" y="${winY-8.5}" width="9" height="17" rx="3.5"/>
       <rect x="316" y="126" width="26" height="10" rx="2.5" opacity=".7"/>
     </g>
     <path d="M236 140 312 118" stroke="${LINE}" stroke-width="1.8" opacity=".28"/>
@@ -2388,7 +2389,7 @@ $("detail").addEventListener("click",(e)=>{
     $("rwyNote").textContent="PISTE "+activeRwy+
       (min>=1 ? " · SEIT "+(min<60?min+" MIN.":Math.round(min/60)+" STD.") : " · GERADE BESTÄTIGT");
     clearTimeout(rwyTimer);
-    rwyTimer=setTimeout(()=>{ p.hidden=true; }, 5000);
+    rwyTimer=setTimeout(()=>{ p.hidden=true; }, 10000);
   }else{
     clearTimeout(rwyTimer);
   }
