@@ -552,7 +552,7 @@
 
 <script>
 "use strict";
-const VERSION = "v66";
+const VERSION = "v72";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -909,132 +909,444 @@ function gear(){
     ${leg(236,139,25,8.5)}`;
 }
 
+/* --- Verkehrsflugzeug, flache Seitenansicht ---
+   Aufbau von hinten nach vorne: fernes Triebwerk, Leitwerke, naher Flügel,
+   dann der Rumpf (der die Flügelwurzel verdeckt, wie in der echten
+   Seitenansicht), darauf die Verkleidung, zuletzt Triebwerk und Fahrwerk. */
+const JET_FUSE = 'M470 126 C468 116 454 108 428 105 L152 101 C122 100 94 97 72 93'
+  + 'C58 90 48 87 44 84 C40 81 38 85 42 89 L100 136 C108 141 118 144 130 144'
+  + 'L424 144 C454 141 468 137 470 126Z';
+const GREY = "#DCDAD2";
+
+function jetWindows(x0, n, cargo){
+  if(cargo) return "";
+  const col = isNight() ? "#F6D98C" : "#42607E";
+  let s="";
+  for(let i=0;i<n;i++){
+    const x=x0+i*10.4;
+    s+=`<circle cx="${x.toFixed(1)}" cy="${(117+i*10.4*0.010).toFixed(1)}" r="2" fill="${col}"/>`;
+  }
+  return s;
+}
+
 function drawJet(a,o){
   o = o || {};
   const nose = o.nose==="boeing" ? "boeing" : "airbus";
-  const band = Math.max(96, Math.min(208, o.band||146));
   const liv  = o.liv || "band";
-  const F    = FUSE_NOSE[nose];
-  const fuseId = "fuse"+(++clipSeq);
+  const id   = "jf"+(++clipSeq);
+  /* Rumpflänge bestimmt, wie viele Fenster hineinpassen */
+  const nWin = Math.max(14, Math.min(30, Math.round((o.band||150)/6.5)));
+  const bandW = nWin*10.4+12;
 
-  /* Triebwerk: kurz und dick bei modernen, lang und schmal bei alten Mustern */
-  const E = o.eng==="fat"  ? {x:232, y:146, w:74, h:44}
-          : o.eng==="slim" ? {x:222, y:154, w:96, h:29}
-          :                  {x:226, y:150, w:84, h:37};
-  const E2 = o.eng==="fat" ? {x:194,y:172,w:60,h:36}
-           : o.eng==="slim"? {x:186,y:178,w:74,h:25}
-           :                 {x:190,y:176,w:66,h:30};
+  const E = o.eng==="fat"  ? {x:250, y:144, w:70, h:34}
+          : o.eng==="slim" ? {x:242, y:150, w:86, h:25}
+          :                  {x:246, y:146, w:76, h:30};
 
-  /* Bemalung, am Rumpf zugeschnitten */
   const paint =
-    liv==="full"  ? `<rect x="55" y="70" width="400" height="80" fill="${a.c}"/>`
-  : liv==="belly" ? `<rect x="55" y="112" width="400" height="40" fill="${a.c}"/>`
-  : liv==="stripe"? `<path d="M96 70 152 152 186 152 130 70Z" fill="${a.c}"/>
-                     <path d="M136 70 192 152 214 152 158 70Z" fill="${a.c}" opacity=".75"/>`
-  : liv==="tail"  ? `<path d="M170 111H${196+band}" stroke="${a.c}" stroke-width="4"/>`
-  :                 `<rect x="204" y="105" width="${band}" height="14" rx="7" fill="${a.c}"/>`;
-  const winY = liv==="band" ? 112 : liv==="tail" ? 104 : 111;
+    liv==="full"  ? `<rect x="30" y="70" width="450" height="90" fill="${a.c}"/>`
+  : liv==="belly" ? `<path d="M30 118 480 132 480 170 30 170Z" fill="${a.c}"/>`
+  : liv==="stripe"? `<path d="M70 80 130 160 164 160 104 80Z" fill="${a.c}"/>
+                     <path d="M110 80 170 160 192 160 132 80Z" fill="${a.c}" opacity=".72"/>`
+  : liv==="tail"  ? `<path d="M132 113H${132+bandW}" stroke="${a.c}" stroke-width="3.5"/>`
+  :                 `<rect x="118" y="110" width="${bandW}" height="14" fill="${a.c}"/>`;
 
   return `
-  <path d="${o.winglet
-      ? "M298 94L196 47C191 39 187 31 186 23L175 25C177 33 180 41 184 49L280 108Z"
-      : "M298 94 188 40 168 43 280 108Z"}" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  ${o.engines>=4?farNacelle(184,46,54,24,a.c):""}
-  ${farNacelle(214,64,68,30,a.c)}
-  <path d="M134 84 60 60C54 58 50 65 56 68L120 102C128 106 136 102 136 94Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  ${o.finKink?`<path d="M150 90 128 46 140 44 160 90Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>`:""}
-  ${tail(a, FIN_JET, false)}
-  <defs><clipPath id="${fuseId}"><path d="${F}"/></clipPath></defs>
-  <path d="${F}" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <g clip-path="url(#${fuseId})">
+  ${o.engines>=4?`<rect x="196" y="118" width="52" height="20" rx="10" fill="#CFCDC5" stroke="${LINE}" stroke-width="1.5"/>`:""}
+  <path d="M104 98 24 68 14 76 96 108Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M92 92 34 72" stroke="${LINE}" stroke-width="1" opacity=".35" fill="none"/>
+  ${tail(a, 'M124 98 78 26C76 21 72 18 66 18L56 18C50 18 46 23 48 29L66 98Z', false)}
+  ${o.finKink?`<path d="M110 98 92 60 100 58 118 98Z" fill="${a.c}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>`:""}
+
+  <path d="M344 131 166 160 152 165 210 149Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.9" stroke-linejoin="round"/>
+  ${o.winglet?`<path d="M166 160 157 146 163 145 173 157Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>`:""}
+  <path d="M322 138 176 160M300 142 200 156" stroke="${LINE}" stroke-width="0.9" opacity=".28" fill="none"/>
+
+  <defs><clipPath id="${id}"><path d="${JET_FUSE}"/></clipPath></defs>
+  <path d="${JET_FUSE}" fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  <g clip-path="url(#${id})">
     ${paint}
-    ${liv==="full"||liv==="stripe" ? "" : `<path d="M168 113H${196+band}" stroke="${LINE}" stroke-width="1.6" opacity=".18"/>`}
-    ${windows(204,band,winY,o.cargo)}
-    <g stroke="${LINE}" stroke-width="1.8" fill="none" opacity=".42">
-      <rect x="360" y="${winY-12}" width="11" height="24" rx="4"/>
-      <rect x="188" y="${winY-12}" width="11" height="24" rx="4"/>
-      <rect x="271.5" y="${winY-8.5}" width="9" height="17" rx="3.5"/>
-      <rect x="316" y="126" width="26" height="10" rx="2.5" opacity=".7"/>
+    ${jetWindows(150, nWin, o.cargo)}
+    <g stroke="${LINE}" stroke-width="1.2" fill="none" opacity=".55">
+      <rect x="400" y="108" width="10" height="22" rx="3.5"/>
+      <rect x="130" y="105" width="10" height="22" rx="3.5"/>
+      <rect x="290" y="110" width="8" height="16" rx="3"/>
+      <rect x="268" y="110" width="8" height="16" rx="3"/>
+      <rect x="332" y="131" width="28" height="8" rx="1.6"/>
+      <rect x="186" y="129" width="24" height="7" rx="1.6"/>
     </g>
-    <path d="M236 140 312 118" stroke="${LINE}" stroke-width="1.8" opacity=".28"/>
+    <path d="M44 90 470 122" stroke="${LINE}" stroke-width="0.9" opacity=".2" fill="none"/>
+    <path d="M120 100 460 130" stroke="${LINE}" stroke-width="0.9" opacity=".13" fill="none"/>
+    <path d="M438 106 432 140" stroke="${LINE}" stroke-width="1" opacity=".25" fill="none"/>
+    <path d="M240 102 244 142M330 105 334 143" stroke="${LINE}" stroke-width="0.9" opacity=".12" fill="none"/>
   </g>
-  <path d="${COCKPIT[nose]}" fill="${LINE}"/>
-  ${o.gear?gear():""}
-  <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  ${o.winglet?`<path d="M197 197C192 187 189 179 188 172L179 175C181 184 184 193 188 203Z" fill="${BODY}" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>`:""}
-  ${o.engines>=4?nacelle(E2.x,E2.y,E2.w,E2.h,a.c):""}
-  ${nacelle(E.x,E.y,E.w,E.h,a.c)}
-  ${lights({near:[176,206],far:[172,42],tail:[60,80],beacon:[300,140]})}`;
+  <path d="M428 108C441 111 453 116 460 121L431 116Z" fill="#22303F"/>
+  <path d="M435 110v9M443 112v9" stroke="${BODY}" stroke-width="1.1"/>
+
+  <path d="M212 143C250 158 300 158 338 140L338 144 212 147Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
+
+  <path d="M${E.x+54} ${E.y+2} ${E.x+66} ${E.y-10}" stroke="${LINE}" stroke-width="7" stroke-linecap="round"/>
+  <rect x="${E.x}" y="${E.y}" width="${E.w}" height="${E.h}" rx="${E.h/2}" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
+  <path d="M${E.x+E.w-15} ${E.y+1.4}a${E.h/2-1.4} ${E.h/2-1.4} 0 0 1 0 ${E.h-2.8}Z" fill="${BODY}"/>
+  <path d="M${E.x+22} ${E.y+1}v${E.h-2}M${E.x+46} ${E.y+2}v${E.h-4}" stroke="${LINE}" stroke-width="1" opacity=".45"/>
+  <path d="M${E.x} ${E.y+8}c-7 4-8 14-1 19" fill="none" stroke="${LINE}" stroke-width="1.8"/>
+
+  ${o.gear?jetGear():""}
+  ${lights({near:[152,167],far:[166,155],tail:[42,86],beacon:[300,146]})}`;
 }
 
-/* --- Regionaljet: T-Leitwerk, Triebwerke am Heck --- */
-function drawRegional(a){ return `
-  <path d="M292 96 196 48 178 51 276 108Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  ${tail(a, FIN_T, true)}
-  <path d="M50 16H152C159 16 163 20 163 25 163 30 159 34 152 34L50 34C43 34 39 30 39 25 39 20 43 16 50 16Z" fill="${a.c}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  <path d="${FUSE_REG}" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <path d="M296 116 206 190 184 200 240 136Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  ${nacelle(148,92,78,35,a.c)}
-  ${farNacelle(160,74,66,28,a.c)}
-  <g fill="${LINE}"><circle cx="252" cy="103" r="5"/><circle cx="276" cy="104" r="5"/><circle cx="300" cy="105" r="5"/><circle cx="324" cy="106" r="5"/><circle cx="348" cy="107" r="5"/></g>
-  <path d="M390 99C406 102 420 107 428 113L394 107Z" fill="${LINE}"/>
-  ${lights({near:[186,198],far:[180,50],tail:[70,84],beacon:[300,134]})}`;
+/* Fahrwerk in der Seitenansicht */
+function jetGear(){
+  const wheel=(x,y,r)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
+    <circle cx="${x}" cy="${y}" r="${r*0.5}" fill="#D9DCE1" stroke="${LINE}" stroke-width="1.1"/>`;
+  return `
+  <g stroke="${LINE}" stroke-width="1.8" fill="none">
+    <path d="M410 142v14"/><path d="M256 146v16"/><path d="M276 146v16"/>
+  </g>
+  <g stroke="${LINE}" stroke-width="3.4" fill="none" stroke-linecap="round">
+    <path d="M410 144v10"/><path d="M256 148v10"/><path d="M276 148v10"/>
+  </g>
+  ${wheel(410,160,6)}${wheel(256,166,7)}${wheel(276,166,7)}`;
 }
 
-/* --- Turboprop mit zwei Motoren am Hochdecker (ATR, Dash 8) --- */
-function drawProp(a){ return `
-  ${tail(a, FIN_T, true)}
-  <path d="M50 16H152C159 16 163 20 163 25 163 30 159 34 152 34L50 34C43 34 39 30 39 25 39 20 43 16 50 16Z" fill="${a.c}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  <path d="${FUSE_REG}" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <rect x="206" y="100" width="150" height="13" rx="6.5" fill="${a.c}"/>
-  ${windows(206,150,106.5,false)}
-  <path d="M390 99C406 102 420 107 428 113L394 107Z" fill="${LINE}"/>
-  <path d="M352 74 150 92C143 93 143 104 150 105L356 90C364 89 363 75 352 74Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
+/* --- Regionaljet (E195, CRJ): kürzer, gepfeiltes Seitenleitwerk --- */
+function drawRegional(a,o){ o=o||{}; const id="rj"+(++clipSeq);
+  const F='M446 124 C444 115 432 108 410 105 L170 101 C142 100 118 97 98 93'
+        + 'C86 90 78 87 74 84 C70 81 68 85 72 89 L124 134 C132 139 142 142 154 142'
+        + 'L406 142 C434 139 444 134 446 124Z';
+  return `
+  <path d="M128 98 56 70 46 78 120 106Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  ${tail(a, 'M148 98 104 30C102 25 98 22 92 22L80 22C74 22 70 27 72 33L90 98Z', false)}
+  <path d="M352 130 190 158 176 163 232 148Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M190 158 182 145 188 144 197 155Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.5" stroke-linejoin="round"/>
+  <defs><clipPath id="${id}"><path d="${F}"/></clipPath></defs>
+  <path d="${F}" fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  <g clip-path="url(#${id})">
+    ${o.liv==="full"?`<rect x="40" y="70" width="440" height="90" fill="${a.c}"/>`
+     :o.liv==="belly"?`<path d="M60 118 470 130 470 170 60 170Z" fill="${a.c}"/>`
+     :`<rect x="150" y="110" width="230" height="12" fill="${a.c}"/>`}
+    ${jetWindows(178, 18, o.cargo)}
+    <g stroke="${LINE}" stroke-width="1.2" fill="none" opacity=".55">
+      <rect x="384" y="108" width="9" height="21" rx="3.5"/>
+      <rect x="158" y="105" width="9" height="21" rx="3.5"/>
+      <rect x="288" y="110" width="7" height="15" rx="3"/>
+    </g>
+    <path d="M72 90 446 120" stroke="${LINE}" stroke-width="0.9" opacity=".18" fill="none"/>
+  </g>
+  <path d="M412 108C424 111 436 116 442 121L415 116Z" fill="#22303F"/>
+  <path d="M232 141C266 154 312 154 348 138L348 142 232 145Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M312 146 324 134" stroke="${LINE}" stroke-width="6" stroke-linecap="round"/>
+  <rect x="262" y="144" width="68" height="28" rx="14" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
+  <path d="M317 145.4a13 13 0 0 1 0 25.2Z" fill="${BODY}"/>
+  <path d="M282 145v26M302 146v24" stroke="${LINE}" stroke-width="1" opacity=".45"/>
+  ${o.gear?`<g stroke="${LINE}" stroke-width="3.2" stroke-linecap="round"><path d="M396 142v10"/><path d="M272 145v10"/></g>
+    <circle cx="396" cy="158" r="6" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
+    <circle cx="272" cy="161" r="6.5" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>`:""}
+  ${lights({near:[178,165],far:[190,156],tail:[72,86],beacon:[300,144]})}`;
+}
+
+/* --- Turboprop am Hochdecker (Dash 8 Q400, ATR) --- */
+function drawProp(a,o){ o=o||{}; const id="tp"+(++clipSeq);
+  const F='M448 126 C446 116 432 108 408 105 L150 100 C120 99 96 96 78 92'
+        + 'C64 89 54 86 50 83 C46 80 44 84 48 88 L106 138 C114 143 126 146 140 146'
+        + 'L404 146 C436 143 446 137 448 126Z';
+  return `
+  <path d="M118 46 40 22 30 30 110 56Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  ${tail(a, 'M130 100 92 34C90 29 86 26 80 26L66 26C60 26 56 31 58 37L74 100Z', false)}
+  <path d="M420 92 120 98C110 98 108 110 118 110L424 104C434 103 432 92 420 92Z" fill="${GREY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <defs><clipPath id="${id}"><path d="${F}"/></clipPath></defs>
+  <path d="${F}" fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  <g clip-path="url(#${id})">
+    ${o.liv==="belly"?`<path d="M40 122 470 134 470 172 40 172Z" fill="${a.c}"/>`
+      :`<rect x="140" y="112" width="240" height="12" fill="${a.c}"/>`}
+    ${jetWindows(166, 20, o.cargo)}
+    <g stroke="${LINE}" stroke-width="1.2" fill="none" opacity=".55">
+      <rect x="382" y="110" width="9" height="21" rx="3.5"/>
+      <rect x="146" y="107" width="9" height="21" rx="3.5"/>
+    </g>
+  </g>
+  <path d="M410 108C424 111 436 116 442 121L413 116Z" fill="#22303F"/>
   <g>
-    <rect x="176" y="86" width="62" height="27" rx="13.5" fill="${a.c}" stroke="${LINE}" stroke-width="3"/>
-    <ellipse cx="240" cy="99" rx="6" ry="36" fill="${a.c}" opacity=".25" stroke="${LINE}" stroke-width="2.2"/>
-    <path d="M231 87.5a13 13 0 0 1 0 24Z" fill="${BODY}"/>
+    <rect x="246" y="88" width="62" height="26" rx="13" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
+    <path d="M295 89.4a12 12 0 0 1 0 23.2Z" fill="${BODY}"/>
+    <ellipse cx="312" cy="101" rx="5" ry="34" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="1.6"/>
+    <path d="M262 114v22" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="262" cy="142" r="7" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
   </g>
-  <rect x="236" y="78" width="74" height="32" rx="16" fill="${a.c}" stroke="${LINE}" stroke-width="3.2"/>
-  <ellipse cx="312" cy="92" rx="7" ry="44" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="2.4"/>
-  <path d="M302 80a15 15 0 0 1 0 26Z" fill="${BODY}"/>
-  ${lights({near:[152,106],far:[356,88],tail:[70,84],beacon:[280,130]})}`;
+  ${o.gear?`<path d="M404 146v10" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="404" cy="162" r="6" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>`:""}
+  ${lights({near:[124,110],far:[420,96],tail:[50,86],beacon:[300,144]})}`;
 }
 
-/* --- Einmotorige Propellermaschine mit T-Leitwerk (PC-12, TBM, Cessna) --- */
-function drawSingle(a){ return `
-  <path d="M292 88 216 44 200 47 278 100Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>
-  <path d="M164 84 140 34C138 28 132 25 126 25L112 25C106 25 102 30 104 36L128 86Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  <path d="M84 20H176C182 20 186 24 186 28 186 32 182 36 176 36L84 36C78 36 74 32 74 28 74 24 78 20 84 20Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  <path d="M368 104C364 94 352 88 334 86L150 80C126 79 112 78 104 76 100 75 98 79 101 81L152 116C160 120 168 122 178 122L328 122C352 120 366 114 368 104Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  <path d="M296 90C310 92 322 96 330 102L300 98Z" fill="${LINE}"/>
-  <g fill="#2C3E5A"><circle cx="206" cy="97" r="6"/><circle cx="232" cy="98" r="6"/><circle cx="258" cy="99" r="6"/></g>
-  <path d="M300 110 208 176 188 186 244 126Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  <path d="M336 86c14 2 24 6 30 12 5 6 3 13-4 15l-26 4Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  <ellipse cx="374" cy="104" rx="6" ry="40" fill="${a.c}" opacity=".22" stroke="${LINE}" stroke-width="2.2"/>
-  ${lights({near:[190,184],far:[200,46],tail:[104,80],beacon:[250,126]})}`;
+/* --- Einmotoriger Tiefdecker (Aquila, Cirrus, Diamond) --- */
+function drawSingle(a,o){ o=o||{};
+  return `
+  <path d="M126 84 62 58 52 66 118 94Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  ${tail(a, 'M146 96 108 34C106 29 102 26 96 26L86 26C80 26 76 31 78 37L94 96Z', false)}
+  <path d="M330 132 190 156 174 162 236 144Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M410 122C408 112 396 106 376 104L140 98C118 97 100 95 88 92 82 90 80 94 84 98L128 132C136 137 146 140 158 140L372 140C398 138 408 132 410 122Z"
+        fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M300 104C326 100 352 102 370 110L366 122 296 120Z" fill="#22303F" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M330 102v20" stroke="${BODY}" stroke-width="1.4" opacity=".7"/>
+  <path d="M382 106c14 3 22 7 28 13 5 5 3 12-4 14l-24 3Z" fill="${a.c}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <ellipse cx="418" cy="122" rx="5" ry="36" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="1.6"/>
+  <g stroke="${LINE}" stroke-width="2.6" stroke-linecap="round"><path d="M250 148v14"/><path d="M368 138v14"/></g>
+  <circle cx="250" cy="166" r="6" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
+  <circle cx="368" cy="156" r="5" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
+  ${lights({near:[178,160],far:[190,152],tail:[86,94],beacon:[280,138]})}`;
 }
 
-/* --- Hubschrauber (EC135-Bauart mit Fenestron im Heck) --- */
-function drawHeli(a){ return `
-  <path d="M208 100 118 94C110 93 108 103 116 106L168 124 208 124Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  <path d="M158 108 126 98C121 96 118 104 123 106L154 120Z" fill="${BODY}" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>
-  <path d="M124 112 108 44C106 34 96 30 86 34L70 40C60 44 56 54 60 63L92 118Z" fill="${a.c}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  <path d="M108 44C106 34 96 30 86 34L70 40 74 52 104 41Z" fill="${a.stripe||"#C1121F"}" stroke="${LINE}" stroke-width="2.6" stroke-linejoin="round"/>
-  <circle cx="86" cy="66" r="17" fill="${BODY}" stroke="${LINE}" stroke-width="3"/>
-  <path d="M91.0 66.0L101.0 66.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M90.3 68.5L99.0 73.5" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M88.5 70.3L93.5 79.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M86.0 71.0L86.0 81.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M83.5 70.3L78.5 79.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M81.7 68.5L73.0 73.5" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M81.0 66.0L71.0 66.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M81.7 63.5L73.0 58.5" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M83.5 61.7L78.5 53.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M86.0 61.0L86.0 51.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M88.5 61.7L93.5 53.0" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/><path d="M90.3 63.5L99.0 58.5" stroke="${LINE}" stroke-width="2.2" stroke-linecap="round"/>
-  <circle cx="86" cy="66" r="5" fill="${LINE}"/>
-  <path d="M96 116 84 138C82 142 88 145 91 141L106 122Z" fill="${a.c}" stroke="${LINE}" stroke-width="2.8" stroke-linejoin="round"/>
-  <path d="M234 82C290 82 338 95 374 120 386 128 382 146 366 146L238 146C208 146 188 131 188 114 188 95 208 82 234 82Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <path d="M330 100C350 109 364 119 373 130L322 130C315 130 311 123 313 117L320 104C323 99 327 98 330 100Z" fill="#2C3E5A" stroke="${LINE}" stroke-width="2.6" stroke-linejoin="round"/>
-  <rect x="212" y="98" width="92" height="19" rx="9.5" fill="#2C3E5A" stroke="${LINE}" stroke-width="2.6"/>
-  <path d="M240 70h72c8 0 12 5 12 11v7h-96v-7c0-6 4-11 12-11Z" fill="${a.c}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  <rect x="272" y="48" width="16" height="24" rx="4" fill="${LINE}"/>
-  <ellipse cx="280" cy="46" rx="17" ry="7" fill="${LINE}"/>
-  <path d="M92 38h376c8 0 8 11 0 11H92c-8 0-8-11 0-11Z" fill="${LINE}"/>
-  <path d="M214 178h140" stroke="${LINE}" stroke-width="8" stroke-linecap="round"/>
-  <path d="M244 146 232 178M328 146 340 178" stroke="${LINE}" stroke-width="7" stroke-linecap="round"/>
-  ${lights({near:[380,132],far:[210,88],tail:[64,60],beacon:[280,150]})}`;
+/* --- Geschäftsreisejet (Citation, Learjet): T-Leitwerk, Hecktriebwerke --- */
+function drawBizjet(a,o){ o=o||{}; const id="bj"+(++clipSeq);
+  const F='M436 124 C434 115 422 109 402 106 L164 102 C138 101 118 99 102 96'
+        + 'C90 93 82 90 78 87 C74 84 72 88 76 92 L128 132 C136 137 146 140 158 140'
+        + 'L398 140 C424 137 434 132 436 124Z';
+  return `
+  <path d="M104 42 34 20 24 28 96 52Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  ${tail(a, 'M134 98 96 32C94 27 90 24 84 24L70 24C64 24 60 29 62 35L78 98Z', false)}
+  <path d="M330 132 182 156 166 162 226 144Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M182 156 175 144 181 143 189 153Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.4" stroke-linejoin="round"/>
+  <defs><clipPath id="${id}"><path d="${F}"/></clipPath></defs>
+  <path d="${F}" fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  <g clip-path="url(#${id})">
+    <path d="M70 126 450 134 450 168 70 168Z" fill="${a.c}" opacity=".9"/>
+    <g fill="${isNight()?"#F6D98C":"#42607E"}">
+      <ellipse cx="256" cy="116" rx="7" ry="6"/><ellipse cx="284" cy="117" rx="7" ry="6"/>
+      <ellipse cx="312" cy="117" rx="7" ry="6"/><ellipse cx="340" cy="118" rx="7" ry="6"/>
+    </g>
+    <rect x="212" y="108" width="10" height="24" rx="4" fill="none" stroke="${LINE}" stroke-width="1.2" opacity=".55"/>
+    <path d="M78 94 436 122" stroke="${LINE}" stroke-width="0.9" opacity=".18" fill="none"/>
+  </g>
+  <path d="M400 108C414 111 426 116 432 121L403 116Z" fill="#22303F"/>
+  <rect x="150" y="106" width="58" height="24" rx="12" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
+  <path d="M196 107.2a11 11 0 0 1 0 21.6Z" fill="${BODY}"/>
+  ${o.gear?`<g stroke="${LINE}" stroke-width="2.8" stroke-linecap="round"><path d="M388 138v10"/><path d="M258 142v10"/><path d="M276 142v10"/></g>
+    <circle cx="388" cy="154" r="5" fill="#23262B" stroke="${LINE}" stroke-width="1.4"/>
+    <circle cx="258" cy="158" r="5.5" fill="#23262B" stroke="${LINE}" stroke-width="1.4"/>
+    <circle cx="276" cy="158" r="5.5" fill="#23262B" stroke="${LINE}" stroke-width="1.4"/>`:""}
+  ${lights({near:[170,160],far:[182,152],tail:[76,90],beacon:[300,138]})}`;
+}
+
+/* --- Hochdecker mit festem Fahrwerk (Cessna 172, An-2) --- */
+function drawHighwing(a,o){ o=o||{};
+  return `
+  <path d="M120 76 52 52 42 60 112 86Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  ${tail(a, 'M140 94 104 32C102 27 98 24 92 24L82 24C76 24 72 29 74 35L88 94Z', false)}
+  <path d="M400 120C398 110 386 104 366 102L136 96C114 95 98 93 86 90 80 88 78 92 82 96L124 128C132 133 142 136 154 136L362 136C388 134 398 130 400 120Z"
+        fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M396 86 150 92C140 92 138 104 148 104L400 98C410 97 408 86 396 86Z" fill="${GREY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M240 104 232 96M300 104 312 96" stroke="${LINE}" stroke-width="2" opacity=".6"/>
+  <path d="M298 100C324 96 348 98 366 106L362 118 294 116Z" fill="#22303F" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M328 98v20" stroke="${BODY}" stroke-width="1.4" opacity=".7"/>
+  <path d="M374 102c14 3 22 7 28 13 5 5 3 12-4 14l-24 3Z" fill="${a.c}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <ellipse cx="410" cy="118" rx="5" ry="34" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="1.6"/>
+  <g stroke="${LINE}" stroke-width="2.6" stroke-linecap="round"><path d="M258 136 246 158"/><path d="M354 132 362 152"/></g>
+  <ellipse cx="244" cy="162" rx="9" ry="6" fill="${BODY}" stroke="${LINE}" stroke-width="2"/>
+  <ellipse cx="364" cy="156" rx="8" ry="5.5" fill="${BODY}" stroke="${LINE}" stroke-width="2"/>
+  ${lights({near:[152,102],far:[396,90],tail:[84,92],beacon:[270,132]})}`;
+}
+
+/* --- Segelflugzeug (ASK 21): schlanker Rumpf, langer Flügel --- */
+function drawGlider(a,o){ o=o||{};
+  return `
+  <path d="M104 68 34 44 24 52 96 78Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
+  ${tail(a, 'M122 96 92 34C90 29 86 26 80 26L72 26C66 26 62 31 64 37L76 96Z', false)}
+  <path d="M356 122 128 152 106 158 232 138Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  <path d="M404 124C402 116 392 111 376 109L134 100C114 99 98 97 88 95 82 93 80 97 84 100L120 126C128 131 138 134 150 134L372 134C394 132 404 130 404 124Z"
+        fill="${BODY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M300 106C332 104 358 108 376 116L372 126 296 122Z" fill="#22303F" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  <path d="M338 105v19" stroke="${BODY}" stroke-width="1.3" opacity=".7"/>
+  <path d="M250 134v10" stroke="${LINE}" stroke-width="2.6" stroke-linecap="round"/>
+  <circle cx="250" cy="148" r="6" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
+  ${lights({near:[112,156],far:[126,150],tail:[86,96],beacon:[290,130]})}`;
+}
+
+/* --- Wasserflugzeug: Hochdecker auf Schwimmern --- */
+function drawFloat(a,o){ o=o||{};
+  return `
+  <path d="M120 70 52 46 42 54 112 80Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  ${tail(a, 'M140 88 104 26C102 21 98 18 92 18L82 18C76 18 72 23 74 29L88 88Z', false)}
+  <path d="M400 114C398 104 386 98 366 96L136 90C114 89 98 87 86 84 80 82 78 86 82 90L124 122C132 127 142 130 154 130L362 130C388 128 398 124 400 114Z"
+        fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M396 80 150 86C140 86 138 98 148 98L400 92C410 91 408 80 396 80Z" fill="${GREY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M296 94C322 90 346 92 364 100L360 112 292 110Z" fill="#22303F" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M374 96c14 3 22 7 28 13 5 5 3 12-4 14l-24 3Z" fill="${a.c}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <ellipse cx="410" cy="112" rx="5" ry="32" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="1.6"/>
+  <g stroke="${LINE}" stroke-width="2.6" stroke-linecap="round">
+    <path d="M228 130 220 152M300 130 306 152M256 130 252 152M340 128 342 150"/>
+  </g>
+  <path d="M196 152h176c12 0 18 5 18 10s-6 10-18 10H196c-12 0-18-5-18-10s6-10 18-10Z"
+        fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  ${lights({near:[152,96],far:[396,84],tail:[84,86],beacon:[270,126]})}`;
+}
+
+/* --- Kampfjet (Eurofighter): Delta mit Entenflügel --- */
+function drawFighter(a,o){ o=o||{};
+  return `
+  ${tail(a, 'M162 100 126 24C124 19 120 16 114 16L104 16C98 16 94 21 96 27L110 100Z', false)}
+  <path d="M120 104 52 78 42 86 112 114Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  <path d="M300 128 120 160 100 168 214 142Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.9" stroke-linejoin="round"/>
+  <path d="M380 108 326 92 316 98 366 116Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  <path d="M462 128C458 118 440 110 414 107L150 102C124 101 106 99 94 96 86 94 84 99 90 103L136 136C144 141 154 144 166 144L410 142C444 139 460 136 462 128Z"
+        fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M336 100C368 100 396 106 416 116L410 124 330 118Z" fill="#22303F" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M120 108h30v26h-30Z" fill="${a.c}" stroke="${LINE}" stroke-width="1.8"/>
+  <path d="M126 112v18M134 112v18M142 112v18" stroke="${BODY}" stroke-width="1.1" opacity=".6"/>
+  <g fill="${GREY}" stroke="${LINE}" stroke-width="1.6">
+    <rect x="206" y="146" width="74" height="12" rx="6"/>
+    <rect x="300" y="142" width="52" height="10" rx="5"/>
+  </g>
+  <path d="M180 140 176 152M330 136 328 146" stroke="${LINE}" stroke-width="2" opacity=".7"/>
+  ${lights({near:[106,164],far:[120,156],tail:[96,100],beacon:[300,140]})}`;
+}
+
+/* --- Militärtransporter (Hercules): Hochdecker, vier Propeller --- */
+function drawMilTransport(a,o){ o=o||{};
+  return `
+  <path d="M122 44 40 18 30 26 114 54Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  ${tail(a, 'M136 104 96 32C94 27 90 24 84 24L68 24C62 24 58 29 60 35L78 104Z', false)}
+  <path d="M424 88 128 96C116 96 114 110 126 110L428 102C440 101 438 88 424 88Z" fill="${GREY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M452 128C450 116 434 108 410 105L150 100C122 99 100 97 86 94 78 92 76 97 82 101L118 140C126 145 138 148 152 148L406 148C438 145 450 138 452 128Z"
+        fill="${BODY}" stroke="${LINE}" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M414 108C428 111 440 116 446 121L417 116Z" fill="#22303F"/>
+  <g>
+    <rect x="196" y="86" width="54" height="22" rx="11" fill="${a.c}" stroke="${LINE}" stroke-width="1.8"/>
+    <ellipse cx="254" cy="97" rx="4.5" ry="30" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="1.5"/>
+    <rect x="278" y="84" width="54" height="22" rx="11" fill="${a.c}" stroke="${LINE}" stroke-width="1.8"/>
+    <ellipse cx="336" cy="95" rx="4.5" ry="30" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="1.5"/>
+  </g>
+  <g fill="${isNight()?"#F6D98C":"#42607E"}"><circle cx="190" cy="114" r="4"/><circle cx="210" cy="115" r="4"/><circle cx="230" cy="115" r="4"/></g>
+  <path d="M96 132h54v12H96Z" fill="${BODY}" stroke="${LINE}" stroke-width="1.8"/>
+  <g stroke="${LINE}" stroke-width="3" stroke-linecap="round"><path d="M396 148v10"/><path d="M232 148v10"/><path d="M252 148v10"/></g>
+  <circle cx="396" cy="164" r="6" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
+  <circle cx="232" cy="164" r="6.5" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
+  <circle cx="252" cy="164" r="6.5" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
+  ${lights({near:[130,108],far:[424,92],tail:[78,100],beacon:[300,146]})}`;
+}
+
+/* --- Schulflugzeug (PC-7): Turboprop mit langer Kanzel --- */
+function drawTrainer(a,o){ o=o||{};
+  return `
+  <path d="M118 78 50 54 40 62 110 88Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  ${tail(a, 'M140 96 104 30C102 25 98 22 92 22L82 22C76 22 72 27 74 33L88 96Z', false)}
+  <path d="M336 132 194 156 178 162 240 144Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M400 122C398 112 386 106 366 104L136 98C114 97 98 95 86 92 80 90 78 94 82 98L124 132C132 137 142 140 154 140L362 140C388 138 398 132 400 122Z"
+        fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M248 102C296 96 340 100 366 112L360 122 244 120Z" fill="#22303F" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M300 99v22" stroke="${BODY}" stroke-width="1.4" opacity=".7"/>
+  <path d="M374 104c14 3 22 7 28 13 5 5 3 12-4 14l-24 3Z" fill="${a.c}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <ellipse cx="410" cy="120" rx="5" ry="36" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="1.6"/>
+  <g stroke="${LINE}" stroke-width="2.6" stroke-linecap="round"><path d="M256 148v12"/><path d="M362 138v12"/></g>
+  <circle cx="256" cy="164" r="6" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
+  <circle cx="362" cy="154" r="5" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
+  ${lights({near:[182,160],far:[194,152],tail:[84,94],beacon:[280,138]})}`;
+}
+
+/* --- Hubschrauber leicht (EC135) mit Fenestron --- */
+function drawHeli(a,o){ o=o||{}; const GL="#22303F"; return `
+  <path d="M232 104 C196 101 152 96 122 92 L118 80 C152 84 198 91 234 95Z"
+        fill="${BODY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M186 96 148 90 146 84 188 90Z" fill="${BODY}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M118 88 106 46 C105 41 100 39 96 41 L88 44 C84 46 83 51 85 55 L100 92Z"
+        fill="${a.c}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="106" cy="86" r="21" fill="${BODY}" stroke="${LINE}" stroke-width="2.2"/>
+  <circle cx="106" cy="86" r="15" fill="#E8E6DD" stroke="${LINE}" stroke-width="1.2"/>
+  <g stroke="${LINE}" stroke-width="1.2" opacity=".8"><path d="M106 71v30M91 86h30M95 75 117 97M117 75 95 97"/></g>
+  <circle cx="106" cy="86" r="4.5" fill="${LINE}"/>
+  <path d="M394 124 C392 106 374 86 340 79 C304 72 264 74 242 85 C224 94 216 108 218 124
+           C220 138 234 149 256 150 L342 150 C374 148 392 140 394 124Z"
+        fill="${BODY}" stroke="${LINE}" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M300 76 C332 78 358 88 372 102 L318 96 C300 92 292 84 300 76Z"
+        fill="${a.c}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M392 124 C388 110 376 96 358 88 L338 118Z" fill="${GL}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M366 92 350 118" stroke="${BODY}" stroke-width="1.4" opacity=".8"/>
+  <rect x="262" y="100" width="46" height="26" rx="7" fill="${GL}" stroke="${LINE}" stroke-width="1.8"/>
+  <rect x="228" y="104" width="26" height="22" rx="6" fill="${GL}" stroke="${LINE}" stroke-width="1.6"/>
+  <path d="M258 100v26" stroke="${LINE}" stroke-width="1.4" opacity=".5"/>
+  <g stroke="${LINE}" stroke-width="3.4" fill="none" stroke-linecap="round"><path d="M258 150 246 172"/><path d="M336 150 344 172"/></g>
+  <path d="M212 172 C216 168 224 166 232 166 L370 166 C378 166 382 168 382 172"
+        fill="none" stroke="${LINE}" stroke-width="4.5" stroke-linecap="round"/>
+  <rect x="292" y="58" width="13" height="22" rx="4" fill="${LINE}"/>
+  <ellipse cx="298" cy="56" rx="16" ry="6" fill="${LINE}"/>
+  <path d="M298 52 C240 46 140 42 62 44 L62 50 C142 50 242 54 298 58Z" fill="${LINE}"/>
+  <path d="M298 52 C356 46 420 44 452 46 L452 52 C420 52 356 56 298 58Z" fill="${LINE}"/>
+  ${lights({near:[250,166],far:[366,164],tail:[96,44],beacon:[300,148]})}`;
+}
+
+/* --- Hubschrauber mittel (Black Hawk, Bell 212): offener Heckrotor --- */
+function drawHeli2(a,o){ o=o||{}; const GL="#22303F"; return `
+  <path d="M240 118 C200 116 150 110 116 104 L112 90 C150 96 200 102 244 106Z"
+        fill="${BODY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M116 104 108 60 C107 54 101 51 96 54 L88 58 C83 61 82 67 84 72 L100 108Z"
+        fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M100 92 62 84 60 76 102 84Z" fill="${BODY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <g><path d="M92 66 60 44M92 66 124 88M92 66 62 88M92 66 122 44" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
+     <circle cx="92" cy="66" r="3.5" fill="${LINE}"/></g>
+  <path d="M398 132 C396 112 380 96 350 90 L268 78 C238 74 218 82 214 98 L212 124
+           C210 138 222 148 244 149 L352 149 C382 147 398 146 398 132Z"
+        fill="${BODY}" stroke="${LINE}" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M262 82 340 92 C356 96 366 102 372 110 L258 96Z" fill="${a.c}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M396 132 C392 118 380 104 362 96 L340 126Z" fill="${GL}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <g fill="${GL}" stroke="${LINE}" stroke-width="1.7">
+    <rect x="300" y="102" width="30" height="24" rx="4"/>
+    <rect x="262" y="100" width="32" height="24" rx="4"/>
+    <rect x="230" y="102" width="26" height="22" rx="4"/>
+  </g>
+  <path d="M212 106 176 116 172 108 210 98Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  <rect x="288" y="62" width="14" height="22" rx="4" fill="${LINE}"/>
+  <ellipse cx="295" cy="60" rx="17" ry="6" fill="${LINE}"/>
+  <path d="M295 56 C230 50 130 46 52 48 L52 54 C132 54 232 58 295 62Z" fill="${LINE}"/>
+  <path d="M295 56 C356 50 424 48 458 50 L458 56 C424 56 356 60 295 62Z" fill="${LINE}"/>
+  <g stroke="${LINE}" stroke-width="3.4" stroke-linecap="round"><path d="M250 149v14"/><path d="M336 149v14"/><path d="M128 108v10"/></g>
+  <circle cx="250" cy="168" r="7" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
+  <circle cx="336" cy="168" r="7" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
+  <circle cx="128" cy="123" r="5" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
+  ${lights({near:[176,114],far:[366,150],tail:[62,80],beacon:[300,146]})}`;
+}
+
+/* --- Hubschrauber Zweirotor (Chinook) --- */
+function drawHeli3(a,o){ o=o||{}; const GL="#22303F"; return `
+  <path d="M132 118 C130 100 142 86 164 84 L340 82 C368 82 384 92 388 108 L392 132
+           C394 144 382 152 362 152 L162 152 C140 152 130 142 130 130Z"
+        fill="${BODY}" stroke="${LINE}" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M386 122 C382 106 370 94 352 88 L330 118Z" fill="${GL}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <g fill="${GL}" stroke="${LINE}" stroke-width="1.6">
+    <rect x="286" y="100" width="24" height="20" rx="3"/><rect x="252" y="100" width="24" height="20" rx="3"/>
+    <rect x="218" y="100" width="24" height="20" rx="3"/><rect x="184" y="100" width="24" height="20" rx="3"/>
+  </g>
+  <path d="M130 128 C132 140 142 148 158 150 L176 150 176 132Z" fill="${a.c}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M336 84 C356 78 372 76 380 78 L380 86 340 92Z" fill="${a.c}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M150 84 C148 68 156 58 168 56 L188 54 190 86Z" fill="${a.c}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="330" y="62" width="14" height="22" rx="4" fill="${LINE}"/>
+  <ellipse cx="337" cy="60" rx="16" ry="6" fill="${LINE}"/>
+  <path d="M337 56 C400 50 448 48 476 50 L476 56 C448 56 400 60 337 62Z" fill="${LINE}"/>
+  <path d="M337 56 C280 50 220 48 186 50 L186 56 C222 56 280 60 337 62Z" fill="${LINE}"/>
+  <rect x="164" y="34" width="14" height="24" rx="4" fill="${LINE}"/>
+  <ellipse cx="171" cy="32" rx="16" ry="6" fill="${LINE}"/>
+  <path d="M171 28 C110 22 54 20 26 22 L26 28 C56 28 112 32 171 34Z" fill="${LINE}"/>
+  <path d="M171 28 C232 22 288 20 316 22 L316 28 C288 28 232 32 171 34Z" fill="${LINE}"/>
+  <g stroke="${LINE}" stroke-width="3.4" stroke-linecap="round"><path d="M200 152v12"/><path d="M228 152v12"/><path d="M330 152v12"/></g>
+  <circle cx="200" cy="169" r="6.5" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
+  <circle cx="228" cy="169" r="6.5" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
+  <circle cx="330" cy="169" r="6.5" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
+  ${lights({near:[196,166],far:[334,166],tail:[136,120],beacon:[300,150]})}`;
+}
+
+/* --- Hubschrauber Zweirotor (Chinook) --- */
+function drawHeli3(a,o){ o=o||{};
+  return `
+  <path d="M180 22h300c10 0 10 12 0 12H180c-10 0-10-12 0-12Z" fill="${LINE}"/>
+  <path d="M20 42h300c10 0 10 12 0 12H20c-10 0-10-12 0-12Z" fill="${LINE}"/>
+  <rect x="330" y="34" width="16" height="30" rx="5" fill="${LINE}"/>
+  <rect x="150" y="54" width="16" height="38" rx="5" fill="${LINE}"/>
+  <path d="M126 100C126 84 142 74 166 74L346 74C374 74 392 86 394 102L396 130C398 142 384 150 364 150L156 150C134 150 124 142 124 130Z"
+        fill="${BODY}" stroke="${LINE}" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M366 82C384 88 392 94 396 104L358 102Z" fill="#22303F" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <rect x="196" y="100" width="130" height="20" rx="6" fill="#22303F" stroke="${LINE}" stroke-width="1.8"/>
+  <path d="M124 86h44v34h-44Z" fill="${a.c}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <g stroke="${LINE}" stroke-width="3.4" stroke-linecap="round"><path d="M180 150v14"/><path d="M340 150v14"/></g>
+  <circle cx="180" cy="170" r="7" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
+  <circle cx="340" cy="170" r="7" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
+  ${lights({near:[396,138],far:[130,92],tail:[128,122],beacon:[260,154]})}`;
 }
 
 /* --- Jumbo: Buckel hinter dem Cockpit, vier Triebwerke (747) --- */
@@ -1121,31 +1433,57 @@ function features(icao){
 function craftWidth(len){ return Math.max(46, Math.min(94, 40 + len*0.78)); }
 
 function craftSVG(kind, a, flipped, opt){
-  const draw = { heli:drawHeli, prop:drawProp, single:drawSingle, regional:drawRegional,
+  const draw = { heli:drawHeli, heli2:drawHeli2, heli3:drawHeli3,
+                 prop:drawProp, single:drawSingle, regional:drawRegional,
+                 bizjet:drawBizjet, highwing:drawHighwing, glider:drawGlider,
+                 float:drawFloat, fighter:drawFighter, miltransport:drawMilTransport,
+                 trainer:drawTrainer,
                  jumbo:drawJumbo, super:drawSuper, beluga:drawBeluga }[kind] || drawJet;
   drawFlipped = !!flipped;
   const inner = draw(a, opt);
-  const box = kind==="single" ? "70 10 340 190"
-            : kind==="heli" ? "45 25 435 175"
+  const box = kind==="heli" ? "40 20 400 170"
+            : kind==="heli2" ? "40 20 440 165"
+            : kind==="heli3" ? "10 10 480 175"
+            : kind==="glider" ? "10 20 420 160"
+            : kind==="float" ? "20 10 420 180"
+            : kind==="fighter" ? "20 10 470 180"
+            : kind==="miltransport" ? "20 10 460 180"
+            : kind==="trainer" ? "20 10 420 180"
+            : kind==="bizjet" ? "20 10 440 170"
+            : kind==="highwing" ? "20 10 420 180"
+            : kind==="single" ? "30 10 420 180"
+            : kind==="regional" ? "20 10 450 170"
+            : kind==="prop" ? "10 10 460 180"
+            : (kind==="jet"||!kind) ? "10 10 480 180"
             : kind==="super" ? "40 0 430 245" : "40 0 420 235";
   return `<svg viewBox="${box}" role="img">
     <g transform="${flipped?"scale(-1,1) translate(-500,0)":""}">${inner}</g></svg>`;
 }
 function kindOf(ac, info, rare){
-  if(rare.kind==="heli") return "heli";
   const t=((info&&info.icao)||ac.t||"").toUpperCase();
+  if(rare.kind==="heli"){
+    if(/^(CH47|H47|CH46|MI26|BV23)/.test(t)) return "heli3";
+    if(/^(H60|S70|UH60|B212|B412|AB41|AB21|MI8|MI17|H225|AS32|EC25|S92|H215|A139|B429|H175|S76|AS65|NH90|EC55|H155)/.test(t)) return "heli2";
+    return "heli";
+  }
   if(/^A388/.test(t)) return "super";
   if(/^(B74|BLCF|BSCA)/.test(t)) return "jumbo";
   if(/^(A3ST|A37L|BLGA)/.test(t)) return "beluga";
-  /* Einmotorige und leichte Propellermaschinen. Die Liste deckt ab, was
-     über Wien realistisch auftaucht; darüber hinaus greift die ADS-B-
-     Gewichtsklasse A1 (leicht) als Auffangnetz, damit kleine Maschinen
-     nicht fälschlich als Verkehrsjet gezeichnet werden. */
-  if(/^(AT01|PC12|PC6|PC7|TBM|C1[4-8]|C20|C21|C82|C72|C77|C42|SR2|SR22|DA20|DA40|DA42|DA62|DV20|M20|P28|P32|PA2|PA3|PA4|P46|BE2|BE33|BE35|BE36|BE55|BE58|BE76|RV[4-9]|RV1|AA5|AA1|F150|F172|R200|R100|WT9|VL3|EV97|P200|LNC|GLAS|G115|G109|SF25|KODI|EPIC|EVOT|TB[12]|TB2|MCR|SLG|HUSK|C185|C206|C210|C337|MU2|AC11|AC50|COL4|LGEZ|VELO|ZLIN|Z42|Z43|Z142|AN2|YK18|CAP1|CAP2|EXTR|E300|GA8|SW2)/.test(t)) return "single";
-  if(/^(AT4|AT5|AT7|DH8|SF3|SW4|C4|PC2|B19|D22|L410|A40|SB20|F50|F27|E12|JS3|BE20|BE30|BE9|C441|SW3)/.test(t)) return "prop";
-  /* Auffangnetz: als "leicht" gemeldet und kein bekannter Jet-Typ */
-  if((ac.category||"").toUpperCase()==="A1") return "single";
-  if(/^(E13|E14|E17|CRJ|GLF|CL3|CL6|C55|C56|C68|C25|F2T|FA7|FA8|E55|E50|E35|LJ|BE4|GL5|GL7|H25)/.test(t)) return "regional";
+  /* Reihenfolge zählt: erst die Jets, dann die Propellermaschinen, erst
+     ganz zum Schluss das Auffangnetz für unbekannte Leichtflugzeuge.
+     Sonst wird eine Citation als Propellermaschine gezeichnet. */
+  /* Militär und Sonderformen zuerst */
+  if(/^(EUFI|F16|F15|F18|F35|F5(?![0-9])|GRIP|RFAL|TOR|MIG|SU2|SU3|SU5|A10|HAWK|L39|M346|AJET|T38|F4|F14|MI24|EF20)/.test(t)) return "fighter";
+  if(/^(C130|C30J|C17(?![0-9])|A400|C295|CN35|C27J|KC13|IL76|AN12|AN26|AN70|A124|AN22|K35R|E3TF|P8(?![0-9]))/.test(t)) return "miltransport";
+  if(/^(PC7|PC9|PC21|T6|TUCA|G120|SF26|DA42M|SB05|T34|T44)/.test(t)) return "trainer";
+  if(/^(GLID|DG[0-9]|LS[0-9]|ASK|ASW|ASH|ASG|DUOD|JANU|VENT|ARCU|DISC|NIMB|STDC|SZD|PIK|LAK|H36|SF25|SF28|KA6|KA7|BLAN|TWIN|G109|DIMO|TS1J|AS33|AS34)/.test(t)) return "glider";
+  if(/^(PBY|CL21|CL41|CL2T|CL4T|SEAR|ICON|LA8|DHC2|C208S|BE18S|AT8T|G21|SM10)/.test(t)) return "float";
+  if(PRIVATE_JET.test(t)) return "bizjet";
+  if(/^(C1[5-8]|C172|C182|C206|C207|C208|C210|C337|C42|GA8|AN2|SW2|P750|PC6|CN23|C185|DHC2|DHC3|DHC6|ST75|WILG|L410)/.test(t)) return "highwing";
+  if(/^(AT01|PC12|PC7|TBM|C20|C21|C82|C72|C77|SR2|SR22|DA20|DA40|DA42|DA62|DV20|M20|P28|P32|PA2|PA3|PA4|P46|BE2|BE33|BE35|BE36|BE55|BE58|BE76|RV[4-9]|RV1|AA5|AA1|F150|F172|R200|R100|WT9|VL3|EV97|P200|LNC|GLAS|G115|G109|SF25|KODI|EPIC|EVOT|TB[12]|MCR|SLG|HUSK|MU2|AC11|AC50|COL4|LGEZ|VELO|ZLIN|Z42|Z43|Z142|YK18|CAP1|CAP2|EXTR|E300)/.test(t)) return "single";
+  if(/^(AT4|AT5|AT7|DH8|SF3|SW4|C4|PC2|B19|D22|A40|SB20|F50|F27|E12|JS3|BE20|BE30|BE9|C441|SW3)/.test(t)) return "prop";
+  /* Regionaljets: Embraer E-Jets, CRJ, Fokker, Suchoi Superjet */
+  if(/^(E1[3-9]|E29|E29[05]|E75|E90|E195|CRJ|CR[27789]|SU95|RJ[13][05]|F70|F100|B461|B462|B463|AR8|MD8|MD9|B71)/.test(t)) return "regional";
   return "jet";
 }
 /* Hubschrauber tragen keine Airline. In Österreich verrät das Kennzeichen
