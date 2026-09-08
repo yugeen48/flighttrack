@@ -552,7 +552,7 @@
 
 <script>
 "use strict";
-const VERSION = "v78";
+const VERSION = "v83";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -761,6 +761,17 @@ async function lookupAircraft(hex){
 const COMMON=new Set(["A319","A320","A20N","A321","A21N","B737","B738","B38M","B739","E190","E195",
   "E290","E295","AT75","AT76","DH8D","CRJ9","CRJX","B77W","B788","B789","A333","A332","A359",
   "B763","B752","B77L","A388","BCS1","BCS3","SU95"]);
+
+/* Frachtflüge erkennt man am Rufzeichen der Frachtgesellschaften oder am
+   Mustercode mit F für Freighter. */
+const CARGO_CALL = new Set(["GEC","BOX","FDX","UPS","GTI","CLX","ABW","RCF","ABD","MSX",
+  "QTR","SQC","CKS","TAY","BCS","NPT","CAO","CKK","AIH","ETH","MPH","SWN","IRX","EXS"]);
+function isCargo(call, icao){
+  const c=(call||"").slice(0,3).toUpperCase();
+  const t=(icao||"").toUpperCase();
+  return CARGO_CALL.has(c) || /F$|BCF|SF$|BDSF|CF$|^B74S|^MD11F/.test(t);
+}
+
 function noteType(pk,t){
   if(!t) return 3;
   const seen=store.get("seen-"+pk,{}), cut=Date.now()-30*24*3600*1000;
@@ -987,6 +998,15 @@ function drawJet(a,o){
   ${lights({near:[198,158],tail:[36,86],beacon:[300,138]})}`;
 }
 
+
+/* Ein Rad mit Reifen, Felge und Nabe - überall gleich, damit kein
+   Flugzeug plötzlich schwarze Punkte statt Räder hat. */
+function wheelAt(x,y,r){
+  return `<circle cx="${x}" cy="${y}" r="${r}" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>`
+       + `<circle cx="${x}" cy="${y}" r="${(r*0.5).toFixed(1)}" fill="#D9DCE1" stroke="${LINE}" stroke-width="1"/>`
+       + `<circle cx="${x}" cy="${y}" r="${(r*0.16).toFixed(1)}" fill="${LINE}"/>`;
+}
+
 /* Fahrwerk in der Seitenansicht */
 function jetGear(){
   const wheel=(x,y,r)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
@@ -1002,6 +1022,22 @@ function jetGear(){
   ${wheel(414,153,5.5)}${wheel(244,159,6)}${wheel(262,159,6)}`;
 }
 
+
+/* Fahrwerk des Regionaljets, gleiche Bauart wie beim Verkehrsjet */
+function regGear(){
+  const wheel=(x,y,r)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
+    <circle cx="${x}" cy="${y}" r="${r*0.5}" fill="#D9DCE1" stroke="${LINE}" stroke-width="1.1"/>`;
+  return `
+  <g stroke="${LINE}" stroke-width="1.8" fill="none">
+    <path d="M392 140v11"/><path d="M262 141v13"/>
+  </g>
+  <g stroke="${LINE}" stroke-width="3.2" fill="none" stroke-linecap="round">
+    <path d="M392 142v8"/><path d="M262 143v9"/>
+  </g>
+  <path d="M256 154h14" stroke="${LINE}" stroke-width="2.8" stroke-linecap="round"/>
+  ${wheel(392,156,5)}${wheel(256,160,5.5)}${wheel(270,160,5.5)}`;
+}
+
 /* --- Regionaljet (E195, CRJ): kürzer, gepfeiltes Seitenleitwerk --- */
 function drawRegional(a,o){ o=o||{}; const id="rj"+(++clipSeq);
   const F='M446 124 C444 115 432 108 410 105 L170 101 C142 100 118 97 98 93'
@@ -1011,6 +1047,7 @@ function drawRegional(a,o){ o=o||{}; const id="rj"+(++clipSeq);
   <path d="M130 96 C110 90 82 81 62 74 L58 79 C80 87 108 97 128 101Z"
         fill="${GREY}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
   ${tail(a, 'M148 98 104 30C102 25 98 22 92 22L80 22C74 22 70 27 72 33L90 98Z', false)}
+  ${o.gear?regGear():""}
   <path d="M352 130 C312 137 244 149 196 156 L188 161 C238 152 314 140 354 135Z"
         fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
   <path d="M196 156 189 145 195 144 203 154Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.4" stroke-linejoin="round"/>
@@ -1034,9 +1071,6 @@ function drawRegional(a,o){ o=o||{}; const id="rj"+(++clipSeq);
   <rect x="262" y="144" width="68" height="28" rx="14" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
   <path d="M317 145.4a13 13 0 0 1 0 25.2Z" fill="${BODY}"/>
   <path d="M282 145v26M302 146v24" stroke="${LINE}" stroke-width="1" opacity=".45"/>
-  ${o.gear?`<g stroke="${LINE}" stroke-width="3.2" stroke-linecap="round"><path d="M396 142v10"/><path d="M272 145v10"/></g>
-    <circle cx="396" cy="158" r="6" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
-    <circle cx="272" cy="161" r="6.5" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>`:""}
   ${lights({near:[178,165],far:[190,156],tail:[72,86],beacon:[300,144]})}`;
 }
 
@@ -1066,10 +1100,10 @@ function drawProp(a,o){ o=o||{}; const id="tp"+(++clipSeq);
     <path d="M295 89.4a12 12 0 0 1 0 23.2Z" fill="${BODY}"/>
     <ellipse cx="312" cy="101" rx="5" ry="34" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="1.6"/>
     <path d="M262 114v22" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
-    <circle cx="262" cy="142" r="7" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
+    ${wheelAt(262,142,7)}
   </g>
   ${o.gear?`<path d="M404 146v10" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
-    <circle cx="404" cy="162" r="6" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>`:""}
+    ${wheelAt(404,162,6)}`:""}
   ${lights({near:[124,110],far:[420,96],tail:[50,86],beacon:[300,144]})}`;
 }
 
@@ -1086,8 +1120,8 @@ function drawSingle(a,o){ o=o||{};
   <path d="M382 106c14 3 22 7 28 13 5 5 3 12-4 14l-24 3Z" fill="${a.c}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
   <ellipse cx="418" cy="122" rx="5" ry="36" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="1.6"/>
   <g stroke="${LINE}" stroke-width="2.6" stroke-linecap="round"><path d="M250 148v14"/><path d="M368 138v14"/></g>
-  <circle cx="250" cy="166" r="6" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
-  <circle cx="368" cy="156" r="5" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
+  ${wheelAt(250,166,6)}
+  ${wheelAt(368,156,5)}
   ${lights({near:[178,160],far:[190,152],tail:[86,94],beacon:[280,138]})}`;
 }
 
@@ -1116,9 +1150,9 @@ function drawBizjet(a,o){ o=o||{}; const id="bj"+(++clipSeq);
   <rect x="150" y="106" width="58" height="24" rx="12" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
   <path d="M196 107.2a11 11 0 0 1 0 21.6Z" fill="${BODY}"/>
   ${o.gear?`<g stroke="${LINE}" stroke-width="2.8" stroke-linecap="round"><path d="M388 138v10"/><path d="M258 142v10"/><path d="M276 142v10"/></g>
-    <circle cx="388" cy="154" r="5" fill="#23262B" stroke="${LINE}" stroke-width="1.4"/>
-    <circle cx="258" cy="158" r="5.5" fill="#23262B" stroke="${LINE}" stroke-width="1.4"/>
-    <circle cx="276" cy="158" r="5.5" fill="#23262B" stroke="${LINE}" stroke-width="1.4"/>`:""}
+    ${wheelAt(388,154,5)}
+    ${wheelAt(258,158,5.5)}
+    ${wheelAt(276,158,5.5)}`:""}
   ${lights({near:[170,160],far:[182,152],tail:[76,90],beacon:[300,138]})}`;
 }
 
@@ -1152,7 +1186,7 @@ function drawGlider(a,o){ o=o||{};
   <path d="M300 106C332 104 358 108 376 116L372 126 296 122Z" fill="#22303F" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
   <path d="M338 105v19" stroke="${BODY}" stroke-width="1.3" opacity=".7"/>
   <path d="M250 134v10" stroke="${LINE}" stroke-width="2.6" stroke-linecap="round"/>
-  <circle cx="250" cy="148" r="6" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
+  ${wheelAt(250,148,6)}
   ${lights({near:[112,156],far:[126,150],tail:[86,96],beacon:[290,130]})}`;
 }
 
@@ -1213,9 +1247,9 @@ function drawMilTransport(a,o){ o=o||{};
   <g fill="${isNight()?"#F6D98C":"#42607E"}"><circle cx="190" cy="114" r="4"/><circle cx="210" cy="115" r="4"/><circle cx="230" cy="115" r="4"/></g>
   <path d="M96 132h54v12H96Z" fill="${BODY}" stroke="${LINE}" stroke-width="1.8"/>
   <g stroke="${LINE}" stroke-width="3" stroke-linecap="round"><path d="M396 148v10"/><path d="M232 148v10"/><path d="M252 148v10"/></g>
-  <circle cx="396" cy="164" r="6" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
-  <circle cx="232" cy="164" r="6.5" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
-  <circle cx="252" cy="164" r="6.5" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
+  ${wheelAt(396,164,6)}
+  ${wheelAt(232,164,6.5)}
+  ${wheelAt(252,164,6.5)}
   ${lights({near:[130,108],far:[424,92],tail:[78,100],beacon:[300,146]})}`;
 }
 
@@ -1232,8 +1266,8 @@ function drawTrainer(a,o){ o=o||{};
   <path d="M374 104c14 3 22 7 28 13 5 5 3 12-4 14l-24 3Z" fill="${a.c}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
   <ellipse cx="410" cy="120" rx="5" ry="36" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="1.6"/>
   <g stroke="${LINE}" stroke-width="2.6" stroke-linecap="round"><path d="M256 148v12"/><path d="M362 138v12"/></g>
-  <circle cx="256" cy="164" r="6" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
-  <circle cx="362" cy="154" r="5" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
+  ${wheelAt(256,164,6)}
+  ${wheelAt(362,154,5)}
   ${lights({near:[182,160],far:[194,152],tail:[84,94],beacon:[280,138]})}`;
 }
 
@@ -1293,9 +1327,9 @@ function drawHeli2(a,o){ o=o||{}; const GL="#22303F"; return `
   <path d="M295 56 C230 50 130 46 52 48 L52 54 C132 54 232 58 295 62Z" fill="${LINE}"/>
   <path d="M295 56 C356 50 424 48 458 50 L458 56 C424 56 356 60 295 62Z" fill="${LINE}"/>
   <g stroke="${LINE}" stroke-width="3.4" stroke-linecap="round"><path d="M250 149v14"/><path d="M336 149v14"/><path d="M128 108v10"/></g>
-  <circle cx="250" cy="168" r="7" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
-  <circle cx="336" cy="168" r="7" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
-  <circle cx="128" cy="123" r="5" fill="#23262B" stroke="${LINE}" stroke-width="1.5"/>
+  ${wheelAt(250,168,7)}
+  ${wheelAt(336,168,7)}
+  ${wheelAt(128,123,5)}
   ${lights({near:[176,114],far:[366,150],tail:[62,80],beacon:[300,146]})}`;
 }
 
@@ -1321,9 +1355,9 @@ function drawHeli3(a,o){ o=o||{}; const GL="#22303F"; return `
   <path d="M171 28 C110 22 54 20 26 22 L26 28 C56 28 112 32 171 34Z" fill="${LINE}"/>
   <path d="M171 28 C232 22 288 20 316 22 L316 28 C288 28 232 32 171 34Z" fill="${LINE}"/>
   <g stroke="${LINE}" stroke-width="3.4" stroke-linecap="round"><path d="M200 152v12"/><path d="M228 152v12"/><path d="M330 152v12"/></g>
-  <circle cx="200" cy="169" r="6.5" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
-  <circle cx="228" cy="169" r="6.5" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
-  <circle cx="330" cy="169" r="6.5" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
+  ${wheelAt(200,169,6.5)}
+  ${wheelAt(228,169,6.5)}
+  ${wheelAt(330,169,6.5)}
   ${lights({near:[196,166],far:[334,166],tail:[136,120],beacon:[300,150]})}`;
 }
 
@@ -1340,81 +1374,130 @@ function drawHeli3(a,o){ o=o||{};
   <rect x="196" y="100" width="130" height="20" rx="6" fill="#22303F" stroke="${LINE}" stroke-width="1.8"/>
   <path d="M124 86h44v34h-44Z" fill="${a.c}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
   <g stroke="${LINE}" stroke-width="3.4" stroke-linecap="round"><path d="M180 150v14"/><path d="M340 150v14"/></g>
-  <circle cx="180" cy="170" r="7" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
-  <circle cx="340" cy="170" r="7" fill="#23262B" stroke="${LINE}" stroke-width="1.6"/>
+  ${wheelAt(180,170,7)}
+  ${wheelAt(340,170,7)}
   ${lights({near:[396,138],far:[130,92],tail:[128,122],beacon:[260,154]})}`;
 }
 
-/* --- Jumbo: Buckel hinter dem Cockpit, vier Triebwerke (747) --- */
-function drawJumbo(a,o){ o=o||{}; return `
-  <path d="M298 94 188 40 168 43 280 108Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  ${farNacelle(184,46,54,24,a.c)}
-  ${farNacelle(214,64,68,30,a.c)}
-  <path d="M134 84 60 60C54 58 50 65 56 68L120 102C128 106 136 102 136 94Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  ${tail(a, FIN_JET, false)}
-  <path d="M450 120C447 108 432 99 408 94 400 72 378 60 350 61 326 62 310 72 302 88L118 83C88 82 70 80 58 78 54 77 52 81 55 83L140 130C150 135 160 138 172 138L392 138C426 136 447 132 450 120Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <path d="M168 113H398" stroke="${LINE}" stroke-width="1.6" opacity=".28"/>
-  <rect x="196" y="106" width="176" height="14" rx="7" fill="${a.c}"/>
-  ${windows(196,176,113,o.cargo)}
-  <rect x="318" y="74" width="62" height="12" rx="6" fill="${a.c}"/>
-  ${windows(318,62,80,o.cargo)}
-  <path d="M404 96C418 99 430 104 438 110L408 105Z" fill="${LINE}"/>
-  <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  ${nacelle(190,176,66,30,a.c)}
-  ${nacelle(236,142,78,34,a.c)}
-  ${lights({near:[176,206],far:[172,42],tail:[60,80],beacon:[300,140]})}`;
+/* --- Jumbo (747): Rumpfhöcker vorne, vier Triebwerke --- */
+function drawJumbo(a,o){ o=o||{}; const id="jb"+(++clipSeq);
+  const F='M478 128 C476 118 462 110 436 106 L330 100 C324 88 312 82 296 82'
+        + 'L246 82 C228 82 216 90 212 100 L96 96 C74 93 58 90 50 87'
+        + 'C44 84 40 88 44 92 L100 136 C108 141 120 144 134 144'
+        + 'L430 144 C462 141 476 136 478 128Z';
+  return `
+  <path d="M108 96 C90 90 62 80 40 72 L36 78 C60 87 88 97 106 102Z"
+        fill="${GREY}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
+  ${tail(a, 'M126 98 82 20C80 15 76 12 70 12L58 12C52 12 48 17 50 23L70 98Z', false)}
+  ${o.gear?jetGear():""}
+  <path d="M348 132 C318 136 262 145 214 152 L188 159 L184 164 L216 160 C266 152 320 143 350 138Z"
+        fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  <defs><clipPath id="${id}"><path d="${F}"/></clipPath></defs>
+  <path d="${F}" fill="${BODY}" stroke="${LINE}" stroke-width="2.1" stroke-linejoin="round"/>
+  <g clip-path="url(#${id})">
+    ${o.liv==="belly"?`<path d="M20 120 490 132 490 168 20 168Z" fill="${a.c}"/>`
+      :`<rect x="110" y="110" width="300" height="13" fill="${a.c}"/>`}
+    ${jetWindows(140, 30, o.cargo)}
+    ${o.cargo?"":`<g fill="${isNight()?"#F6D98C":"#42607E"}">${[0,1,2,3,4].map(i=>`<circle cx="${240+i*11}" cy="92" r="1.8"/>`).join("")}</g>`}
+    <g stroke="${LINE}" stroke-width="1.1" fill="none" opacity=".5">
+      <rect x="406" y="108" width="9" height="21" rx="3.5"/><rect x="120" y="104" width="9" height="21" rx="3.5"/>
+      <rect x="300" y="110" width="7" height="15" rx="3"/><rect x="270" y="110" width="7" height="15" rx="3"/>
+    </g>
+  </g>
+  <path d="M436 108C449 111 461 116 468 121L439 116Z" fill="#22303F"/>
+  <path d="M250 138C280 148 316 148 348 137L348 141 250 142Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="1.3" stroke-linejoin="round"/>
+  <rect x="196" y="146" width="58" height="24" rx="12" fill="${a.c}" stroke="${LINE}" stroke-width="1.8"/>
+  <path d="M243 147.2a11 11 0 0 1 0 21.6Z" fill="${BODY}" stroke="${LINE}" stroke-width="1.4"/>
+  <rect x="276" y="142" width="62" height="26" rx="13" fill="${a.c}" stroke="${LINE}" stroke-width="1.9"/>
+  <path d="M327 143.3a12 12 0 0 1 0 23.4Z" fill="${BODY}" stroke="${LINE}" stroke-width="1.5"/>
+  ${lights({near:[186,161],tail:[44,90],beacon:[300,142]})}`;
 }
 
-/* --- Doppelstock über die ganze Länge (A380) --- */
-function drawSuper(a,o){ o=o||{}; return `
-  <path d="M300 96 186 40 166 43 282 110Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  ${farNacelle(182,46,56,25,a.c)}
-  ${farNacelle(214,66,70,31,a.c)}
-  <path d="M138 88 58 62C52 60 48 67 54 70L122 108C130 112 140 108 140 100Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  ${tail(a, FIN_JET, false)}
-  <path d="M452 124C449 110 430 100 400 96L118 84C88 83 70 81 58 79 54 78 52 82 55 84L142 142C152 148 162 152 174 152L392 152C426 150 448 138 452 124Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <rect x="196" y="100" width="164" height="13" rx="6.5" fill="${a.c}"/>
-  ${windows(196,164,106.5,o.cargo)}
-  <rect x="188" y="126" width="176" height="13" rx="6.5" fill="${a.c}"/>
-  ${windows(188,176,132.5,o.cargo)}
-  <path d="M398 99C414 102 428 108 436 114L402 108Z" fill="${LINE}"/>
-  <path d="M320 130 200 210 176 222 244 152Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  ${nacelle(198,186,68,30,a.c)}
-  ${nacelle(248,152,78,34,a.c)}
-  ${lights({near:[180,218],far:[170,42],tail:[58,82],beacon:[300,154]})}`;
+/* --- A380: zwei Fensterreihen über die ganze Länge, vier Triebwerke --- */
+function drawSuper(a,o){ o=o||{}; const id="sp"+(++clipSeq);
+  const F='M480 126 C478 112 462 100 434 96 L140 90 C112 89 84 86 62 82'
+        + 'C46 79 36 76 32 73 C28 70 26 74 30 78 L92 140 C100 146 112 150 126 150'
+        + 'L430 150 C464 146 478 140 480 126Z';
+  return `
+  <path d="M104 100 C86 93 58 82 36 74 L32 80 C56 90 84 101 102 106Z"
+        fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  ${tail(a, 'M122 92 76 10C74 5 70 2 64 2L50 2C44 2 40 7 42 13L64 92Z', false)}
+  ${o.gear?jetGear():""}
+  <path d="M352 138 C316 143 254 154 202 162 L176 169 L172 174 L206 170 C258 161 320 149 354 144Z"
+        fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <defs><clipPath id="${id}"><path d="${F}"/></clipPath></defs>
+  <path d="${F}" fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  <g clip-path="url(#${id})">
+    ${o.liv==="belly"?`<path d="M20 126 490 140 490 176 20 176Z" fill="${a.c}"/>`
+      :`<rect x="104" y="104" width="330" height="12" fill="${a.c}"/>`}
+    <g fill="${isNight()?"#F6D98C":"#42607E"}">
+      ${Array.from({length:30},(_,i)=>`<circle cx="${132+i*10.4}" cy="${109+i*0.09}" r="1.9"/>`).join("")}
+      ${Array.from({length:28},(_,i)=>`<circle cx="${140+i*10.4}" cy="${129+i*0.09}" r="1.9"/>`).join("")}
+    </g>
+    <g stroke="${LINE}" stroke-width="1.1" fill="none" opacity=".5">
+      <rect x="408" y="100" width="9" height="20" rx="3.5"/><rect x="120" y="98" width="9" height="20" rx="3.5"/>
+      <rect x="300" y="124" width="9" height="20" rx="3.5"/><rect x="180" y="122" width="9" height="20" rx="3.5"/>
+    </g>
+  </g>
+  <path d="M436 99C449 102 461 107 468 112L439 107Z" fill="#22303F"/>
+  <path d="M240 144C276 156 320 156 356 143L356 148 240 149Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="1.3" stroke-linejoin="round"/>
+  <rect x="188" y="156" width="62" height="26" rx="13" fill="${a.c}" stroke="${LINE}" stroke-width="1.9"/>
+  <path d="M239 157.3a12 12 0 0 1 0 23.4Z" fill="${BODY}" stroke="${LINE}" stroke-width="1.5"/>
+  <rect x="274" y="150" width="68" height="28" rx="14" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
+  <path d="M329 151.4a13 13 0 0 1 0 25.2Z" fill="${BODY}" stroke="${LINE}" stroke-width="1.5"/>
+  ${lights({near:[174,171],tail:[30,80],beacon:[300,148]})}`;
 }
 
-/* --- Beluga: Buckel über fast die ganze Länge --- */
-function drawBeluga(a,o){ o=o||{cargo:true}; return `
-  <path d="M296 96 190 44 170 47 278 110Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  ${farNacelle(216,66,66,29,a.c)}
-  <path d="M134 84 60 60C54 58 50 65 56 68L120 102C128 106 136 102 136 94Z" fill="${BODY}" stroke="${LINE}" stroke-width="3" stroke-linejoin="round"/>
-  ${tail(a, FIN_JET, false)}
-  <path d="M452 122C449 110 438 102 422 98L406 96C400 66 370 44 320 42 258 40 198 54 166 78L118 83C88 82 70 80 58 78 54 77 52 81 55 83L140 130C150 135 160 138 172 138L392 138C426 136 449 134 452 122Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.4" stroke-linejoin="round"/>
-  <rect x="206" y="106" width="140" height="13" rx="6.5" fill="${a.c}"/>
-  <path d="M404 100C418 102 430 107 438 113L408 108Z" fill="${LINE}"/>
-  <path d="M312 118 196 200 172 212 236 140Z" fill="${BODY}" stroke="${LINE}" stroke-width="3.2" stroke-linejoin="round"/>
-  ${nacelle(226,150,84,37,a.c)}
-  ${lights({near:[176,206],far:[172,42],tail:[60,80],beacon:[300,140]})}`;
+/* --- Beluga: Umriss aus einem Riss abgemessen. Langer flacher Frachtrücken,
+       vorne abfallende Stirn, Cockpit tief an der Nase. --- */
+function drawBeluga(a,o){ o=o||{}; const id="bl"+(++clipSeq);
+  const F='M470 144 C462 138 454 130 447 122 C440 108 430 92 414 82'
+        + 'C406 77 399 75 391 74 L187 75 C160 76 140 77 130 79'
+        + 'C110 82 70 86 40 88 C30 88 26 92 32 96'
+        + 'L74 126 C90 137 110 146 130 147 L440 148 C458 148 468 148 470 144Z';
+  return `
+  <path d="M96 118 C80 112 54 104 34 98 L30 104 C52 111 78 120 94 124Z"
+        fill="${GREY}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M42 102 34 78 42 76 52 100Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.5" stroke-linejoin="round"/>
+  ${tail(a, 'M128 82 90 30C88 25 84 22 78 22L58 22C52 22 48 27 50 33L64 86Z', false)}
+  ${o.gear?belugaGear():""}
+  <path d="M340 140 C312 145 258 154 210 161 L186 168 L182 173 L214 169 C264 160 316 150 342 145Z"
+        fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  <defs><clipPath id="${id}"><path d="${F}"/></clipPath></defs>
+  <path d="${F}" fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  <g clip-path="url(#${id})">
+    <rect x="60" y="122" width="400" height="9" fill="${a.c}"/>
+    <path d="M130 100 460 122" stroke="${LINE}" stroke-width="1.2" opacity=".3" fill="none"/>
+    <path d="M250 76 254 148M330 75 334 148" stroke="${LINE}" stroke-width="0.9" opacity=".13" fill="none"/>
+  </g>
+  <path d="M448 124 C444 130 442 136 442 142 L466 142 C466 134 458 126 448 124Z"
+        fill="#22303F" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M244 144C274 154 310 154 342 143L342 147 244 148Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="1.3" stroke-linejoin="round"/>
+  <rect x="266" y="148" width="70" height="28" rx="14" fill="${a.c}" stroke="${LINE}" stroke-width="1.9"/>
+  <path d="M323 149.3a13 13 0 0 1 0 25.4Z" fill="${BODY}" stroke="${LINE}" stroke-width="1.5"/>
+  ${lights({near:[184,170],tail:[32,94],beacon:[300,146]})}`;
+}
+function belugaGear(){
+  return `<g stroke="${LINE}" stroke-width="3.2" fill="none" stroke-linecap="round">
+      <path d="M410 150v8"/><path d="M252 150v9"/></g>
+    <path d="M244 162h18" stroke="${LINE}" stroke-width="2.8" stroke-linecap="round"/>
+    ${wheelAt(410,162,5.5)}${wheelAt(244,167,6)}${wheelAt(262,167,6)}`;
 }
 
-/* Merkmale je Muster: Herstellernase, Winglets, Triebwerkszahl, Größe */
-const FOUR_ENG = /^(A388|A34|B74|B52|IL96|AN12|AN22|AN124|A124)/;
-const WINGLET  = /^(A20N|A21N|A19N|B38M|B39M|B3XM|B738|B739|B737|B77W|B78|B789|B788|A35|A359|A35K|A339|A33N|BCS|E29|E19[05]W|B748|A321|A320|A319|CRJ9|CRJX|E75|E75L)/;
-const CARGO_OP = /^(BCS|GEC|UPS|FDX|ABW|ABR|CLX|GTI|BOX|MSX|QAC|TAY|SQC|CKS|NCA)/;
-function isCargo(call, icao){
-  const t=(icao||"").toUpperCase();
-  return /F$/.test(t) || /^(B74S|A3ST|B77F|B76F)/.test(t) || CARGO_OP.test((call||"").toUpperCase());
-}
+/* Bildbreite nach echter Rumpflänge - eine 747 soll größer wirken als ein Regionaljet */
+function craftWidth(len){ return Math.max(46, Math.min(94, 40 + len*0.78)); }
+
+
+/* Merkmale eines Musters aus dem Typenkürzel: Nase, Triebwerksform,
+   Winglets, Triebwerkszahl und die Rumpflänge für die Fensterzahl. */
+const WINGLET = /^(A19N|A20N|A21N|A32[019]|A21|BCS[13]|B73[6-9]|B38M|B39M|B3XM|B75|B77W|B78|A33N|A339|A35|E29|E19[05]|CRJ[79])/;
+const FOUR_ENG = /^(A38|B74|A34|IL96|AN12|C130|A124|B52|AN22)/;
 function features(icao){
   const t=(icao||"").toUpperCase();
   const s=SPECS[t];
   const len = s ? s[0] : 38;
   return {
     nose: /^B[0-9]/.test(t) ? "boeing" : "airbus",
-    /* Triebwerksform: moderne Muster haben kurze, dicke Gehäuse, ältere
-       lange und schmale. Das ist der auffälligste Unterschied zwischen
-       zwei sonst fast gleichen Mustern. */
     eng: /^(A19N|A20N|A21N|B38M|B39M|B3XM|BCS[13]|E29[05]|A35|A339|A33N|B78|B77W)/.test(t) ? "fat"
        : /^(B73[3-9]|B72|B75|B76|MD8|MD9|DC9|F70|F100|CRJ|E13|E14|A30|A310)/.test(t) ? "slim"
        : "std",
@@ -1425,8 +1508,6 @@ function features(icao){
     len: len
   };
 }
-/* Bildbreite nach echter Rumpflänge - eine 747 soll größer wirken als ein Regionaljet */
-function craftWidth(len){ return Math.max(46, Math.min(94, 40 + len*0.78)); }
 
 function craftSVG(kind, a, flipped, opt){
   const draw = { heli:drawHeli, heli2:drawHeli2, heli3:drawHeli3,
@@ -1451,7 +1532,9 @@ function craftSVG(kind, a, flipped, opt){
             : kind==="regional" ? "20 10 450 170"
             : kind==="prop" ? "10 10 460 180"
             : (kind==="jet"||!kind) ? "10 10 480 170"
-            : kind==="super" ? "40 0 430 245" : "40 0 420 235";
+            : kind==="super" ? "10 0 480 190"
+            : kind==="beluga" ? "10 10 480 170"
+            : "10 10 480 170";
   return `<svg viewBox="${box}" role="img">
     <g transform="${flipped?"scale(-1,1) translate(-500,0)":""}">${inner}</g></svg>`;
 }
