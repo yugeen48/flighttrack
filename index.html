@@ -552,7 +552,7 @@
 
 <script>
 "use strict";
-const VERSION = "v76";
+const VERSION = "v77";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -993,12 +993,13 @@ function jetGear(){
     <circle cx="${x}" cy="${y}" r="${r*0.5}" fill="#D9DCE1" stroke="${LINE}" stroke-width="1.1"/>`;
   return `
   <g stroke="${LINE}" stroke-width="1.8" fill="none">
-    <path d="M414 137v12"/><path d="M226 143v14"/><path d="M244 143v14"/>
+    <path d="M414 136v12"/><path d="M252 140v14"/>
   </g>
-  <g stroke="${LINE}" stroke-width="3.2" fill="none" stroke-linecap="round">
-    <path d="M414 139v8"/><path d="M226 145v9"/><path d="M244 145v9"/>
+  <g stroke="${LINE}" stroke-width="3.4" fill="none" stroke-linecap="round">
+    <path d="M414 138v9"/><path d="M252 142v10"/>
   </g>
-  ${wheel(414,154,5.5)}${wheel(226,161,6.5)}${wheel(244,161,6.5)}`;
+  <path d="M244 154h18" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
+  ${wheel(414,153,5.5)}${wheel(244,159,6)}${wheel(262,159,6)}`;
 }
 
 /* --- Regionaljet (E195, CRJ): kürzer, gepfeiltes Seitenleitwerk --- */
