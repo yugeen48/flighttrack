@@ -552,7 +552,7 @@
 
 <script>
 "use strict";
-const VERSION = "v84";
+const VERSION = "v86";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1230,27 +1230,56 @@ function drawFighter(a,o){ o=o||{};
 }
 
 /* --- Militärtransporter (Hercules): Hochdecker, vier Propeller --- */
-function drawMilTransport(a,o){ o=o||{};
+/* --- Militaerischer Turboprop (An-26, C-27, C-130) ---
+   Hochdecker mit stark hochgezogenem Heck (Ladeluke), langen
+   Triebwerksgondeln am Fluegel und Fahrwerksgondeln an den
+   Rumpfseiten. Kein T-Leitwerk: das Hoehenleitwerk sitzt unten am
+   Leitwerksfuss. Vorbild: An-26 der ungarischen Luftwaffe. */
+function drawMilTransport(a,o){ o=o||{}; const id="mt"+(++clipSeq);
+  const F='M450 126 C448 115 434 107 410 104 L152 98 C122 97 98 94 80 90'
+        + 'C68 87 60 85 56 82 C52 79 50 83 54 87 L164 142 C173 146 184 148 196 148'
+        + 'L406 148 C438 145 448 137 450 126Z';
   return `
-  <path d="M122 44 40 18 30 26 114 54Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
-  ${tail(a, 'M136 104 96 32C94 27 90 24 84 24L68 24C62 24 58 29 60 35L78 104Z', false)}
-  <path d="M424 88 128 96C116 96 114 110 126 110L428 102C440 101 438 88 424 88Z" fill="${GREY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
-  <path d="M452 128C450 116 434 108 410 105L150 100C122 99 100 97 86 94 78 92 76 97 82 101L118 140C126 145 138 148 152 148L406 148C438 145 450 138 452 128Z"
-        fill="${BODY}" stroke="${LINE}" stroke-width="2.4" stroke-linejoin="round"/>
-  <path d="M414 108C428 111 440 116 446 121L417 116Z" fill="#22303F"/>
-  <g>
-    <rect x="196" y="86" width="54" height="22" rx="11" fill="${a.c}" stroke="${LINE}" stroke-width="1.8"/>
-    <ellipse cx="254" cy="97" rx="4.5" ry="30" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="1.5"/>
-    <rect x="278" y="84" width="54" height="22" rx="11" fill="${a.c}" stroke="${LINE}" stroke-width="1.8"/>
-    <ellipse cx="336" cy="95" rx="4.5" ry="30" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="1.5"/>
+  <g opacity=".75">
+    <rect x="248" y="75" width="98" height="21" rx="10.5" fill="${a.c}" stroke="${LINE}" stroke-width="1.8"/>
+    <ellipse cx="354" cy="85" rx="4.2" ry="29" fill="${a.c}" opacity=".16" stroke="${LINE}" stroke-width="1.4"/>
   </g>
-  <g fill="${isNight()?"#F6D98C":"#42607E"}"><circle cx="190" cy="114" r="4"/><circle cx="210" cy="115" r="4"/><circle cx="230" cy="115" r="4"/></g>
-  <path d="M96 132h54v12H96Z" fill="${BODY}" stroke="${LINE}" stroke-width="1.8"/>
-  <g stroke="${LINE}" stroke-width="3" stroke-linecap="round"><path d="M396 148v10"/><path d="M232 148v10"/><path d="M252 148v10"/></g>
-  ${wheelAt(396,164,6)}
-  ${wheelAt(232,164,6.5)}
-  ${wheelAt(252,164,6.5)}
-  ${lights({near:[130,108],far:[424,92],tail:[78,100],beacon:[300,146]})}`;
+  <path d="M128 88 44 74 32 84 116 102Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  ${tail(a, 'M150 96 106 30C104 25 100 22 94 22L72 22C66 22 62 27 64 33L72 96Z', false)}
+  <path d="M356 90 134 94C124 94 122 106 132 106L360 102C370 101 368 90 356 90Z" fill="${GREY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <defs><clipPath id="${id}"><path d="${F}"/></clipPath></defs>
+  <path d="${F}" fill="${BODY}" stroke="${LINE}" stroke-width="2.4" stroke-linejoin="round"/>
+  <g clip-path="url(#${id})">
+    <rect x="150" y="119" width="248" height="9" fill="${a.c}"/>
+    <g fill="${isNight()?"#F6D98C":"#42607E"}">
+      <circle cx="196" cy="124" r="2.4"/><circle cx="216" cy="124" r="2.4"/>
+      <circle cx="236" cy="124" r="2.4"/><circle cx="256" cy="124" r="2.4"/>
+      <circle cx="276" cy="124" r="2.4"/><circle cx="296" cy="124" r="2.4"/>
+      <circle cx="316" cy="124" r="2.4"/><circle cx="336" cy="124" r="2.4"/>
+      <circle cx="356" cy="124" r="2.4"/><circle cx="376" cy="124" r="2.4"/>
+    </g>
+    <g stroke="${LINE}" stroke-width="1.2" fill="none" opacity=".5">
+      <rect x="384" y="110" width="9" height="22" rx="3.5"/>
+      <rect x="176" y="112" width="10" height="24" rx="4"/>
+      <path d="M56 88 168 143"/>
+    </g>
+  </g>
+  <path d="M412 107C426 110 438 115 444 120L414 115Z" fill="#22303F"/>
+  <g>
+    <rect x="258" y="82" width="104" height="22" rx="11" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
+    <path d="M351 83.2a10 10 0 0 1 0 19.6Z" fill="${BODY}"/>
+    <ellipse cx="368" cy="93" rx="4.6" ry="30" fill="${a.c}" opacity=".22" stroke="${LINE}" stroke-width="1.6"/>
+  </g>
+  <path d="M274 152C268 141 276 130 294 128L330 128C348 130 354 141 350 152Z"
+        fill="${BODY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  ${o.gear?`
+  <g stroke="${LINE}" stroke-width="3" stroke-linecap="round">
+    <path d="M416 148v11"/><path d="M298 152v9"/><path d="M322 152v9"/>
+  </g>
+  ${wheelAt(416,165,6)}
+  ${wheelAt(298,167,6.5)}
+  ${wheelAt(322,167,6.5)}`:""}
+  ${lights({near:[136,104],far:[424,92],tail:[66,88],beacon:[300,142]})}`;
 }
 
 /* --- Schulflugzeug (PC-7): Turboprop mit langer Kanzel --- */
