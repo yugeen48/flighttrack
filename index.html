@@ -552,7 +552,7 @@
 
 <script>
 "use strict";
-const VERSION = "v73";
+const VERSION = "v74";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -949,14 +949,14 @@ function drawJet(a,o){
 
   return `
   ${o.engines>=4?`<rect x="196" y="118" width="52" height="20" rx="10" fill="#CFCDC5" stroke="${LINE}" stroke-width="1.5"/>`:""}
-  <path d="M104 98 24 68 14 76 96 108Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
-  <path d="M92 92 34 72" stroke="${LINE}" stroke-width="1" opacity=".35" fill="none"/>
+  <path d="M106 96 C86 90 56 80 36 73 L32 78 C54 86 84 96 104 101Z"
+        fill="${GREY}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
   ${tail(a, 'M124 98 78 26C76 21 72 18 66 18L56 18C50 18 46 23 48 29L66 98Z', false)}
   ${o.finKink?`<path d="M110 98 92 60 100 58 118 98Z" fill="${a.c}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>`:""}
 
-  <path d="M344 131 166 160 152 165 210 149Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.9" stroke-linejoin="round"/>
-  ${o.winglet?`<path d="M166 160 157 146 163 145 173 157Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>`:""}
-  <path d="M322 138 176 160M300 142 200 156" stroke="${LINE}" stroke-width="0.9" opacity=".28" fill="none"/>
+  <path d="M346 132 C300 139 224 151 172 158 L164 163 C216 154 302 142 348 137Z"
+        fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  ${o.winglet?`<path d="M172 158 165 146 171 145 179 156Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.5" stroke-linejoin="round"/>`:""}
 
   <defs><clipPath id="${id}"><path d="${JET_FUSE}"/></clipPath></defs>
   <path d="${JET_FUSE}" fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
@@ -985,7 +985,6 @@ function drawJet(a,o){
   <rect x="${E.x}" y="${E.y}" width="${E.w}" height="${E.h}" rx="${E.h/2}" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
   <path d="M${E.x+E.w-15} ${E.y+1.4}a${E.h/2-1.4} ${E.h/2-1.4} 0 0 1 0 ${E.h-2.8}Z" fill="${BODY}"/>
   <path d="M${E.x+22} ${E.y+1}v${E.h-2}M${E.x+46} ${E.y+2}v${E.h-4}" stroke="${LINE}" stroke-width="1" opacity=".45"/>
-  <path d="M${E.x} ${E.y+8}c-7 4-8 14-1 19" fill="none" stroke="${LINE}" stroke-width="1.8"/>
 
   ${o.gear?jetGear():""}
   ${lights({near:[152,167],far:[166,155],tail:[42,86],beacon:[300,146]})}`;
@@ -1011,10 +1010,12 @@ function drawRegional(a,o){ o=o||{}; const id="rj"+(++clipSeq);
         + 'C86 90 78 87 74 84 C70 81 68 85 72 89 L124 134 C132 139 142 142 154 142'
         + 'L406 142 C434 139 444 134 446 124Z';
   return `
-  <path d="M128 98 56 70 46 78 120 106Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M130 96 C110 90 82 81 62 74 L58 79 C80 87 108 97 128 101Z"
+        fill="${GREY}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
   ${tail(a, 'M148 98 104 30C102 25 98 22 92 22L80 22C74 22 70 27 72 33L90 98Z', false)}
-  <path d="M352 130 190 158 176 163 232 148Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
-  <path d="M190 158 182 145 188 144 197 155Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M352 130 C312 137 244 149 196 156 L188 161 C238 152 314 140 354 135Z"
+        fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  <path d="M196 156 189 145 195 144 203 154Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.4" stroke-linejoin="round"/>
   <defs><clipPath id="${id}"><path d="${F}"/></clipPath></defs>
   <path d="${F}" fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
   <g clip-path="url(#${id})">
