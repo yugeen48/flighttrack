@@ -962,6 +962,8 @@ function drawJet(a,o){
   ${o.engines>=4?`<rect x="200" y="116" width="46" height="18" rx="9" fill="#CFCDC5" stroke="${LINE}" stroke-width="1.4"/>`:""}
   <path d="M104 94 C88 89 64 81 44 74 L40 79 C62 87 88 95 102 99Z"
         fill="${GREY}" stroke="${LINE}" stroke-width="1.5" stroke-linejoin="round"/>
+  ${tail(a, 'M118 96 84 32C82 27 78 24 72 24L62 24C56 24 52 29 54 35L70 96Z', false)}
+  ${o.finKink?`<path d="M104 96 88 62 96 60 112 96Z" fill="${a.c}" stroke="${LINE}" stroke-width="1.5" stroke-linejoin="round"/>`:""}
   ${o.gear?jetGear():""}
   ${flaps}
   <path d="M336 130 C312 134 268 142 226 149 L200 156 L196 161 L228 157 C270 150 314 141 338 137Z"
@@ -1044,6 +1046,7 @@ function drawRegional(a,o){ o=o||{}; const id="rj"+(++clipSeq);
   return `
   <path d="M130 96 C110 90 82 81 62 74 L58 79 C80 87 108 97 128 101Z"
         fill="${GREY}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
+  ${tail(a, 'M148 98 104 30C102 25 98 22 92 22L80 22C74 22 70 27 72 33L90 98Z', false)}
   ${o.gear?regGear():""}
   <path d="M352 130 C312 137 244 149 196 156 L188 161 C238 152 314 140 354 135Z"
         fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
@@ -1078,6 +1081,7 @@ function drawProp(a,o){ o=o||{}; const id="tp"+(++clipSeq);
         + 'L404 146 C436 143 446 137 448 126Z';
   return `
   <path d="M118 46 40 22 30 30 110 56Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  ${tail(a, 'M130 100 92 34C90 29 86 26 80 26L66 26C60 26 56 31 58 37L74 100Z', false)}
   <path d="M420 92 120 98C110 98 108 110 118 110L424 104C434 103 432 92 420 92Z" fill="${GREY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
   <defs><clipPath id="${id}"><path d="${F}"/></clipPath></defs>
   <path d="${F}" fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
@@ -1107,6 +1111,7 @@ function drawProp(a,o){ o=o||{}; const id="tp"+(++clipSeq);
 function drawSingle(a,o){ o=o||{};
   return `
   <path d="M126 84 62 58 52 66 118 94Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  ${tail(a, 'M146 96 108 34C106 29 102 26 96 26L86 26C80 26 76 31 78 37L94 96Z', false)}
   <path d="M330 132 190 156 174 162 236 144Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
   <path d="M410 122C408 112 396 106 376 104L140 98C118 97 100 95 88 92 82 90 80 94 84 98L128 132C136 137 146 140 158 140L372 140C398 138 408 132 410 122Z"
         fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
@@ -1127,6 +1132,7 @@ function drawBizjet(a,o){ o=o||{}; const id="bj"+(++clipSeq);
         + 'L398 140 C424 137 434 132 436 124Z';
   return `
   <path d="M104 42 34 20 24 28 96 52Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  ${tail(a, 'M134 98 96 32C94 27 90 24 84 24L70 24C64 24 60 29 62 35L78 98Z', false)}
   <path d="M330 132 182 156 166 162 226 144Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
   <path d="M182 156 175 144 181 143 189 153Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.4" stroke-linejoin="round"/>
   <defs><clipPath id="${id}"><path d="${F}"/></clipPath></defs>
@@ -1154,6 +1160,7 @@ function drawBizjet(a,o){ o=o||{}; const id="bj"+(++clipSeq);
 function drawHighwing(a,o){ o=o||{};
   return `
   <path d="M120 76 52 52 42 60 112 86Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  ${tail(a, 'M140 94 104 32C102 27 98 24 92 24L82 24C76 24 72 29 74 35L88 94Z', false)}
   <path d="M400 120C398 110 386 104 366 102L136 96C114 95 98 93 86 90 80 88 78 92 82 96L124 128C132 133 142 136 154 136L362 136C388 134 398 130 400 120Z"
         fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
   <path d="M396 86 150 92C140 92 138 104 148 104L400 98C410 97 408 86 396 86Z" fill="${GREY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
@@ -1172,6 +1179,7 @@ function drawHighwing(a,o){ o=o||{};
 function drawGlider(a,o){ o=o||{};
   return `
   <path d="M104 68 34 44 24 52 96 78Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
+  ${tail(a, 'M122 96 92 34C90 29 86 26 80 26L72 26C66 26 62 31 64 37L76 96Z', false)}
   <path d="M356 122 128 152 106 158 232 138Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
   <path d="M404 124C402 116 392 111 376 109L134 100C114 99 98 97 88 95 82 93 80 97 84 100L120 126C128 131 138 134 150 134L372 134C394 132 404 130 404 124Z"
         fill="${BODY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
@@ -1186,6 +1194,7 @@ function drawGlider(a,o){ o=o||{};
 function drawFloat(a,o){ o=o||{};
   return `
   <path d="M120 70 52 46 42 54 112 80Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  ${tail(a, 'M140 88 104 26C102 21 98 18 92 18L82 18C76 18 72 23 74 29L88 88Z', false)}
   <path d="M400 114C398 104 386 98 366 96L136 90C114 89 98 87 86 84 80 82 78 86 82 90L124 122C132 127 142 130 154 130L362 130C388 128 398 124 400 114Z"
         fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
   <path d="M396 80 150 86C140 86 138 98 148 98L400 92C410 91 408 80 396 80Z" fill="${GREY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
@@ -1203,6 +1212,7 @@ function drawFloat(a,o){ o=o||{};
 /* --- Kampfjet (Eurofighter): Delta mit Entenflügel --- */
 function drawFighter(a,o){ o=o||{};
   return `
+  ${tail(a, 'M162 100 126 24C124 19 120 16 114 16L104 16C98 16 94 21 96 27L110 100Z', false)}
   <path d="M120 104 52 78 42 86 112 114Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
   <path d="M300 128 120 160 100 168 214 142Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.9" stroke-linejoin="round"/>
   <path d="M380 108 326 92 316 98 366 116Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
@@ -1223,6 +1233,7 @@ function drawFighter(a,o){ o=o||{};
 function drawMilTransport(a,o){ o=o||{};
   return `
   <path d="M122 44 40 18 30 26 114 54Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  ${tail(a, 'M136 104 96 32C94 27 90 24 84 24L68 24C62 24 58 29 60 35L78 104Z', false)}
   <path d="M424 88 128 96C116 96 114 110 126 110L428 102C440 101 438 88 424 88Z" fill="${GREY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
   <path d="M452 128C450 116 434 108 410 105L150 100C122 99 100 97 86 94 78 92 76 97 82 101L118 140C126 145 138 148 152 148L406 148C438 145 450 138 452 128Z"
         fill="${BODY}" stroke="${LINE}" stroke-width="2.4" stroke-linejoin="round"/>
@@ -1246,6 +1257,7 @@ function drawMilTransport(a,o){ o=o||{};
 function drawTrainer(a,o){ o=o||{};
   return `
   <path d="M118 78 50 54 40 62 110 88Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  ${tail(a, 'M140 96 104 30C102 25 98 22 92 22L82 22C76 22 72 27 74 33L88 96Z', false)}
   <path d="M336 132 194 156 178 162 240 144Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
   <path d="M400 122C398 112 386 106 366 104L136 98C114 97 98 95 86 92 80 90 78 94 82 98L124 132C132 137 142 140 154 140L362 140C388 138 398 132 400 122Z"
         fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
@@ -1380,6 +1392,7 @@ function drawJumbo(a,o){ o=o||{}; const id="jb"+(++clipSeq);
   return `
   <path d="M108 96 C90 90 62 80 40 72 L36 78 C60 87 88 97 106 102Z"
         fill="${GREY}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
+  ${tail(a, 'M126 98 82 20C80 15 76 12 70 12L58 12C52 12 48 17 50 23L70 98Z', false)}
   ${o.gear?jetGear():""}
   <path d="M348 132 C318 136 262 145 214 152 L188 159 L184 164 L216 160 C266 152 320 143 350 138Z"
         fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
@@ -1412,6 +1425,7 @@ function drawSuper(a,o){ o=o||{}; const id="sp"+(++clipSeq);
   return `
   <path d="M104 100 C86 93 58 82 36 74 L32 80 C56 90 84 101 102 106Z"
         fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  ${tail(a, 'M122 92 76 10C74 5 70 2 64 2L50 2C44 2 40 7 42 13L64 92Z', false)}
   ${o.gear?jetGear():""}
   <path d="M352 138 C316 143 254 154 202 162 L176 169 L172 174 L206 170 C258 161 320 149 354 144Z"
         fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
@@ -1449,6 +1463,7 @@ function drawBeluga(a,o){ o=o||{}; const id="bl"+(++clipSeq);
   <path d="M96 118 C80 112 54 104 34 98 L30 104 C52 111 78 120 94 124Z"
         fill="${GREY}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
   <path d="M42 102 34 78 42 76 52 100Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.5" stroke-linejoin="round"/>
+  ${tail(a, 'M128 82 90 30C88 25 84 22 78 22L58 22C52 22 48 27 50 33L64 86Z', false)}
   ${o.gear?belugaGear():""}
   <path d="M340 140 C312 145 258 154 210 161 L186 168 L182 173 L214 169 C264 160 316 150 342 145Z"
         fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
