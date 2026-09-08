@@ -552,7 +552,7 @@
 
 <script>
 "use strict";
-const VERSION = "v83";
+const VERSION = "v84";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1271,35 +1271,39 @@ function drawTrainer(a,o){ o=o||{};
   ${lights({near:[182,160],far:[194,152],tail:[84,94],beacon:[280,138]})}`;
 }
 
-/* --- Hubschrauber leicht (EC135) mit Fenestron --- */
+/* --- Hubschrauber leicht (EC135, A109, AW169) --- */
 function drawHeli(a,o){ o=o||{}; const GL="#22303F"; return `
-  <path d="M232 104 C196 101 152 96 122 92 L118 80 C152 84 198 91 234 95Z"
+  <path d="M226 108 C192 105 152 100 124 96 L120 84 C152 88 194 95 228 99Z"
         fill="${BODY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
-  <path d="M186 96 148 90 146 84 188 90Z" fill="${BODY}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
-  <path d="M118 88 106 46 C105 41 100 39 96 41 L88 44 C84 46 83 51 85 55 L100 92Z"
+  <path d="M182 100 146 94 144 88 184 94Z" fill="${BODY}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M150 94 144 76 150 74 158 92Z" fill="${BODY}" stroke="${LINE}" stroke-width="1.4" stroke-linejoin="round"/>
+  <path d="M120 92 108 50 C107 45 102 43 98 45 L90 48 C86 50 85 55 87 59 L102 96Z"
         fill="${a.c}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="106" cy="86" r="21" fill="${BODY}" stroke="${LINE}" stroke-width="2.2"/>
-  <circle cx="106" cy="86" r="15" fill="#E8E6DD" stroke="${LINE}" stroke-width="1.2"/>
-  <g stroke="${LINE}" stroke-width="1.2" opacity=".8"><path d="M106 71v30M91 86h30M95 75 117 97M117 75 95 97"/></g>
-  <circle cx="106" cy="86" r="4.5" fill="${LINE}"/>
-  <path d="M394 124 C392 106 374 86 340 79 C304 72 264 74 242 85 C224 94 216 108 218 124
-           C220 138 234 149 256 150 L342 150 C374 148 392 140 394 124Z"
+  ${o.fenestron
+    ? `<circle cx="104" cy="88" r="19" fill="${BODY}" stroke="${LINE}" stroke-width="2.2"/>
+       <circle cx="104" cy="88" r="13" fill="#E8E6DD" stroke="${LINE}" stroke-width="1.2"/>
+       <g stroke="${LINE}" stroke-width="1.2" opacity=".8"><path d="M104 75v26M91 88h26M95 79 113 97M113 79 95 97"/></g>
+       <circle cx="104" cy="88" r="4" fill="${LINE}"/>`
+    : `<path d="M104 88 82 66M104 88 126 110M104 88 82 110M104 88 126 66" stroke="${LINE}" stroke-width="2.6" stroke-linecap="round"/>
+       <circle cx="104" cy="88" r="3.5" fill="${LINE}"/>`}
+  <path d="M392 126 C388 108 372 92 344 84 C318 76 286 74 262 78 C240 82 228 92 226 104
+           L226 128 C226 140 240 148 260 149 L344 149 C374 147 390 140 392 126Z"
         fill="${BODY}" stroke="${LINE}" stroke-width="2.4" stroke-linejoin="round"/>
-  <path d="M300 76 C332 78 358 88 372 102 L318 96 C300 92 292 84 300 76Z"
+  <path d="M286 78 C318 80 346 88 362 100 L300 96 C284 92 278 84 286 78Z"
         fill="${a.c}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
-  <path d="M392 124 C388 110 376 96 358 88 L338 118Z" fill="${GL}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
-  <path d="M366 92 350 118" stroke="${BODY}" stroke-width="1.4" opacity=".8"/>
-  <rect x="262" y="100" width="46" height="26" rx="7" fill="${GL}" stroke="${LINE}" stroke-width="1.8"/>
-  <rect x="228" y="104" width="26" height="22" rx="6" fill="${GL}" stroke="${LINE}" stroke-width="1.6"/>
-  <path d="M258 100v26" stroke="${LINE}" stroke-width="1.4" opacity=".5"/>
-  <g stroke="${LINE}" stroke-width="3.4" fill="none" stroke-linecap="round"><path d="M258 150 246 172"/><path d="M336 150 344 172"/></g>
-  <path d="M212 172 C216 168 224 166 232 166 L370 166 C378 166 382 168 382 172"
-        fill="none" stroke="${LINE}" stroke-width="4.5" stroke-linecap="round"/>
-  <rect x="292" y="58" width="13" height="22" rx="4" fill="${LINE}"/>
-  <ellipse cx="298" cy="56" rx="16" ry="6" fill="${LINE}"/>
-  <path d="M298 52 C240 46 140 42 62 44 L62 50 C142 50 242 54 298 58Z" fill="${LINE}"/>
-  <path d="M298 52 C356 46 420 44 452 46 L452 52 C420 52 356 56 298 58Z" fill="${LINE}"/>
-  ${lights({near:[250,166],far:[366,164],tail:[96,44],beacon:[300,148]})}`;
+  <path d="M390 126 C386 110 374 96 356 88 L332 122Z" fill="${GL}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M364 92 344 122" stroke="${BODY}" stroke-width="1.4" opacity=".8"/>
+  <path d="M300 96 330 100 322 122 296 120Z" fill="${GL}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  <rect x="248" y="100" width="42" height="24" rx="5" fill="${GL}" stroke="${LINE}" stroke-width="1.7"/>
+  <g stroke="${LINE}" stroke-width="3.4" fill="none" stroke-linecap="round">
+    <path d="M270 149 258 172"/><path d="M344 149 352 172"/>
+  </g>
+  <path d="M232 172 L372 172 C382 172 390 168 394 162" fill="none" stroke="${LINE}" stroke-width="4.5" stroke-linecap="round"/>
+  <rect x="296" y="60" width="13" height="22" rx="4" fill="${LINE}"/>
+  <ellipse cx="302" cy="58" rx="16" ry="6" fill="${LINE}"/>
+  <path d="M302 54 C244 48 150 44 74 46 L74 52 C152 52 246 56 302 60Z" fill="${LINE}"/>
+  <path d="M302 54 C356 48 412 46 442 48 L442 54 C412 54 356 58 302 60Z" fill="${LINE}"/>
+  ${lights({near:[256,170],tail:[92,52],beacon:[300,146]})}`;
 }
 
 /* --- Hubschrauber mittel (Black Hawk, Bell 212): offener Heckrotor --- */
@@ -1510,6 +1514,7 @@ function features(icao){
 }
 
 function craftSVG(kind, a, flipped, opt){
+  if(kind==="heli") opt = Object.assign({}, opt, {fenestron: /^(EC3|EC13|EC135|H135|H145|EC45|EC55|H155)/.test((opt&&opt.icao)||"")});
   const draw = { heli:drawHeli, heli2:drawHeli2, heli3:drawHeli3,
                  prop:drawProp, single:drawSingle, regional:drawRegional,
                  bizjet:drawBizjet, highwing:drawHighwing, glider:drawGlider,
@@ -2382,7 +2387,7 @@ async function showPlane(ac, second){
   const kind=kindOf(ac,info,rare);
   const g = guessRoute(ac, route);
   route = g.route;
-  const a=airlineOf(call,(info&&info.reg)||ac.r||"",kind);
+  let a=airlineOf(call,(info&&info.reg)||ac.r||"",kind);
   const flipped=((ac.track||90)%360)>180;
   const changed=shownHex!==ac.hex;
   shownHex=ac.hex;
@@ -2390,7 +2395,7 @@ async function showPlane(ac, second){
   lastKmh = typeof ac.gs==="number" ? Math.round(ac.gs*1.852) : 400;
 
   const icao=(info&&info.icao)||ac.t||"";
-  const f=features(icao); f.cargo=isCargo(call,icao); f.liv=liveryOf(call);
+  const f=features(icao); f.cargo=isCargo(call,icao); f.liv=liveryOf(call); f.icao=icao;
   /* Fahrwerk kommt beim Anflug etwa ab 2500 Fuß über Grund heraus.
      Hubschrauber haben Kufen und bleiben davon unberührt. */
   f.gear = kind!=="heli" && typeof ac.alt_baro==="number" && ac.alt_baro<2500
@@ -2402,6 +2407,11 @@ async function showPlane(ac, second){
       windFlip=flipped; windKmh=lastKmh; stopWind();
       requestAnimationFrame(()=>setWind(lastKmh));
     }
+    /* Militärische Maschinen bekommen Heeresgrün statt Airline-Farbe.
+       Erkannt am ADS-B-Militärkennzeichen oder am Bundesheer-Squawk. */
+    const sq0=(ac.squawk||"").trim();
+    const milSq = /^50[0-7][0-9]$/.test(sq0) && parseInt(sq0,10)>=5001 && parseInt(sq0,10)<=5077;
+    if((Number(ac.dbFlags||0)&1) || milSq) a = Object.assign({}, a, {c:"#4A5A3E"});
     const sig=[kind,a.c,a.e,flipped,f.engines,f.winglet,f.nose,f.cargo,f.eng,f.liv,f.finKink,f.gear,isNight()].join("|");
     if(sig!==craftSig){ craftSig=sig; $("craft").innerHTML=craftSVG(kind,a,flipped,f); }
     $("craft").style.width=craftWidth(f.len)+"%";
@@ -2426,7 +2436,7 @@ async function showPlane(ac, second){
       const r2={kind: isHeli2 ? "heli" : null};
       const k2=kindOf(s,null,r2);
       const a2=airlineOf(call2,s.r||"",k2);
-      const f2=features(s.t||""); f2.cargo=isCargo(call2, s.t||""); f2.liv=liveryOf(call2);
+      const f2=features(s.t||""); f2.cargo=isCargo(call2, s.t||""); f2.liv=liveryOf(call2); f2.icao=s.t||"";
       c2.innerHTML=craftSVG(k2,a2,((s.track||90)%360)>180,f2);
       c2.classList.remove("hide");
       /* Auch die Maschine im Hintergrund darf sich melden, aber deutlich leiser */
