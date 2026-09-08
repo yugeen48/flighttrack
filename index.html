@@ -552,7 +552,7 @@
 
 <script>
 "use strict";
-const VERSION = "v77";
+const VERSION = "v78";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -953,6 +953,7 @@ function drawJet(a,o){
         fill="${GREY}" stroke="${LINE}" stroke-width="1.5" stroke-linejoin="round"/>
   ${tail(a, 'M118 96 84 32C82 27 78 24 72 24L62 24C56 24 52 29 54 35L70 96Z', false)}
   ${o.finKink?`<path d="M104 96 88 62 96 60 112 96Z" fill="${a.c}" stroke="${LINE}" stroke-width="1.5" stroke-linejoin="round"/>`:""}
+  ${o.gear?jetGear():""}
   ${flaps}
   <path d="M336 130 C312 134 268 142 226 149 L200 156 L196 161 L228 157 C270 150 314 141 338 137Z"
         fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
@@ -978,7 +979,6 @@ function drawJet(a,o){
   <path d="M436 109v9M444 111v8" stroke="${BODY}" stroke-width="1"/>
 
   <path d="M244 136C272 145 306 145 336 135L336 139 244 140Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="1.3" stroke-linejoin="round"/>
-  ${o.gear?jetGear():""}
 
   <rect x="${E.x}" y="${E.y}" width="${E.w}" height="${E.h}" rx="${E.h/2}" fill="${a.c}" stroke="${LINE}" stroke-width="1.9"/>
   <path d="M${E.x+E.w-13} ${E.y+1.3}a${E.h/2-1.3} ${E.h/2-1.3} 0 0 1 0 ${E.h-2.6}Z" fill="${BODY}" stroke="${LINE}" stroke-width="1.6"/>
