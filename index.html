@@ -552,7 +552,7 @@
 
 <script>
 "use strict";
-const VERSION = "v74";
+const VERSION = "v75";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -910,19 +910,17 @@ function gear(){
    Aufbau von hinten nach vorne: fernes Triebwerk, Leitwerke, naher Flügel,
    dann der Rumpf (der die Flügelwurzel verdeckt, wie in der echten
    Seitenansicht), darauf die Verkleidung, zuletzt Triebwerk und Fahrwerk. */
-const JET_FUSE = 'M470 126 C468 116 454 108 428 105 L152 101 C122 100 94 97 72 93'
-  + 'C58 90 48 87 44 84 C40 81 38 85 42 89 L100 136 C108 141 118 144 130 144'
-  + 'L424 144 C454 141 468 137 470 126Z';
-const GREY = "#DCDAD2";
+const JET_FUSE = 'M474 124 C472 116 458 108 430 105 L150 100 C118 99 88 96 66 92'
+  + 'C50 89 40 86 36 83 C32 80 30 84 34 88 L92 130 C100 135 110 138 122 138'
+  + 'L426 138 C458 135 472 132 474 124Z';
+const GREY = "#D5D3CA";
 
 function jetWindows(x0, n, cargo){
   if(cargo) return "";
   const col = isNight() ? "#F6D98C" : "#42607E";
   let s="";
-  for(let i=0;i<n;i++){
-    const x=x0+i*10.4;
-    s+=`<circle cx="${x.toFixed(1)}" cy="${(117+i*10.4*0.010).toFixed(1)}" r="2" fill="${col}"/>`;
-  }
+  for(let i=0;i<n;i++)
+    s+=`<circle cx="${(x0+i*10.2).toFixed(1)}" cy="${(115+i*0.09).toFixed(1)}" r="1.9" fill="${col}"/>`;
   return s;
 }
 
@@ -931,63 +929,63 @@ function drawJet(a,o){
   const nose = o.nose==="boeing" ? "boeing" : "airbus";
   const liv  = o.liv || "band";
   const id   = "jf"+(++clipSeq);
-  /* Rumpflänge bestimmt, wie viele Fenster hineinpassen */
-  const nWin = Math.max(14, Math.min(30, Math.round((o.band||150)/6.5)));
-  const bandW = nWin*10.4+12;
+  const nWin = Math.max(14, Math.min(30, Math.round((o.band||150)/6.2)));
+  const bandW = nWin*10.2+10;
 
-  const E = o.eng==="fat"  ? {x:250, y:144, w:70, h:34}
-          : o.eng==="slim" ? {x:242, y:150, w:86, h:25}
-          :                  {x:246, y:146, w:76, h:30};
+  const E = o.eng==="fat"  ? {x:268, y:138, w:64, h:32}
+          : o.eng==="slim" ? {x:260, y:143, w:80, h:23}
+          :                  {x:264, y:140, w:70, h:28};
 
   const paint =
-    liv==="full"  ? `<rect x="30" y="70" width="450" height="90" fill="${a.c}"/>`
-  : liv==="belly" ? `<path d="M30 118 480 132 480 170 30 170Z" fill="${a.c}"/>`
-  : liv==="stripe"? `<path d="M70 80 130 160 164 160 104 80Z" fill="${a.c}"/>
-                     <path d="M110 80 170 160 192 160 132 80Z" fill="${a.c}" opacity=".72"/>`
-  : liv==="tail"  ? `<path d="M132 113H${132+bandW}" stroke="${a.c}" stroke-width="3.5"/>`
-  :                 `<rect x="118" y="110" width="${bandW}" height="14" fill="${a.c}"/>`;
+    liv==="full"  ? `<rect x="20" y="70" width="470" height="90" fill="${a.c}"/>`
+  : liv==="belly" ? `<path d="M20 116 480 128 480 164 20 164Z" fill="${a.c}"/>`
+  : liv==="stripe"? `<path d="M62 78 122 154 154 154 96 78Z" fill="${a.c}"/>
+                     <path d="M100 78 160 154 182 154 124 78Z" fill="${a.c}" opacity=".72"/>`
+  : liv==="tail"  ? `<path d="M130 111H${130+bandW}" stroke="${a.c}" stroke-width="3"/>`
+  :                 `<rect x="116" y="108" width="${bandW}" height="13" fill="${a.c}"/>`;
+
+  const flaps = [[300,142],[272,147],[244,151]].map(([x,y])=>
+    `<path d="M${x} ${y} l-14 7 l-2 -4 l13 -6Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.2"/>`).join("");
 
   return `
-  ${o.engines>=4?`<rect x="196" y="118" width="52" height="20" rx="10" fill="#CFCDC5" stroke="${LINE}" stroke-width="1.5"/>`:""}
-  <path d="M106 96 C86 90 56 80 36 73 L32 78 C54 86 84 96 104 101Z"
-        fill="${GREY}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
-  ${tail(a, 'M124 98 78 26C76 21 72 18 66 18L56 18C50 18 46 23 48 29L66 98Z', false)}
-  ${o.finKink?`<path d="M110 98 92 60 100 58 118 98Z" fill="${a.c}" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>`:""}
-
-  <path d="M346 132 C300 139 224 151 172 158 L164 163 C216 154 302 142 348 137Z"
-        fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
-  ${o.winglet?`<path d="M172 158 165 146 171 145 179 156Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.5" stroke-linejoin="round"/>`:""}
+  ${o.engines>=4?`<rect x="200" y="116" width="46" height="18" rx="9" fill="#CFCDC5" stroke="${LINE}" stroke-width="1.4"/>`:""}
+  <path d="M104 94 C88 89 64 81 44 74 L40 79 C62 87 88 95 102 99Z"
+        fill="${GREY}" stroke="${LINE}" stroke-width="1.5" stroke-linejoin="round"/>
+  ${tail(a, 'M118 96 84 32C82 27 78 24 72 24L62 24C56 24 52 29 54 35L70 96Z', false)}
+  ${o.finKink?`<path d="M104 96 88 62 96 60 112 96Z" fill="${a.c}" stroke="${LINE}" stroke-width="1.5" stroke-linejoin="round"/>`:""}
+  ${flaps}
+  <path d="M336 130 C312 134 268 142 226 149 L200 156 L196 161 L228 157 C270 150 314 141 338 137Z"
+        fill="${GREY}" stroke="${LINE}" stroke-width="1.7" stroke-linejoin="round"/>
+  ${o.winglet?`<path d="M200 156 195 144 201 143 208 154Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.3" stroke-linejoin="round"/>`:""}
 
   <defs><clipPath id="${id}"><path d="${JET_FUSE}"/></clipPath></defs>
-  <path d="${JET_FUSE}" fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="${JET_FUSE}" fill="${BODY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
   <g clip-path="url(#${id})">
     ${paint}
-    ${jetWindows(150, nWin, o.cargo)}
-    <g stroke="${LINE}" stroke-width="1.2" fill="none" opacity=".55">
-      <rect x="400" y="108" width="10" height="22" rx="3.5"/>
-      <rect x="130" y="105" width="10" height="22" rx="3.5"/>
-      <rect x="290" y="110" width="8" height="16" rx="3"/>
-      <rect x="268" y="110" width="8" height="16" rx="3"/>
-      <rect x="332" y="131" width="28" height="8" rx="1.6"/>
-      <rect x="186" y="129" width="24" height="7" rx="1.6"/>
+    ${jetWindows(148, nWin, o.cargo)}
+    <g stroke="${LINE}" stroke-width="1.1" fill="none" opacity=".5">
+      <rect x="402" y="106" width="9" height="21" rx="3.5"/>
+      <rect x="128" y="103" width="9" height="21" rx="3.5"/>
+      <rect x="290" y="108" width="7" height="15" rx="3"/>
+      <rect x="268" y="108" width="7" height="15" rx="3"/>
+      <rect x="330" y="126" width="26" height="7" rx="1.5"/>
+      <rect x="184" y="124" width="22" height="6" rx="1.5"/>
     </g>
-    <path d="M44 90 470 122" stroke="${LINE}" stroke-width="0.9" opacity=".2" fill="none"/>
-    <path d="M120 100 460 130" stroke="${LINE}" stroke-width="0.9" opacity=".13" fill="none"/>
-    <path d="M438 106 432 140" stroke="${LINE}" stroke-width="1" opacity=".25" fill="none"/>
-    <path d="M240 102 244 142M330 105 334 143" stroke="${LINE}" stroke-width="0.9" opacity=".12" fill="none"/>
+    <path d="M36 90 474 120" stroke="${LINE}" stroke-width="0.8" opacity=".18" fill="none"/>
+    <path d="M440 104 434 134" stroke="${LINE}" stroke-width="0.9" opacity=".22" fill="none"/>
   </g>
-  <path d="M428 108C441 111 453 116 460 121L431 116Z" fill="#22303F"/>
-  <path d="M435 110v9M443 112v9" stroke="${BODY}" stroke-width="1.1"/>
+  <path d="M430 107C443 110 455 115 462 120L433 115Z" fill="#22303F"/>
+  <path d="M436 109v9M444 111v8" stroke="${BODY}" stroke-width="1"/>
 
-  <path d="M212 143C250 158 300 158 338 140L338 144 212 147Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M244 136C272 145 306 145 336 135L336 139 244 140Z" fill="#EDEBE2" stroke="${LINE}" stroke-width="1.3" stroke-linejoin="round"/>
 
-  <path d="M${E.x+46} ${E.y+4} ${E.x+56} ${E.y-8}" stroke="${LINE}" stroke-width="6" stroke-linecap="round"/>
-  <rect x="${E.x}" y="${E.y}" width="${E.w}" height="${E.h}" rx="${E.h/2}" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
-  <path d="M${E.x+E.w-15} ${E.y+1.4}a${E.h/2-1.4} ${E.h/2-1.4} 0 0 1 0 ${E.h-2.8}Z" fill="${BODY}"/>
-  <path d="M${E.x+22} ${E.y+1}v${E.h-2}M${E.x+46} ${E.y+2}v${E.h-4}" stroke="${LINE}" stroke-width="1" opacity=".45"/>
+  <path d="M${E.x+40} ${E.y+2} ${E.x+52} ${E.y-8}" stroke="${LINE}" stroke-width="6" stroke-linecap="round"/>
+  <rect x="${E.x}" y="${E.y}" width="${E.w}" height="${E.h}" rx="${E.h/2}" fill="${a.c}" stroke="${LINE}" stroke-width="1.9"/>
+  <path d="M${E.x+E.w-13} ${E.y+1.3}a${E.h/2-1.3} ${E.h/2-1.3} 0 0 1 0 ${E.h-2.6}Z" fill="${BODY}"/>
+  <path d="M${E.x+20} ${E.y+1}v${E.h-2}M${E.x+42} ${E.y+2}v${E.h-4}" stroke="${LINE}" stroke-width="1" opacity=".4"/>
 
   ${o.gear?jetGear():""}
-  ${lights({near:[152,167],far:[166,155],tail:[42,86],beacon:[300,146]})}`;
+  ${lights({near:[198,158],tail:[36,86],beacon:[300,138]})}`;
 }
 
 /* Fahrwerk in der Seitenansicht */
@@ -996,12 +994,12 @@ function jetGear(){
     <circle cx="${x}" cy="${y}" r="${r*0.5}" fill="#D9DCE1" stroke="${LINE}" stroke-width="1.1"/>`;
   return `
   <g stroke="${LINE}" stroke-width="1.8" fill="none">
-    <path d="M410 142v14"/><path d="M256 146v16"/><path d="M276 146v16"/>
+    <path d="M414 137v12"/><path d="M262 140v14"/><path d="M282 140v14"/>
   </g>
-  <g stroke="${LINE}" stroke-width="3.4" fill="none" stroke-linecap="round">
-    <path d="M410 144v10"/><path d="M256 148v10"/><path d="M276 148v10"/>
+  <g stroke="${LINE}" stroke-width="3.2" fill="none" stroke-linecap="round">
+    <path d="M414 139v8"/><path d="M262 142v9"/><path d="M282 142v9"/>
   </g>
-  ${wheel(410,160,6)}${wheel(256,166,7)}${wheel(276,166,7)}`;
+  ${wheel(414,154,5.5)}${wheel(262,158,6.5)}${wheel(282,158,6.5)}`;
 }
 
 /* --- Regionaljet (E195, CRJ): kürzer, gepfeiltes Seitenleitwerk --- */
@@ -1452,7 +1450,7 @@ function craftSVG(kind, a, flipped, opt){
             : kind==="single" ? "30 10 420 180"
             : kind==="regional" ? "20 10 450 170"
             : kind==="prop" ? "10 10 460 180"
-            : (kind==="jet"||!kind) ? "10 10 480 180"
+            : (kind==="jet"||!kind) ? "10 10 480 170"
             : kind==="super" ? "40 0 430 245" : "40 0 420 235";
   return `<svg viewBox="${box}" role="img">
     <g transform="${flipped?"scale(-1,1) translate(-500,0)":""}">${inner}</g></svg>`;
