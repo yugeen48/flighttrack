@@ -449,6 +449,9 @@
       <button class="mute" id="mute" aria-label="Ton">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h4L14 5v14L8 14.5H4z"/><path class="wave" d="M17 8.6a5 5 0 0 1 0 6.8M19.6 6a8.6 8.6 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path class="off" d="M17 9.5 22 14.5M22 9.5 17 14.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
       </button>
+      <button class="funk" id="notifyBtn" aria-pressed="false" aria-label="Benachrichtigung bei seltenen Gästen">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a6 6 0 0 0-6 6v3.4c0 1-.3 2-1 2.8L4 16h16l-1-1.8c-.7-.8-1-1.8-1-2.8V8a6 6 0 0 0-6-6Zm0 20a2.7 2.7 0 0 0 2.7-2.3H9.3A2.7 2.7 0 0 0 12 22Z"/></svg>
+      </button>
       <span class="live">Live <i class="dot" id="dot"></i> <b id="clock">–</b></span>
     </div>
 
@@ -552,7 +555,7 @@
 
 <script>
 "use strict";
-const VERSION = "v86";
+const VERSION = "v92";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -1108,6 +1111,156 @@ function drawProp(a,o){ o=o||{}; const id="tp"+(++clipSeq);
 }
 
 /* --- Einmotoriger Tiefdecker (Aquila, Cirrus, Diamond) --- */
+/* --- De Havilland Dash 8 / Q400 (ziviler Turboprop, T-Leitwerk) ---
+   Hochdecker, zwei Triebwerke, hohes gerades Seitenleitwerk mit
+   Hoehenleitwerk oben (T-Leitwerk) - klare Trennung von den
+   militaerischen Mustern (die ein tief sitzendes Leitwerk haben).
+   Spitzere, laenger gezogene Nase. */
+function drawDash8(a,o){ o=o||{}; const id="d8"+(++clipSeq);
+  const F='M448 126 C446 116 432 108 408 105 L150 100 C120 99 96 96 78 92'
+        + 'C64 89 54 86 50 83 C46 80 44 84 48 88 L106 138 C114 143 126 146 140 146'
+        + 'L404 146 C436 143 446 137 448 126Z';
+  return `
+  <path d="M118 46 40 22 30 30 110 56Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  ${tail(a, 'M130 100 92 24C90 18 86 14 80 14L66 14C60 14 56 20 58 27L74 100Z', false)}
+  <path d="M96 22 44 10 34 16 90 30Z" fill="${a.c}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M420 92 120 98C110 98 108 110 118 110L424 104C434 103 432 92 420 92Z" fill="${GREY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <defs><clipPath id="${id}"><path d="${F}"/></clipPath></defs>
+  <path d="${F}" fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  <g clip-path="url(#${id})">
+    ${o.liv==="belly"?`<path d="M40 122 470 134 470 172 40 172Z" fill="${a.c}"/>`
+      :`<rect x="140" y="112" width="240" height="12" fill="${a.c}"/>`}
+    ${jetWindows(166, 20, o.cargo)}
+    <g stroke="${LINE}" stroke-width="1.2" fill="none" opacity=".55">
+      <rect x="382" y="110" width="9" height="21" rx="3.5"/>
+      <rect x="146" y="107" width="9" height="21" rx="3.5"/>
+    </g>
+  </g>
+  <path d="M410 108C424 111 436 116 442 121L413 116Z" fill="#22303F"/>
+  <g>
+    <rect x="246" y="88" width="62" height="26" rx="13" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
+    <path d="M295 89.4a12 12 0 0 1 0 23.2Z" fill="${BODY}"/>
+    <ellipse cx="312" cy="101" rx="5" ry="34" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="1.6"/>
+    <path d="M262 114v22" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
+    ${wheelAt(262,142,7)}
+  </g>
+  ${o.gear?`<path d="M404 146v10" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
+    ${wheelAt(404,162,6)}`:""}
+  ${lights({near:[124,110],far:[420,96],tail:[50,86],beacon:[300,144]})}`;
+}
+
+/* --- ATR 42/72 (ziviler Turboprop, T-Leitwerk) ---
+   Hochdecker, zwei Triebwerke, T-Leitwerk wie der Dash 8, aber
+   stumpfere/rundere Nase, kleineres Seitenleitwerk und ovale statt
+   runde Kabinenfenster - zur Unterscheidung vom Dash 8. */
+function drawATR(a,o){ o=o||{}; const id="atr"+(++clipSeq);
+  const F='M440 124 C438 112 424 102 402 100 L150 100 C120 99 96 96 78 92'
+        + 'C64 89 54 86 50 83 C46 80 44 84 48 88 L106 138 C114 143 126 146 140 146'
+        + 'L404 146 C426 144 438 137 440 124Z';
+  return `
+  <path d="M118 46 40 22 30 30 110 56Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  ${tail(a, 'M130 100 96 32C94 26 90 22 84 22L70 22C64 22 60 27 62 33L76 100Z', false)}
+  <path d="M100 30 52 18 43 24 94 37Z" fill="${a.c}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M416 92 120 98C110 98 108 110 118 110L420 104C430 103 428 92 416 92Z" fill="${GREY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <defs><clipPath id="${id}"><path d="${F}"/></clipPath></defs>
+  <path d="${F}" fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  <g clip-path="url(#${id})">
+    ${o.liv==="belly"?`<path d="M40 122 470 134 470 172 40 172Z" fill="${a.c}"/>`
+      :`<rect x="140" y="112" width="238" height="12" fill="${a.c}"/>`}
+    <g fill="${isNight()?"#F6D98C":"#42607E"}">
+      ${Array.from({length:18},(_,i)=>`<ellipse cx="${(168+i*10.6).toFixed(1)}" cy="115" rx="2.6" ry="1.9"/>`).join("")}
+    </g>
+    <g stroke="${LINE}" stroke-width="1.2" fill="none" opacity=".55">
+      <rect x="376" y="110" width="9" height="21" rx="3.5"/>
+      <rect x="146" y="107" width="9" height="21" rx="3.5"/>
+    </g>
+  </g>
+  <path d="M404 108C417 111 428 116 434 121L406 116Z" fill="#22303F"/>
+  <g>
+    <rect x="242" y="88" width="60" height="26" rx="13" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
+    <path d="M290 89.4a12 12 0 0 1 0 23.2Z" fill="${BODY}"/>
+    <ellipse cx="307" cy="101" rx="5" ry="34" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="1.6"/>
+    <path d="M258 114v22" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
+    ${wheelAt(258,142,7)}
+  </g>
+  ${o.gear?`<path d="M398 146v10" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
+    ${wheelAt(398,162,6)}`:""}
+  ${lights({near:[124,110],far:[414,96],tail:[50,86],beacon:[300,144]})}`;
+}
+
+/* --- Tiefdecker-Turboprop, konventionelles Leitwerk
+   (Saab 340, Metroliner, King Air 90, Conquest) ---
+   Gleicher Rumpf wie der Hochdecker-Turboprop, aber Fluegel/Triebwerk
+   sitzen tief am Rumpf statt oben, dazu ein tief sitzendes Hoehen-
+   leitwerk am Heck (kein T-Leitwerk). */
+function drawLowProp(a,o){ o=o||{}; const id="lp"+(++clipSeq);
+  const F='M448 126 C446 116 432 108 408 105 L150 100 C120 99 96 96 78 92'
+        + 'C64 89 54 86 50 83 C46 80 44 84 48 88 L106 138 C114 143 126 146 140 146'
+        + 'L404 146 C436 143 446 137 448 126Z';
+  return `
+  <path d="M118 46 40 22 30 30 110 56Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  ${tail(a, 'M130 100 92 34C90 29 86 26 80 26L66 26C60 26 56 31 58 37L74 100Z', false)}
+  <path d="M132 98 60 86 50 93 122 108Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M420 128 120 122C110 122 108 134 118 134L424 140C434 139 432 128 420 128Z" fill="${GREY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <defs><clipPath id="${id}"><path d="${F}"/></clipPath></defs>
+  <path d="${F}" fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  <g clip-path="url(#${id})">
+    ${o.liv==="belly"?`<path d="M40 122 470 134 470 172 40 172Z" fill="${a.c}"/>`
+      :`<rect x="140" y="112" width="240" height="12" fill="${a.c}"/>`}
+    ${jetWindows(166, 20, o.cargo)}
+    <g stroke="${LINE}" stroke-width="1.2" fill="none" opacity=".55">
+      <rect x="382" y="110" width="9" height="21" rx="3.5"/>
+      <rect x="146" y="107" width="9" height="21" rx="3.5"/>
+    </g>
+  </g>
+  <path d="M410 108C424 111 436 116 442 121L413 116Z" fill="#22303F"/>
+  <g>
+    <rect x="246" y="120" width="62" height="24" rx="12" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
+    <path d="M293 121.3a11 11 0 0 1 0 21.4Z" fill="${BODY}"/>
+    <ellipse cx="309" cy="132" rx="4.6" ry="31" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="1.6"/>
+    ${wheelAt(262,150,7)}
+  </g>
+  ${o.gear?`<path d="M404 146v10" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
+    ${wheelAt(404,162,6)}`:""}
+  ${lights({near:[124,110],far:[420,96],tail:[50,86],beacon:[300,144]})}`;
+}
+
+/* --- Tiefdecker-Turboprop, T-Leitwerk
+   (King Air 200/300/350, EMB-120 Brasilia, Jetstream 31/32) ---
+   Gleicher Tiefdecker-Rumpf wie drawLowProp, aber mit hohem
+   T-Leitwerk statt tief sitzendem Hoehenleitwerk. */
+function drawLowPropT(a,o){ o=o||{}; const id="lpt"+(++clipSeq);
+  const F='M448 126 C446 116 432 108 408 105 L150 100 C120 99 96 96 78 92'
+        + 'C64 89 54 86 50 83 C46 80 44 84 48 88 L106 138 C114 143 126 146 140 146'
+        + 'L404 146 C436 143 446 137 448 126Z';
+  return `
+  <path d="M118 46 40 22 30 30 110 56Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  ${tail(a, 'M130 100 92 24C90 18 86 14 80 14L66 14C60 14 56 20 58 27L74 100Z', false)}
+  <path d="M96 22 44 10 34 16 90 30Z" fill="${a.c}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M420 128 120 122C110 122 108 134 118 134L424 140C434 139 432 128 420 128Z" fill="${GREY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <defs><clipPath id="${id}"><path d="${F}"/></clipPath></defs>
+  <path d="${F}" fill="${BODY}" stroke="${LINE}" stroke-width="2.2" stroke-linejoin="round"/>
+  <g clip-path="url(#${id})">
+    ${o.liv==="belly"?`<path d="M40 122 470 134 470 172 40 172Z" fill="${a.c}"/>`
+      :`<rect x="140" y="112" width="240" height="12" fill="${a.c}"/>`}
+    ${jetWindows(166, 20, o.cargo)}
+    <g stroke="${LINE}" stroke-width="1.2" fill="none" opacity=".55">
+      <rect x="382" y="110" width="9" height="21" rx="3.5"/>
+      <rect x="146" y="107" width="9" height="21" rx="3.5"/>
+    </g>
+  </g>
+  <path d="M410 108C424 111 436 116 442 121L413 116Z" fill="#22303F"/>
+  <g>
+    <rect x="246" y="120" width="62" height="24" rx="12" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
+    <path d="M293 121.3a11 11 0 0 1 0 21.4Z" fill="${BODY}"/>
+    <ellipse cx="309" cy="132" rx="4.6" ry="31" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="1.6"/>
+    ${wheelAt(262,150,7)}
+  </g>
+  ${o.gear?`<path d="M404 146v10" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
+    ${wheelAt(404,162,6)}`:""}
+  ${lights({near:[124,110],far:[420,96],tail:[50,86],beacon:[300,144]})}`;
+}
+
 function drawSingle(a,o){ o=o||{};
   return `
   <path d="M126 84 62 58 52 66 118 94Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
@@ -1235,6 +1388,11 @@ function drawFighter(a,o){ o=o||{};
    Triebwerksgondeln am Fluegel und Fahrwerksgondeln an den
    Rumpfseiten. Kein T-Leitwerk: das Hoehenleitwerk sitzt unten am
    Leitwerksfuss. Vorbild: An-26 der ungarischen Luftwaffe. */
+/* --- Militaerischer Turboprop (An-26, C-27, C-130) ---
+   Hochdecker mit stark hochgezogenem Heck (Ladeluke), langen
+   Triebwerksgondeln am Fluegel und Fahrwerksgondeln an den
+   Rumpfseiten. Kein T-Leitwerk: das Hoehenleitwerk sitzt unten am
+   Leitwerksfuss. Vorbild: An-26 der ungarischen Luftwaffe. */
 function drawMilTransport(a,o){ o=o||{}; const id="mt"+(++clipSeq);
   const F='M450 126 C448 115 434 107 410 104 L152 98 C122 97 98 94 80 90'
         + 'C68 87 60 85 56 82 C52 79 50 83 54 87 L164 142 C173 146 184 148 196 148'
@@ -1263,15 +1421,22 @@ function drawMilTransport(a,o){ o=o||{}; const id="mt"+(++clipSeq);
       <rect x="176" y="112" width="10" height="24" rx="4"/>
       <path d="M56 88 168 143"/>
     </g>
+    <path d="M150 108C130 105 106 101 86 96C74 93 63 89 56 85"
+          stroke="${LINE}" stroke-width="1" fill="none" opacity=".55"/>
+    <g fill="${LINE}" opacity=".5">
+      <circle cx="140" cy="106" r="1.1"/><circle cx="120" cy="102" r="1.1"/>
+      <circle cx="100" cy="98" r="1.1"/><circle cx="82" cy="94" r="1.1"/>
+      <circle cx="66" cy="90" r="1.1"/>
+    </g>
   </g>
   <path d="M412 107C426 110 438 115 444 120L414 115Z" fill="#22303F"/>
   <g>
     <rect x="258" y="82" width="104" height="22" rx="11" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
-    <path d="M351 83.2a10 10 0 0 1 0 19.6Z" fill="${BODY}"/>
+    <path d="M351 83.2a10 10 0 0 1 0 19.6Z" fill="#B7BBC1" stroke="${LINE}" stroke-width="1.3"/>
     <ellipse cx="368" cy="93" rx="4.6" ry="30" fill="${a.c}" opacity=".22" stroke="${LINE}" stroke-width="1.6"/>
   </g>
   <path d="M274 152C268 141 276 130 294 128L330 128C348 130 354 141 350 152Z"
-        fill="${BODY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+        fill="#DCD9CC" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
   ${o.gear?`
   <g stroke="${LINE}" stroke-width="3" stroke-linecap="round">
     <path d="M416 148v11"/><path d="M298 152v9"/><path d="M322 152v9"/>
@@ -1280,6 +1445,72 @@ function drawMilTransport(a,o){ o=o||{}; const id="mt"+(++clipSeq);
   ${wheelAt(298,167,6.5)}
   ${wheelAt(322,167,6.5)}`:""}
   ${lights({near:[136,104],far:[424,92],tail:[66,88],beacon:[300,142]})}`;
+}
+
+/* --- C-130 Hercules (Quad-Turboprop) ---
+   Rumpfnase per Fotovermessung nachgebaut: die Kontur laeuft ab x=396
+   in einer einzigen Kurve auf einen leicht nach unten (zur Bauchlinie
+   hin) versetzten Punkt zusammen; das schwarze Radom sitzt nur im
+   letzten kurzen Stueck der Spitze und folgt exakt derselben Kurve
+   (keine Rundnase, kein separater Aufsatz). Sonst gleiche Heckgeometrie
+   wie der An-26-Transporter (hochgezogenes Heck mit Laderampe),
+   groesseres gepfeiltes Leitwerk mit schwarzer Anti-Glare-Spitze. Vier
+   Triebwerke eng gebuendelt am Fluegel: zwei nah beieinander sichtbar,
+   zwei weitere nur als blasse Silhouette direkt dahinter angedeutet.
+   Vorbild: C-130K/J Austrian Air Force. */
+function drawMilTransport4(a,o){ o=o||{}; const id="h4"+(++clipSeq);
+  const F='M450 127 C442 110 415 98 389 98 L152 98 C122 97 98 94 80 90'
+        + 'C68 87 60 85 56 82 C52 79 50 83 54 87 L164 142 C173 146 184 148 196 148'
+        + 'L389 148 C415 148 442 136 450 133Z';
+  return `
+  <g opacity=".5">
+    <rect x="260" y="85" width="44" height="17" rx="8.5" fill="${a.c}" stroke="${LINE}" stroke-width="1.5"/>
+    <ellipse cx="302" cy="93" rx="3.4" ry="21" fill="${a.c}" opacity=".18" stroke="${LINE}" stroke-width="1.1"/>
+  </g>
+  <path d="M128 88 44 74 32 84 116 102Z" fill="${GREY}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round"/>
+  ${tail(a, 'M154 96 100 20C97 14 92 10 85 10L66 10C59 10 55 16 58 23L70 96Z', false)}
+  <path d="M109 32 100 20C97 14 92 10 85 10L66 10C59 10 55 16 58 23L60 32Z" fill="#0E0E0D"/>
+  <path d="M356 90 134 94C124 94 122 106 132 106L360 102C370 101 368 90 356 90Z" fill="${GREY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  <defs><clipPath id="${id}"><path d="${F}"/></clipPath></defs>
+  <path d="${F}" fill="${BODY}" stroke="${LINE}" stroke-width="2.4" stroke-linejoin="round"/>
+  <g clip-path="url(#${id})">
+    <rect x="150" y="119" width="248" height="9" fill="${a.c}"/>
+    <g fill="${isNight()?"#F6D98C":"#42607E"}">
+      <circle cx="270" cy="124" r="2.4"/><circle cx="292" cy="124" r="2.4"/>
+      <circle cx="314" cy="124" r="2.4"/><circle cx="336" cy="124" r="2.4"/>
+    </g>
+    <g stroke="${LINE}" stroke-width="1.2" fill="none" opacity=".5">
+      <rect x="176" y="112" width="10" height="24" rx="4"/>
+    </g>
+    <path d="M150 108C130 105 106 101 86 96C74 93 63 89 56 85"
+          stroke="${LINE}" stroke-width="1" fill="none" opacity=".55"/>
+    <g fill="${LINE}" opacity=".5">
+      <circle cx="140" cy="106" r="1.1"/><circle cx="120" cy="102" r="1.1"/>
+      <circle cx="100" cy="98" r="1.1"/><circle cx="82" cy="94" r="1.1"/>
+      <circle cx="66" cy="90" r="1.1"/>
+    </g>
+    <path d="M385 96 410 90 413 99 388 104Z" fill="${isNight()?"#3A3F33":"#22303F"}" opacity=".85"/>
+    <path d="M435.5 111.3C442.1 115.7 447.2 121.1 450 127L450 133C447.2 134.1 442.1 136.2 435.5 138.6Z" fill="#0E0E0D"/>
+  </g>
+  <g>
+    <rect x="298" y="83" width="48" height="19" rx="9.5" fill="${a.c}" stroke="${LINE}" stroke-width="1.9"/>
+    <ellipse cx="346" cy="92" rx="4" ry="24" fill="${a.c}" opacity=".2" stroke="${LINE}" stroke-width="1.4"/>
+  </g>
+  <g>
+    <rect x="332" y="80" width="62" height="21" rx="10.5" fill="${a.c}" stroke="${LINE}" stroke-width="2"/>
+    <path d="M389 81.2a10 10 0 0 1 0 19.6Z" fill="#B7BBC1" stroke="${LINE}" stroke-width="1.3"/>
+    <ellipse cx="402" cy="90" rx="4.6" ry="30" fill="${a.c}" opacity=".22" stroke="${LINE}" stroke-width="1.6"/>
+  </g>
+  <path d="M296 152C290 141 298 130 316 128L340 128C356 130 362 141 356 152Z"
+        fill="#DCD9CC" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
+  ${o.gear?`
+  <g stroke="${LINE}" stroke-width="3" stroke-linecap="round">
+    <path d="M443 135v10"/><path d="M320 152v9"/><path d="M344 152v9"/>
+  </g>
+  ${wheelAt(443,151,6)}
+  ${wheelAt(320,167,6.5)}
+  ${wheelAt(344,167,6.5)}`:""}
+  ${lights({near:[136,104],far:[448,102],tail:[66,88],beacon:[300,142]})}`;
 }
 
 /* --- Schulflugzeug (PC-7): Turboprop mit langer Kanzel --- */
@@ -1548,6 +1779,8 @@ function craftSVG(kind, a, flipped, opt){
                  prop:drawProp, single:drawSingle, regional:drawRegional,
                  bizjet:drawBizjet, highwing:drawHighwing, glider:drawGlider,
                  float:drawFloat, fighter:drawFighter, miltransport:drawMilTransport,
+                 miltransport4:drawMilTransport4, dash8:drawDash8, atr:drawATR,
+                 lowprop:drawLowProp, lowpropt:drawLowPropT,
                  trainer:drawTrainer,
                  jumbo:drawJumbo, super:drawSuper, beluga:drawBeluga }[kind] || drawJet;
   drawFlipped = !!flipped;
@@ -1559,6 +1792,11 @@ function craftSVG(kind, a, flipped, opt){
             : kind==="float" ? "20 10 420 180"
             : kind==="fighter" ? "20 10 470 180"
             : kind==="miltransport" ? "20 10 460 180"
+            : kind==="miltransport4" ? "0 0 470 190"
+            : kind==="dash8" ? "0 0 470 190"
+            : kind==="atr" ? "0 0 470 190"
+            : kind==="lowprop" ? "0 0 470 190"
+            : kind==="lowpropt" ? "0 0 470 190"
             : kind==="trainer" ? "20 10 420 180"
             : kind==="bizjet" ? "20 10 440 170"
             : kind==="highwing" ? "20 10 420 180"
@@ -1587,14 +1825,19 @@ function kindOf(ac, info, rare){
      Sonst wird eine Citation als Propellermaschine gezeichnet. */
   /* Militär und Sonderformen zuerst */
   if(/^(EUFI|F16|F15|F18|F35|F5(?![0-9])|GRIP|RFAL|TOR|MIG|SU2|SU3|SU5|A10|HAWK|L39|M346|AJET|T38|F4|F14|MI24|EF20)/.test(t)) return "fighter";
-  if(/^(C130|C30J|C17(?![0-9])|A400|C295|CN35|C27J|KC13|IL76|AN12|AN26|AN70|A124|AN22|K35R|E3TF|P8(?![0-9]))/.test(t)) return "miltransport";
+  if(/^(C130|C30J|A400|AN22)/.test(t)) return "miltransport4";
+  if(/^(C17(?![0-9])|C295|CN35|C27J|KC13|IL76|AN12|AN26|AN70|A124|K35R|E3TF|P8(?![0-9]))/.test(t)) return "miltransport";
   if(/^(PC7|PC9|PC21|T6|TUCA|G120|SF26|DA42M|SB05|T34|T44)/.test(t)) return "trainer";
   if(/^(GLID|DG[0-9]|LS[0-9]|ASK|ASW|ASH|ASG|DUOD|JANU|VENT|ARCU|DISC|NIMB|STDC|SZD|PIK|LAK|H36|SF25|SF28|KA6|KA7|BLAN|TWIN|G109|DIMO|TS1J|AS33|AS34)/.test(t)) return "glider";
   if(/^(PBY|CL21|CL41|CL2T|CL4T|SEAR|ICON|LA8|DHC2|C208S|BE18S|AT8T|G21|SM10)/.test(t)) return "float";
   if(PRIVATE_JET.test(t)) return "bizjet";
   if(/^(C1[5-8]|C172|C182|C206|C207|C208|C210|C337|C42|GA8|AN2|SW2|P750|PC6|CN23|C185|DHC2|DHC3|DHC6|ST75|WILG|L410)/.test(t)) return "highwing";
   if(/^(AT01|PC12|PC7|TBM|C20|C21|C82|C72|C77|SR2|SR22|DA20|DA40|DA42|DA62|DV20|M20|P28|P32|PA2|PA3|PA4|P46|BE2|BE33|BE35|BE36|BE55|BE58|BE76|RV[4-9]|RV1|AA5|AA1|F150|F172|R200|R100|WT9|VL3|EV97|P200|LNC|GLAS|G115|G109|SF25|KODI|EPIC|EVOT|TB[12]|MCR|SLG|HUSK|MU2|AC11|AC50|COL4|LGEZ|VELO|ZLIN|Z42|Z43|Z142|YK18|CAP1|CAP2|EXTR|E300)/.test(t)) return "single";
-  if(/^(AT4|AT5|AT7|DH8|SF3|SW4|C4|PC2|B19|D22|A40|SB20|F50|F27|E12|JS3|BE20|BE30|BE9|C441|SW3)/.test(t)) return "prop";
+  if(/^(AT4|AT5|AT7|F50|F27)/.test(t)) return "atr";
+  if(/^(DH8)/.test(t)) return "dash8";
+  if(/^(SF3|SW3|SW4|C441|BE9|SB20)/.test(t)) return "lowprop";
+  if(/^(BE20|BE30|E12|JS3)/.test(t)) return "lowpropt";
+  if(/^(C4|PC2|B19|D22|A40)/.test(t)) return "prop";
   /* Regionaljets: Embraer E-Jets, CRJ, Fokker, Suchoi Superjet */
   if(/^(E1[3-9]|E29|E29[05]|E75|E90|E195|CRJ|CR[27789]|SU95|RJ[13][05]|F70|F100|B461|B462|B463|AR8|MD8|MD9|B71)/.test(t)) return "regional";
   return "jet";
@@ -2216,6 +2459,30 @@ async function readAtis(){
   speak(txt);
 }
 
+/* Push-Benachrichtigung bei seltenen Gästen. Nur wenn erlaubt und nur,
+   wenn die Seite gerade nicht offen im Blick ist - sonst reicht das
+   Banner "Seltener Gast" oben, eine zusätzliche Meldung wäre doppelt. */
+let notifyOn = store.get("notify", false);
+function paintNotify(){ $("notifyBtn").setAttribute("aria-pressed", String(notifyOn)); }
+$("notifyBtn").addEventListener("click", async ()=>{
+  if(!notifyOn){
+    if(!("Notification" in window)) return;
+    let perm = Notification.permission;
+    if(perm==="default") perm = await Notification.requestPermission();
+    if(perm!=="granted") return;
+  }
+  notifyOn = !notifyOn; store.set("notify", notifyOn); paintNotify();
+});
+paintNotify();
+let lastNotifyHex=null;
+function notifyRare(hex, title, body){
+  if(!notifyOn || hex===lastNotifyHex) return;
+  if(!("Notification" in window) || Notification.permission!=="granted") return;
+  if(document.visibilityState==="visible") return;
+  lastNotifyHex=hex;
+  try{ new Notification(title, {body, tag:"rare-guest"}); }catch(e){}
+}
+
 let funkOn = store.get("funk", false);
 function paintFunk(){ $("funk").setAttribute("aria-pressed", String(funkOn)); }
 $("funk").addEventListener("click",()=>{
@@ -2493,7 +2760,11 @@ async function showPlane(ac, second){
     $("metaText").textContent=[airlineName,call,typeName].filter(Boolean).join(" · ").toUpperCase();
     $("rare").textContent = rare.rare ? ("Seltener Gast"+(rare.label?" · "+rare.label:"")+" ·") : "";
     $("rare").classList.toggle("on",rare.rare);
-    if(rare.rare && changed) beep("rare");
+    if(rare.rare && changed){
+      beep("rare");
+      notifyRare(ac.hex, "Seltener Gast"+(rare.label?" · "+rare.label:""),
+        [airlineName,call,typeName].filter(Boolean).join(" · "));
+    }
     const bigText = route&&route.from&&route.to
       ? route.from+" → "+route.to
       : (typeName || call || "Unbekannter Flug");
