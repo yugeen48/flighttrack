@@ -71,6 +71,20 @@
   .place:active{transform:scale(.93)}
   .place:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 
+  .placesearch{position:fixed;inset:0;background:rgba(20,20,19,.45);display:flex;
+    align-items:flex-start;justify-content:center;z-index:40;padding-top:70px}
+  .placesearch-card{background:var(--panel);border:1.5px solid var(--ink);border-radius:14px;
+    padding:16px 18px;width:min(320px,86vw);box-shadow:0 10px 30px rgba(0,0,0,.3)}
+  .placesearch-card label{display:block;font-size:12px;letter-spacing:.05em;
+    color:var(--panel-soft);margin-bottom:6px}
+  .placesearch-card input{width:100%;box-sizing:border-box;padding:9px 10px;border-radius:8px;
+    border:1px solid rgba(26,26,24,.3);font-size:15px;font-family:inherit}
+  .placesearch-row{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+  .placesearch-row button{border:1px solid rgba(26,26,24,.3);background:#fff;border-radius:8px;
+    padding:7px 14px;font-size:13px;cursor:pointer;font-family:inherit}
+  .placesearch-row button#placeConfirm{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .placesearch-msg{margin-top:8px;font-size:12px;color:var(--needle);min-height:14px}
+
   /* Flugzeug */
   .radius{display:inline-flex;gap:2px;flex:0 0 auto;background:rgba(255,255,255,.55);
     border:1px solid rgba(26,26,24,.16);border-radius:999px;padding:2px}
@@ -412,21 +426,16 @@
     <div class="sun" id="sun"><svg class="moon" id="moon" viewBox="0 0 100 100" aria-hidden="true"></svg></div>
 
     <div class="top">
-      <button class="place" id="btn-0" aria-pressed="true" aria-label="Home">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6 1.9 11.4h2.9V21h5.3v-5.6h3.8V21h5.2v-9.6h2.9L12 2.6Z"/></svg>
-      </button>
-      <button class="place" id="btn-1" aria-pressed="false" aria-label="Work">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M9.7 8.3A4.24 4.24 0 0 1 15.7 14.3L5.2 20.8a1.2 1.2 0 0 1-1.7-1.7Z"/>
-          <ellipse cx="14.4" cy="5.7" rx="1.45" ry="3.2" transform="rotate(-15 14.4 5.7)"/>
-          <ellipse cx="16.7" cy="6" rx="1.35" ry="3" transform="rotate(30 16.7 6)"/>
-          <ellipse cx="17.9" cy="7.2" rx="1.25" ry="2.8" transform="rotate(62 17.9 7.2)"/>
-        </svg>
-      </button>
       <button class="place" id="btn-geo" aria-pressed="false" aria-label="Aktueller Standort">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 1.5a1.3 1.3 0 0 1 1.3 1.3v1.6a7.7 7.7 0 0 1 6.3 6.3h1.6a1.3 1.3 0 0 1 0 2.6h-1.6a7.7 7.7 0 0 1-6.3 6.3v1.6a1.3 1.3 0 0 1-2.6 0v-1.6a7.7 7.7 0 0 1-6.3-6.3H2.8a1.3 1.3 0 0 1 0-2.6h1.6a7.7 7.7 0 0 1 6.3-6.3V2.8A1.3 1.3 0 0 1 12 1.5Zm0 5.4a5.1 5.1 0 1 0 0 10.2 5.1 5.1 0 0 0 0-10.2Z"/>
           <circle cx="12" cy="12" r="2.7"/>
+        </svg>
+      </button>
+      <button class="place" id="btn-search" aria-pressed="false" aria-label="Ort suchen">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.1"/>
+          <path d="M15.3 15.3 21 21" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
         </svg>
       </button>
       <button class="place gear" id="btn-tech" aria-pressed="false" aria-label="Technische Zeichnung">
@@ -453,6 +462,18 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a6 6 0 0 0-6 6v3.4c0 1-.3 2-1 2.8L4 16h16l-1-1.8c-.7-.8-1-1.8-1-2.8V8a6 6 0 0 0-6-6Zm0 20a2.7 2.7 0 0 0 2.7-2.3H9.3A2.7 2.7 0 0 0 12 22Z"/></svg>
       </button>
       <span class="live">Live <i class="dot" id="dot"></i> <b id="clock">–</b></span>
+    </div>
+
+    <div class="placesearch" id="placeSearch" hidden>
+      <div class="placesearch-card">
+        <label for="placeInput">Ort oder Postleitzahl</label>
+        <input type="text" id="placeInput" placeholder="z.B. 1020 Wien" autocomplete="off">
+        <div class="placesearch-row">
+          <button type="button" id="placeCancel">Abbrechen</button>
+          <button type="button" id="placeConfirm">Übernehmen</button>
+        </div>
+        <div class="placesearch-msg" id="placeMsg"></div>
+      </div>
     </div>
 
     <div class="craft2 hide" id="craft2"></div>
@@ -555,7 +576,7 @@
 
 <script>
 "use strict";
-const VERSION = "v92";
+const VERSION = "v95";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -929,12 +950,15 @@ const JET_FUSE = 'M474 124 C472 116 458 108 430 105 L150 100 C118 99 88 96 66 92
   + 'L426 138 C458 135 472 132 474 124Z';
 const GREY = BODY;   /* Flügel in Rumpffarbe, nur durch die Kontur getrennt */
 
-function jetWindows(x0, n, cargo){
+function jetWindows(x0, n, cargo, skip){
   if(cargo) return "";
   const col = isNight() ? "#F6D98C" : "#42607E";
   let s="";
-  for(let i=0;i<n;i++)
-    s+=`<circle cx="${(x0+i*10.2).toFixed(1)}" cy="${(115+i*0.09).toFixed(1)}" r="1.9" fill="${col}"/>`;
+  for(let i=0;i<n;i++){
+    const cx=x0+i*10.2;
+    if(skip && skip.some(([a,b])=>cx>=a-2 && cx<=b+2)) continue;
+    s+=`<circle cx="${cx.toFixed(1)}" cy="${(115+i*0.09).toFixed(1)}" r="1.9" fill="${col}"/>`;
+  }
   return s;
 }
 
@@ -977,7 +1001,7 @@ function drawJet(a,o){
   <path d="${JET_FUSE}" fill="${BODY}" stroke="${LINE}" stroke-width="2" stroke-linejoin="round"/>
   <g clip-path="url(#${id})">
     ${paint}
-    ${jetWindows(148, nWin, o.cargo)}
+    ${jetWindows(148, nWin, o.cargo, [[268,275],[290,297]])}
     <g stroke="${LINE}" stroke-width="1.1" fill="none" opacity=".5">
       <rect x="402" y="106" width="9" height="21" rx="3.5"/>
       <rect x="128" y="103" width="9" height="21" rx="3.5"/>
@@ -1060,7 +1084,7 @@ function drawRegional(a,o){ o=o||{}; const id="rj"+(++clipSeq);
     ${o.liv==="full"?`<rect x="40" y="70" width="440" height="90" fill="${a.c}"/>`
      :o.liv==="belly"?`<path d="M60 118 470 130 470 170 60 170Z" fill="${a.c}"/>`
      :`<rect x="150" y="110" width="230" height="12" fill="${a.c}"/>`}
-    ${jetWindows(178, 18, o.cargo)}
+    ${jetWindows(178, 18, o.cargo, [[288,295]])}
     <g stroke="${LINE}" stroke-width="1.2" fill="none" opacity=".55">
       <rect x="384" y="108" width="9" height="21" rx="3.5"/>
       <rect x="158" y="105" width="9" height="21" rx="3.5"/>
@@ -1661,7 +1685,7 @@ function drawJumbo(a,o){ o=o||{}; const id="jb"+(++clipSeq);
   <g clip-path="url(#${id})">
     ${o.liv==="belly"?`<path d="M20 120 490 132 490 168 20 168Z" fill="${a.c}"/>`
       :`<rect x="110" y="110" width="300" height="13" fill="${a.c}"/>`}
-    ${jetWindows(140, 30, o.cargo)}
+    ${jetWindows(140, 30, o.cargo, [[270,277],[300,307]])}
     ${o.cargo?"":`<g fill="${isNight()?"#F6D98C":"#42607E"}">${[0,1,2,3,4].map(i=>`<circle cx="${240+i*11}" cy="92" r="1.8"/>`).join("")}</g>`}
     <g stroke="${LINE}" stroke-width="1.1" fill="none" opacity=".5">
       <rect x="406" y="108" width="9" height="21" rx="3.5"/><rect x="120" y="104" width="9" height="21" rx="3.5"/>
@@ -1695,8 +1719,8 @@ function drawSuper(a,o){ o=o||{}; const id="sp"+(++clipSeq);
     ${o.liv==="belly"?`<path d="M20 126 490 140 490 176 20 176Z" fill="${a.c}"/>`
       :`<rect x="104" y="104" width="330" height="12" fill="${a.c}"/>`}
     <g fill="${isNight()?"#F6D98C":"#42607E"}">
-      ${Array.from({length:30},(_,i)=>`<circle cx="${132+i*10.4}" cy="${109+i*0.09}" r="1.9"/>`).join("")}
-      ${Array.from({length:28},(_,i)=>`<circle cx="${140+i*10.4}" cy="${129+i*0.09}" r="1.9"/>`).join("")}
+      ${Array.from({length:30},(_,i)=>{const cx=132+i*10.4; if(cx>=406 && cx<=419) return ""; return `<circle cx="${cx}" cy="${109+i*0.09}" r="1.9"/>`;}).join("")}
+      ${Array.from({length:28},(_,i)=>{const cx=140+i*10.4; if((cx>=298&&cx<=311)||(cx>=178&&cx<=191)) return ""; return `<circle cx="${cx}" cy="${129+i*0.09}" r="1.9"/>`;}).join("")}
     </g>
     <g stroke="${LINE}" stroke-width="1.1" fill="none" opacity=".5">
       <rect x="408" y="100" width="9" height="20" rx="3.5"/><rect x="120" y="98" width="9" height="20" rx="3.5"/>
@@ -2478,7 +2502,6 @@ let lastNotifyHex=null;
 function notifyRare(hex, title, body){
   if(!notifyOn || hex===lastNotifyHex) return;
   if(!("Notification" in window) || Notification.permission!=="granted") return;
-  if(document.visibilityState==="visible") return;
   lastNotifyHex=hex;
   try{ new Notification(title, {body, tag:"rare-guest"}); }catch(e){}
 }
@@ -2984,9 +3007,8 @@ async function tick(){
 function loop(){ clearInterval(timer); tick(); timer=setInterval(tick, DEMO?6000:REFRESH_MS); }
 
 function markActive(which){
-  $("btn-0").setAttribute("aria-pressed",String(which===0));
-  $("btn-1").setAttribute("aria-pressed",String(which===1));
   $("btn-geo").setAttribute("aria-pressed",String(which==="geo"));
+  $("btn-search").setAttribute("aria-pressed",String(which==="search"));
 }
 function applyPlace(p, which){
   place=p; gen++; markActive(which);
@@ -2994,6 +3016,39 @@ function applyPlace(p, which){
   shownHex=null; last=null; weather={}; loop();
 }
 function selectPlace(i){ store.set("place",i); applyPlace(PLACES[i], i); }
+
+/* Ort per Postleitzahl/Stadtname. Nominatim (OpenStreetMap) braucht keinen
+   API-Key; ein Suchbegriff pro Klick ist unproblematisch. */
+function openPlaceSearch(){
+  $("placeMsg").textContent="";
+  $("placeInput").value="";
+  $("placeSearch").hidden=false;
+  setTimeout(()=>$("placeInput").focus(),10);
+}
+function closePlaceSearch(){ $("placeSearch").hidden=true; }
+async function confirmPlaceSearch(){
+  const q=$("placeInput").value.trim();
+  if(!q) return;
+  $("placeMsg").textContent="Suche …";
+  try{
+    const url="https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=de&q="+encodeURIComponent(q);
+    const res=await fetch(url);
+    const data=await res.json();
+    if(!data || !data.length){ $("placeMsg").textContent="Nichts gefunden"; return; }
+    const hit=data[0];
+    const name=(hit.display_name||q).split(",")[0];
+    applyPlace({key:"search",name,lat:parseFloat(hit.lat),lon:parseFloat(hit.lon)},"search");
+    closePlaceSearch();
+  }catch(e){ $("placeMsg").textContent="Suche fehlgeschlagen"; }
+}
+$("btn-search").addEventListener("click", openPlaceSearch);
+$("placeCancel").addEventListener("click", closePlaceSearch);
+$("placeConfirm").addEventListener("click", confirmPlaceSearch);
+$("placeSearch").addEventListener("click", e=>{ if(e.target.id==="placeSearch") closePlaceSearch(); });
+$("placeInput").addEventListener("keydown", e=>{
+  if(e.key==="Enter") confirmPlaceSearch();
+  if(e.key==="Escape") closePlaceSearch();
+});
 
 /* Aktueller Standort. Braucht HTTPS - über http vom Pi verweigert Safari den Zugriff. */
 function useGeo(){
@@ -3081,7 +3136,6 @@ function toggleTech(on){
 $("btn-tech").addEventListener("click",()=>toggleTech());
 $("btn-tech2").addEventListener("click",()=>toggleTech(false));
 
-PLACES.forEach((_,i)=>$("btn-"+i).addEventListener("click",()=>selectPlace(i)));
 $("btn-geo").addEventListener("click",useGeo);
 
 /* Tipp auf einen unauffälligen Squawk zeigt seine Bedeutung. Nochmal
