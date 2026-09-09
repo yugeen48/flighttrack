@@ -575,7 +575,7 @@
 
 <script>
 "use strict";
-const VERSION = "v96";
+const VERSION = "v97";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -3034,7 +3034,7 @@ async function confirmPlaceSearch(){
   const prevText="Der Himmel über "+place.name;
   $("here").textContent="Suche "+q+" …";
   try{
-    const url="https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=de&q="+encodeURIComponent(q);
+    const url="https://nominatim.openstreetmap.org/search?format=json&limit=5&accept-language=de&q="+encodeURIComponent(q);
     const res=await fetch(url);
     const data=await res.json();
     if(!data || !data.length){
@@ -3042,7 +3042,14 @@ async function confirmPlaceSearch(){
       setTimeout(()=>{$("here").textContent=prevText;},3000);
       return;
     }
-    const hit=data[0];
+    /* Kurze Eingaben wie eine bloße PLZ sind weltweit mehrdeutig - unter
+       den Treffern den nehmen, der am nächsten am zuletzt verwendeten
+       Standort liegt, statt blind den ersten. */
+    let hit=data[0], best=haversine(place.lat,place.lon,parseFloat(hit.lat),parseFloat(hit.lon));
+    for(const d of data.slice(1)){
+      const km=haversine(place.lat,place.lon,parseFloat(d.lat),parseFloat(d.lon));
+      if(km<best){ best=km; hit=d; }
+    }
     const name=(hit.display_name||q).split(",")[0];
     applyPlace({key:"search",name,lat:parseFloat(hit.lat),lon:parseFloat(hit.lon)},"search");
   }catch(e){
