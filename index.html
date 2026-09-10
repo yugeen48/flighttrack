@@ -575,7 +575,7 @@
 
 <script>
 "use strict";
-const VERSION = "v97";
+const VERSION = "v98";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -2885,20 +2885,24 @@ async function showEmpty(note, raw, ok){
    ist Schluss. Liefert eine nur eine leere Liste, wird die nächste
    gefragt, weil jedes Netz eigene Empfänger hat. */
 let srcStatus = "";
+let proxyDownSince = 0;   /* wenn gesetzt: Proxy vor Kurzem nicht erreichbar - */
+                          /* nicht bei jedem Zyklus neu 9s verschwenden */
 const errName = e => { const m=String(e&&e.message||e);
   return /^\d+$/.test(m) ? "HTTP "+m : "blockiert"; };
 
 async function planes(){
   const la=place.lat.toFixed(4), lo=place.lon.toFixed(4), nm=RADIUS_NM().toFixed(1);
   const notes=[]; let best=[], ok=0;
-  if(MY_PROXY){
+  const skipProxy = proxyDownSince && (Date.now()-proxyDownSince < 5*60*1000);
+  if(MY_PROXY && !skipProxy){
     try{
-      const d=await fetchJSON(`${MY_PROXY}?lat=${la}&lon=${lo}&dist=${nm}`, 9000);
+      const d=await fetchJSON(`${MY_PROXY}?lat=${la}&lon=${lo}&dist=${nm}`, 4000);
       best=d.ac||d.aircraft||[];
+      proxyDownSince=0;
       srcStatus="Worker über "+(d.src||"?")+" · "+best.length
         + (d.error?" ("+String(d.error).replace(/\s+/g," ").slice(0,110)+")":"");
       return { list:best, ok:1 };
-    }catch(e){ notes.push("Worker "+errName(e)); }
+    }catch(e){ notes.push("Worker "+errName(e)); proxyDownSince=Date.now(); }
   }
   for(const s of DIRECT){
     try{
