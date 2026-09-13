@@ -575,7 +575,7 @@
 
 <script>
 "use strict";
-const VERSION = "v98";
+const VERSION = "v99";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -815,7 +815,7 @@ function rarity(ac,info,pk){
   const T=(type||"").toUpperCase();
 
   if(cat==="A7"||/helicopter|rotorcraft/.test(desc)||
-     (T&&/^(H|EC1|EC3|EC4|A109|A139|B06|B407|B412|R22|R44|R66|S76|AS35|H145|H135|EC35)/.test(T)))
+     (T&&/^(H|EC1|EC3|EC4|A109|A139|B06|B407|B412|R22|R44|R66|S76|AS35|AS332|H145|H135|EC35)/.test(T)))
     return {rare:true,kind:"heli",label:"Hubschrauber"};
   if(f&1) return {rare:true,kind:null,label:"Militär"};
   if(f&8) return {rare:true,kind:null,label:"Behörde"};
@@ -1837,7 +1837,7 @@ function kindOf(ac, info, rare){
   const t=((info&&info.icao)||ac.t||"").toUpperCase();
   if(rare.kind==="heli"){
     if(/^(CH47|H47|CH46|MI26|BV23)/.test(t)) return "heli3";
-    if(/^(H60|S70|UH60|B212|B412|AB41|AB21|MI8|MI17|H225|AS32|EC25|S92|H215|A139|B429|H175|S76|AS65|NH90|EC55|H155)/.test(t)) return "heli2";
+    if(/^(H60|S70|UH60|B212|B412|AB41|AB21|MI8|MI17|H225|AS32|AS332|EC25|S92|H215|A139|B429|H175|S76|AS65|NH90|EC55|H155)/.test(t)) return "heli2";
     return "heli";
   }
   if(/^A388/.test(t)) return "super";
