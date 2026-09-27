@@ -575,7 +575,7 @@
 
 <script>
 "use strict";
-const VERSION = "v100";
+const VERSION = "v102";
 const DEMO = false;   // true = Beispieldaten statt Live-Abfrage
 
 /* ============ Standorte ============ */
@@ -2104,14 +2104,6 @@ function composeNewSVG(typeCode, liveryColor, opt){
     const tx = -(2*minx + vw);
     inner = `<g transform="scale(-1,1) translate(${tx},0)">${inner}</g>`;
   }
-  if(opt.night){
-    /* Positionslicht als kleiner Punkt an der Fluegelspitze - rot/gruen
-       je nach sichtbarer Seite, wie beim bisherigen Icon-System. */
-    const wx = opt.flipped ? minx+vw*0.42 : minx+vw*0.58;
-    const wy = miny+vh*0.42;
-    const col = opt.flipped ? "#57E08A" : "#FF5C5C";
-    inner += `<circle cx="${wx.toFixed(1)}" cy="${wy.toFixed(1)}" r="${(vh*0.045).toFixed(2)}" fill="${col}"/>`;
-  }
   return `<svg viewBox="${vb[1]}" role="img">${inner}</svg>`;
 }
 
@@ -2971,7 +2963,7 @@ async function showPlane(ac, second){
     if(sig!==craftSig){
       craftSig=sig;
       $("craft").innerHTML = newKey
-        ? composeNewSVG(newKey, a.c, {flipped, cargo:f.cargo, night:isNight()})
+        ? composeNewSVG(newKey, a.c, {flipped, cargo:f.cargo})
         : craftSVG(kind,a,flipped,f);
     }
     $("craft").style.width=craftWidth(f.len)+"%";
@@ -3000,7 +2992,7 @@ async function showPlane(ac, second){
       const flipped2 = ((s.track||90)%360)>180;
       const newKey2 = newAssetKey(f2.icao);
       c2.innerHTML = newKey2
-        ? composeNewSVG(newKey2, a2.c, {flipped:flipped2, cargo:f2.cargo, night:isNight()})
+        ? composeNewSVG(newKey2, a2.c, {flipped:flipped2, cargo:f2.cargo})
         : craftSVG(k2,a2,flipped2,f2);
       c2.classList.remove("hide");
       /* Auch die Maschine im Hintergrund darf sich melden, aber deutlich leiser */
@@ -3359,9 +3351,10 @@ function paintTech(){
     $("rareList").innerHTML="";
     return;
   }
-  $("techDraw").innerHTML =
-    '<div class="views"><div class="v">'+craftSVG(last.kind,last.a,false)+
-    '</div><div class="v">'+topView(last.icao,last.kind)+'</div></div>';
+  const newKeyTech = newAssetKey(last.icao);
+  $("techDraw").innerHTML = '<div class="views"><div class="v">' +
+    (newKeyTech ? composeNewSVG(newKeyTech, last.a.c, {flipped:false}) : craftSVG(last.kind,last.a,false)) +
+    '</div></div>';
   const s=SPECS[last.icao];
   if(s){
     $("techL1").textContent=numDe(s[2])+" t maximale Abflugmasse";
